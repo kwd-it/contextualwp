@@ -1,0 +1,39 @@
+{
+    "name": "kwdit/contextwp",
+    "description": "MCP-compatible WordPress plugin for exposing context endpoints.",
+    "version": "0.1.0",
+    "type": "wordpress-plugin",
+    "license": "MIT",
+    "keywords": [
+        "wordpress",
+        "plugin",
+        "mcp",
+        "context",
+        "ai",
+        "endpoints"
+    ],
+    "homepage": "https://github.com/kwdit/contextwp",
+    "support": {
+        "issues": "https://github.com/kwdit/contextwp/issues",
+        "source": "https://github.com/kwdit/contextwp"
+    },
+    "authors": [
+      {
+        "name": "KWD IT",
+        "email": "contact@kwd-it.co.uk",
+        "homepage": "https://kwd-it.co.uk"
+      }
+    ],
+    "require": {
+        "php": ">=8.1"
+    },
+    "autoload": {
+      "psr-4": {
+        "ContextWP\\": "includes/"
+      }
+    },
+    "extra": {
+        "wordpress-plugin-slug": "contextwp"
+    }
+}
+  

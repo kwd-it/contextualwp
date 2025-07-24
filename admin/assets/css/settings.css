@@ -1,0 +1,88 @@
+/**
+ * ContextWP Settings Page Styles
+ */
+
+/* Settings field improvements */
+.contextwp-settings-field {
+    margin-bottom: 20px;
+}
+
+.contextwp-settings-field label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.contextwp-settings-field select,
+.contextwp-settings-field input[type="text"],
+.contextwp-settings-field input[type="password"],
+.contextwp-settings-field input[type="number"] {
+    min-width: 200px;
+}
+
+/* Description text styling */
+.contextwp-settings-field .description {
+    margin-top: 5px;
+    color: #666;
+    font-style: italic;
+}
+
+/* Advanced settings toggle */
+.contextwp-advanced-toggle {
+    margin: 20px 0;
+}
+
+.contextwp-advanced-toggle button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #f0f0f1;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.contextwp-advanced-toggle button:hover {
+    background: #e5e5e5;
+    border-color: #8c8f94;
+}
+
+.contextwp-advanced-toggle .toggle-icon {
+    font-size: 12px;
+    transition: transform 0.2s ease;
+}
+
+/* Advanced settings section */
+.contextwp-advanced-settings {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+    margin-top: 10px;
+}
+
+.contextwp-advanced-settings p {
+    margin-top: 0;
+    color: #666;
+}
+
+/* Form styling improvements */
+.wrap form {
+    max-width: 800px;
+}
+
+.wrap h1 {
+    margin-bottom: 30px;
+}
+
+/* Settings sections */
+.form-table th {
+    padding: 20px 10px 20px 0;
+    width: 200px;
+}
+
+.form-table td {
+    padding: 15px 10px;
+} 

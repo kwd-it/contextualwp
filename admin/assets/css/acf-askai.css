@@ -1,0 +1,33 @@
+.contextwp-acf-askai {
+    display: inline-block;
+    margin-left: 6px;
+    width: 18px;
+    height: 18px;
+    background: url('logo.png') no-repeat center center;
+    background-size: contain;
+    vertical-align: middle;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+.contextwp-acf-askai:hover, .contextwp-acf-askai.loading {
+    opacity: 1;
+    filter: brightness(1.2);
+}
+.contextwp-acf-askai-tooltip {
+    position: absolute;
+    z-index: 10010;
+    background: #fff;
+    color: #222;
+    border: 1px solid #2271b1;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(34,113,177,0.12);
+    padding: 10px 14px;
+    min-width: 220px;
+    max-width: 350px;
+    font-size: 0.97em;
+    margin-top: 4px;
+    margin-left: 4px;
+    white-space: pre-line;
+    pointer-events: auto;
+} 
