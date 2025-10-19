@@ -5,6 +5,27 @@ All notable changes to ContextWP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2024-12-19
+
+### Added
+- **Smart Model Selector**: Automatically selects the most efficient AI model based on prompt length and complexity
+- New helper class `Smart_Model_Selector` with intelligent model selection logic
+- Admin toggle for enabling/disabling smart model selection (default: enabled)
+- Support for GPT-3.5 Turbo, GPT-4, Claude Sonnet, and Claude Opus model variants
+- Token-based model selection with complexity analysis
+- Developer filter `contextwp_smart_model_select` for custom model selection logic
+- Additional filters for thresholds and model mapping customization
+
+### Technical Features
+- Smart model selection integrated into `/generate_context` endpoint
+- Automatic model selection based on:
+  - Short/simple prompts (< 200 tokens): GPT-3.5 Turbo
+  - Medium prompts (200-1000 tokens): GPT-3.5 Turbo  
+  - Long/complex prompts (1000+ tokens): GPT-4
+  - Claude provider uses Claude Sonnet for nano/mini, Claude Opus for large
+- Complexity analysis using keyword and pattern matching
+- Extensible architecture for future premium features
+
 ## [0.1.0] - 2024-12-19
 
 ### Added

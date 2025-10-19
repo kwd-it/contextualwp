@@ -96,6 +96,13 @@ class ContextWP_Admin_Settings {
             'contextwp-settings',
             'contextwp_advanced_section'
         );
+        add_settings_field(
+            'smart_model_selection',
+            __( 'Enable Smart Model Selection', 'contextwp' ),
+            [ $this, 'field_smart_model_selection' ],
+            'contextwp-settings',
+            'contextwp_advanced_section'
+        );
     }
 
     public function section_description() {
@@ -141,6 +148,9 @@ class ContextWP_Admin_Settings {
         if ( $output['temperature'] < 0 || $output['temperature'] > 2 ) {
             $output['temperature'] = 1.0;
         }
+        
+        // Sanitize smart model selection setting
+        $output['smart_model_selection'] = isset( $input['smart_model_selection'] ) ? (bool) $input['smart_model_selection'] : true;
         
         return $output;
     }
@@ -280,6 +290,19 @@ class ContextWP_Admin_Settings {
         echo '<div class="contextwp-settings-field">';
         echo '<input type="number" step="0.01" name="contextwp_settings[temperature]" value="' . $value . '" class="small-text" min="0" max="2" />';
         echo '<p class="description">' . esc_html__( 'Sampling temperature (0-2). Lower values are more focused, higher values more creative. Default: 1.0', 'contextwp' ) . '</p>';
+        echo '</div>';
+    }
+
+    public function field_smart_model_selection() {
+        $options = get_option( 'contextwp_settings' );
+        $value = isset( $options['smart_model_selection'] ) ? (bool) $options['smart_model_selection'] : true;
+        
+        echo '<div class="contextwp-settings-field">';
+        echo '<label>';
+        echo '<input type="checkbox" name="contextwp_settings[smart_model_selection]" value="1" ' . checked( $value, true, false ) . ' />';
+        echo ' ' . esc_html__( 'Automatically select the most efficient model based on prompt length and complexity', 'contextwp' );
+        echo '</label>';
+        echo '<p class="description">' . esc_html__( 'When enabled, ContextWP will automatically choose between GPT-3.5 Turbo, GPT-4, Claude Sonnet, or Claude Opus based on your prompt. When disabled, it uses the manually selected model.', 'contextwp' ) . '</p>';
         echo '</div>';
     }
 }

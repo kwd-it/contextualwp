@@ -2,6 +2,7 @@
 namespace ContextWP\Endpoints;
 
 use ContextWP\Helpers\Utilities;
+use ContextWP\Helpers\Smart_Model_Selector;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -39,6 +40,10 @@ class Generate_Context {
         $context_id = $request->get_param( 'context_id' );
         $prompt     = $request->get_param( 'prompt' );
         $format     = $request->get_param( 'format' );
+
+        // Apply smart model selection if enabled
+        $provider_slug = $this->map_provider_name( $ai_provider );
+        $model = Smart_Model_Selector::select_model( $prompt, '', $provider_slug, $model, $settings );
 
         // Robust multi-post context aggregation check
         if ( strtolower( trim( $context_id ) ) === 'multi' ) {
@@ -82,6 +87,10 @@ class Generate_Context {
                     'count'   => count($multi_context),
                 ],
             ];
+            
+            // Apply smart model selection for multi-context
+            $model = Smart_Model_Selector::select_model( $prompt, $content, $provider_slug, $model, $settings );
+            
             // AI call (OpenAI/Mistral/Claude)
             $provider = apply_filters( 'contextwp_ai_provider', $this->map_provider_name( $ai_provider ), $settings, $context_data, $request );
             $ai_response = null;
@@ -214,6 +223,9 @@ class Generate_Context {
                 'acf'       => $acf_fields ?: new \stdClass(),
             ],
         ], $post, $request );
+
+        // Apply smart model selection for single post context
+        $model = Smart_Model_Selector::select_model( $prompt, $content, $provider_slug, $model, $settings );
 
         // Cache key uses provider, model and context parameters
         $cache_key = apply_filters( 'contextwp_ai_cache_key', \ContextWP\Helpers\Utilities::get_cache_key(

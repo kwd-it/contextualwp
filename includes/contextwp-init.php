@@ -5,6 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Load helper classes
 require_once CONTEXTWP_DIR . 'includes/helpers/utilities.php';
+require_once CONTEXTWP_DIR . 'includes/helpers/smart-model-selector.php';
 
 // Autoload endpoint classes
 require_once CONTEXTWP_DIR . 'includes/endpoints/list-contexts.php';
