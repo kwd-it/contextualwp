@@ -3,10 +3,10 @@ jQuery(function($){
         // ACF fields have .acf-field, label is .acf-label label, input is .acf-input :input
         $('.acf-field').each(function(){
             var $field = $(this);
-            if ($field.find('.contextwp-acf-askai').length) return; // already added
+            if ($field.find('.contextualwp-acf-askai').length) return; // already added
             var $label = $field.find('.acf-label label').first();
             if ($label.length === 0) return;
-            var $icon = $('<span class="contextwp-acf-askai" title="Ask AI about this field"></span>');
+            var $icon = $('<span class="contextualwp-acf-askai" title="Ask AI about this field"></span>');
             $label.after($icon);
         });
     }
@@ -14,7 +14,7 @@ jQuery(function($){
     // In case of dynamic ACF fields (repeaters, etc.)
     $(document).on('acf/setup_fields', addAskAIIcons);
 
-    $(document).on('click', '.contextwp-acf-askai', function(e){
+    $(document).on('click', '.contextualwp-acf-askai', function(e){
         e.preventDefault();
         var $icon = $(this);
         var $field = $icon.closest('.acf-field');
@@ -27,28 +27,28 @@ jQuery(function($){
         prompt += 'Current value: ' + (value || '[empty]');
         $icon.addClass('loading');
         // Remove any previous tooltip
-        $field.find('.contextwp-acf-askai-tooltip').remove();
-        var $tooltip = $('<div class="contextwp-acf-askai-tooltip" role="tooltip" tabindex="0">Asking AI...</div>');
+        $field.find('.contextualwp-acf-askai-tooltip').remove();
+        var $tooltip = $('<div class="contextualwp-acf-askai-tooltip" role="tooltip" tabindex="0">Asking AI...</div>');
         $icon.after($tooltip);
         $tooltip.focus();
         $.ajax({
-            url: contextwpACFAskAI.endpoint,
+            url: contextualwpACFAskAI.endpoint,
             method: 'POST',
-            beforeSend: function(xhr){ xhr.setRequestHeader('X-WP-Nonce', contextwpACFAskAI.nonce); },
+            beforeSend: function(xhr){ xhr.setRequestHeader('X-WP-Nonce', contextualwpACFAskAI.nonce); },
             contentType: 'application/json',
             dataType: 'json',
             data: JSON.stringify({
-                context_id: contextwpACFAskAI.postType + '-' + contextwpACFAskAI.postId,
+                context_id: contextualwpACFAskAI.postType + '-' + contextualwpACFAskAI.postId,
                 prompt: prompt
             })
         }).done(function(res){
             if(res.ai && res.ai.output){
-                $tooltip.html('<div class="contextwp-acf-askai-response">' +
+                $tooltip.html('<div class="contextualwp-acf-askai-response">' +
                     $('<div>').text(res.ai.output).html() +
                     '</div>' +
-                    '<div class="contextwp-acf-askai-actions">' +
-                        '<button type="button" class="button button-small contextwp-insert-into-post" aria-label="Insert AI output into post">Insert into post</button>' +
-                        '<button type="button" class="button button-small contextwp-replace-post-content" aria-label="Replace post content with AI output">Replace post content</button>' +
+                    '<div class="contextualwp-acf-askai-actions">' +
+                        '<button type="button" class="button button-small contextualwp-insert-into-post" aria-label="Insert AI output into post">Insert into post</button>' +
+                        '<button type="button" class="button button-small contextualwp-replace-post-content" aria-label="Replace post content with AI output">Replace post content</button>' +
                     '</div>'
                 );
                 $tooltip.data('ai-output', res.ai.output);
@@ -67,16 +67,16 @@ jQuery(function($){
     });
     // Dismiss tooltip on click outside
     $(document).on('mousedown', function(e){
-        $('.contextwp-acf-askai-tooltip').each(function(){
-            if (!$(e.target).closest('.contextwp-acf-askai-tooltip, .contextwp-acf-askai').length) {
+        $('.contextualwp-acf-askai-tooltip').each(function(){
+            if (!$(e.target).closest('.contextualwp-acf-askai-tooltip, .contextualwp-acf-askai').length) {
                 $(this).remove();
             }
         });
     });
 
     // Insert/replace post content handlers
-    $(document).on('click', '.contextwp-insert-into-post', function(){
-        var $tooltip = $(this).closest('.contextwp-acf-askai-tooltip');
+    $(document).on('click', '.contextualwp-insert-into-post', function(){
+        var $tooltip = $(this).closest('.contextualwp-acf-askai-tooltip');
         var aiOutput = $tooltip.data('ai-output');
         if (!aiOutput) return;
         // Try block editor first
@@ -94,8 +94,8 @@ jQuery(function($){
             $tooltip.text('Inserted into post content!');
         }
     });
-    $(document).on('click', '.contextwp-replace-post-content', function(){
-        var $tooltip = $(this).closest('.contextwp-acf-askai-tooltip');
+    $(document).on('click', '.contextualwp-replace-post-content', function(){
+        var $tooltip = $(this).closest('.contextualwp-acf-askai-tooltip');
         var aiOutput = $tooltip.data('ai-output');
         if (!aiOutput) return;
         // Try block editor first

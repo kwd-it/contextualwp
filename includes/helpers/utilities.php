@@ -1,14 +1,14 @@
 <?php
-namespace ContextWP\Helpers;
+namespace ContextualWP\Helpers;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
 /**
- * Utility functions for ContextWP
+ * Utility functions for ContextualWP
  * 
- * @package ContextWP
+ * @package ContextualWP
  * @since 0.1.0
  */
 class Utilities {
@@ -66,13 +66,13 @@ class Utilities {
      * @return bool
      */
     public static function is_rate_limited( $key, $limit, $window = 60 ) {
-        $requests = wp_cache_get( $key, 'contextwp' ) ?: 0;
+        $requests = wp_cache_get( $key, 'contextualwp' ) ?: 0;
         if ( $requests >= $limit ) {
             return true;
         }
         // Only increment/set if under the limit
-        wp_cache_incr( $key, 1, 'contextwp' );
-        wp_cache_set( $key, $requests + 1, 'contextwp', $window );
+        wp_cache_incr( $key, 1, 'contextualwp' );
+        wp_cache_set( $key, $requests + 1, 'contextualwp', $window );
         return false;
     }
 
@@ -126,7 +126,7 @@ class Utilities {
      */
     public static function format_content( $post, $format = 'markdown' ) {
         $title   = get_the_title( $post );
-        $content = apply_filters( 'contextwp_content_before_format', $post->post_content, $post, $format );
+        $content = apply_filters( 'contextualwp_content_before_format', $post->post_content, $post, $format );
 
         switch ( $format ) {
             case 'html':
@@ -155,7 +155,7 @@ class Utilities {
                 break;
         }
 
-        return apply_filters( 'contextwp_formatted_content', $output, $post, $format );
+        return apply_filters( 'contextualwp_formatted_content', $output, $post, $format );
     }
 
     /**
@@ -177,7 +177,7 @@ class Utilities {
      * @param mixed $data The data to log
      * @param string $context The context
      */
-    public static function log_debug( $data, $context = 'contextwp' ) {
+    public static function log_debug( $data, $context = 'contextualwp' ) {
         if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
             error_log( sprintf( '[%s] %s: %s', $context, date( 'Y-m-d H:i:s' ), print_r( $data, true ) ) );
         }

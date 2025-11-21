@@ -1,7 +1,7 @@
 <?php
-namespace ContextWP\Endpoints;
+namespace ContextualWP\Endpoints;
 
-use ContextWP\Helpers\Utilities;
+use ContextualWP\Helpers\Utilities;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -41,7 +41,7 @@ class Get_Context {
 
         return new \WP_Error(
             'rest_forbidden',
-            __( 'Sorry, you are not allowed to access this content.', 'contextwp' ),
+            __( 'Sorry, you are not allowed to access this content.', 'contextualwp' ),
             [ 'status' => 403 ]
         );
     }
@@ -51,7 +51,7 @@ class Get_Context {
             return new \WP_Error( 'invalid_id', 'ID cannot be empty' );
         }
 
-        $supported_prefixes = apply_filters( 'contextwp_supported_id_prefixes', [ 'post', 'page' ] );
+        $supported_prefixes = apply_filters( 'contextualwp_supported_id_prefixes', [ 'post', 'page' ] );
         foreach ( $supported_prefixes as $prefix ) {
             if ( strpos( $id, $prefix . '-' ) === 0 ) {
                 return true;
@@ -104,14 +104,14 @@ class Get_Context {
     
         // Enhanced cache key with post type and user context
         $user_context = is_user_logged_in() ? get_current_user_id() : 'guest';
-        $cache_key = sprintf( 'contextwp_%s_%s_%s_%s', 
+        $cache_key = sprintf( 'contextualwp_%s_%s_%s_%s', 
             md5( $id . $format ), 
             $post->post_type, 
             $user_context,
             $post->post_modified_gmt
         );
         
-        $cached = wp_cache_get( $cache_key, 'contextwp' );
+        $cached = wp_cache_get( $cache_key, 'contextualwp' );
         if ( $cached !== false ) {
             return rest_ensure_response( $cached );
         }
@@ -125,7 +125,7 @@ class Get_Context {
                 $acf_fields = get_fields( $post->ID ) ?: [];
             } catch ( \Exception $e ) {
                 // Log error but don't fail the request
-                error_log( 'ContextWP: ACF fields error for post ' . $post->ID . ': ' . $e->getMessage() );
+                error_log( 'ContextualWP: ACF fields error for post ' . $post->ID . ': ' . $e->getMessage() );
             }
         }
     
@@ -145,15 +145,15 @@ class Get_Context {
         ];
     
         // Cache with shorter TTL for better freshness
-        $cache_ttl = apply_filters( 'contextwp_cache_ttl', HOUR_IN_SECONDS, $post, $format );
-        wp_cache_set( $cache_key, $response, 'contextwp', $cache_ttl );
+        $cache_ttl = apply_filters( 'contextualwp_cache_ttl', HOUR_IN_SECONDS, $post, $format );
+        wp_cache_set( $cache_key, $response, 'contextualwp', $cache_ttl );
         
         return rest_ensure_response( $response );
     }    
 
     private function format_content( $post, $format ) {
         $title   = get_the_title( $post );
-        $content = apply_filters( 'contextwp_content_before_format', $post->post_content, $post, $format );
+        $content = apply_filters( 'contextualwp_content_before_format', $post->post_content, $post, $format );
 
         switch ( $format ) {
             case 'html':
@@ -182,6 +182,6 @@ class Get_Context {
                 break;
         }
 
-        return apply_filters( 'contextwp_formatted_content', $output, $post, $format );
+        return apply_filters( 'contextualwp_formatted_content', $output, $post, $format );
     }
 }

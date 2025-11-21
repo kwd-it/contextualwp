@@ -1,16 +1,16 @@
-# Developer Release Checklist (ContextWP)
+# Developer Release Checklist (ContextualWP)
 
 ## 🔁 Workflow
 - [ ] Create a new branch for feature/fix (e.g. `feature/xyz`)
 - [ ] Complete development, commit regularly
-- [ ] Update version number (contextwp.php) as needed:
+- [ ] Update plugin version number as needed:
   - [ ] MAJOR for breaking changes
   - [ ] MINOR for new features
   - [ ] PATCH for fixes / improvements
 
 ## 📦 Required Updates
-- [ ] `contextwp.php` version header
-- [ ] `composer.json` version field (keep synchronized with contextwp.php)
+- [ ] Main plugin file version header
+- [ ] `composer.json` version field (keep synchronized with the plugin version)
 - [ ] `README.md` (only if version is referenced)
 - [ ] `CHANGELOG.md`
 - [ ] `IMPROVEMENTS.md` (if used)

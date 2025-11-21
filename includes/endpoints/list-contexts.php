@@ -1,16 +1,16 @@
 <?php
-namespace ContextWP\Endpoints;
+namespace ContextualWP\Endpoints;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-use ContextWP\Helpers\Utilities;
+use ContextualWP\Helpers\Utilities;
 
 /**
  * Register the MCP /list_contexts endpoint
  *
- * @package ContextWP
+ * @package ContextualWP
  * @since 0.1.0
  */
 class List_Contexts {
@@ -71,7 +71,7 @@ class List_Contexts {
             $args['s'] = $search;
         }
 
-        $query = new \WP_Query( apply_filters( 'contextwp_list_contexts_query_args', $args, $request ) );
+        $query = new \WP_Query( apply_filters( 'contextualwp_list_contexts_query_args', $args, $request ) );
 
         $contexts = array_map( fn( $post ) => $this->format_context( $post ), $query->posts );
 

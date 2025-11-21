@@ -1,7 +1,7 @@
 <?php
-namespace ContextWP\Endpoints;
+namespace ContextualWP\Endpoints;
 
-use ContextWP\Helpers\Utilities;
+use ContextualWP\Helpers\Utilities;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * 
  * Returns metadata about this context provider for AI agents.
  * 
- * @package ContextWP
+ * @package ContextualWP
  * @since 0.1.0
  */
 class Manifest {
@@ -42,7 +42,7 @@ class Manifest {
         if ( $this->is_rate_limited() ) {
             return new \WP_Error(
                 'rate_limit_exceeded',
-                __( 'Too many requests. Please try again later.', 'contextwp' ),
+                __( 'Too many requests. Please try again later.', 'contextualwp' ),
                 [ 'status' => 429 ]
             );
         }
@@ -80,14 +80,14 @@ class Manifest {
         if ( strtolower($format) === 'yaml' ) {
             return new \WP_Error(
                 'not_implemented',
-                __( 'YAML output is not supported. Please use format=json.', 'contextwp' ),
+                __( 'YAML output is not supported. Please use format=json.', 'contextualwp' ),
                 [ 'status' => 400 ]
             );
         }
         try {
             // Check for cached response
-            $cache_key = \ContextWP\Helpers\Utilities::get_cache_key( 'contextwp_manifest', $request->get_params() );
-            $cached    = wp_cache_get( $cache_key, 'contextwp' );
+            $cache_key = \ContextualWP\Helpers\Utilities::get_cache_key( 'contextualwp_manifest', $request->get_params() );
+            $cached    = wp_cache_get( $cache_key, 'contextualwp' );
             
             if ( $cached !== false ) {
                 return rest_ensure_response( $cached );
@@ -96,15 +96,15 @@ class Manifest {
             $manifest = $this->generate_manifest( $request );
             
             // Cache the response for 1 hour
-            wp_cache_set( $cache_key, $manifest, 'contextwp', HOUR_IN_SECONDS );
+            wp_cache_set( $cache_key, $manifest, 'contextualwp', HOUR_IN_SECONDS );
             
             return rest_ensure_response( $manifest );
             
         } catch ( \Exception $e ) {
-            \ContextWP\Helpers\Utilities::log_debug( $e->getMessage(), 'manifest_error' );
+            \ContextualWP\Helpers\Utilities::log_debug( $e->getMessage(), 'manifest_error' );
             return new \WP_Error(
                 'manifest_generation_failed',
-                __( 'Failed to generate manifest.', 'contextwp' ),
+                __( 'Failed to generate manifest.', 'contextualwp' ),
                 [ 'status' => 500 ]
             );
         }
@@ -123,20 +123,20 @@ class Manifest {
         
         // Ensure we have valid data
         if ( empty( $site_name ) ) {
-            $site_name = __( 'WordPress Site', 'contextwp' );
+            $site_name = __( 'WordPress Site', 'contextualwp' );
         }
         
         if ( empty( $site_description ) ) {
-            $site_description = __( 'A WordPress site with ContextWP integration', 'contextwp' );
+            $site_description = __( 'A WordPress site with ContextualWP integration', 'contextualwp' );
         }
 
-        $manifest = apply_filters( 'contextwp_manifest', [
-            'name'        => $site_name . ' – ContextWP',
+        $manifest = apply_filters( 'contextualwp_manifest', [
+            'name'        => $site_name . ' – ContextualWP',
             'description' => $site_description,
-            'version'     => defined( 'CONTEXTWP_VERSION' ) ? CONTEXTWP_VERSION : '0.1.0',
+            'version'     => defined( 'CONTEXTUALWP_VERSION' ) ? CONTEXTUALWP_VERSION : '0.3.0',
             'endpoints'   => $this->get_endpoints(),
             'formats'     => [ 'markdown', 'plain', 'html' ],
-            'context_types' => apply_filters( 'contextwp_supported_post_types', [ 'post', 'page' ] ),
+            'context_types' => apply_filters( 'contextualwp_supported_post_types', [ 'post', 'page' ] ),
             'branding'    => $this->get_branding(),
             'capabilities' => $this->get_capabilities(),
             'rate_limits' => $this->get_rate_limits(),
@@ -156,12 +156,12 @@ class Manifest {
             'list_contexts' => [
                 'url'    => rest_url( 'mcp/v1/list_contexts' ),
                 'method' => 'GET',
-                'description' => __( 'List available contexts', 'contextwp' ),
+                'description' => __( 'List available contexts', 'contextualwp' ),
             ],
             'get_context' => [
                 'url'    => rest_url( 'mcp/v1/get_context' ),
                 'method' => 'GET',
-                'description' => __( 'Get specific context content', 'contextwp' ),
+                'description' => __( 'Get specific context content', 'contextualwp' ),
             ],
         ];
     }
@@ -173,13 +173,13 @@ class Manifest {
      * @return array
      */
     private function get_branding() {
-        $plugin_url = defined( 'CONTEXTWP_URL' ) ? CONTEXTWP_URL : '';
+        $plugin_url = defined( 'CONTEXTUALWP_URL' ) ? CONTEXTUALWP_URL : '';
         $logo_url   = $plugin_url ? $plugin_url . 'admin/assets/logo.png' : '';
         
         return [
-            'plugin_url' => apply_filters( 'contextwp_plugin_url', $plugin_url ),
-            'logo_url'   => apply_filters( 'contextwp_logo_url', $logo_url ),
-            'author'     => apply_filters( 'contextwp_author', __( 'ContextWP Team', 'contextwp' ) ),
+            'plugin_url' => apply_filters( 'contextualwp_plugin_url', $plugin_url ),
+            'logo_url'   => apply_filters( 'contextualwp_logo_url', $logo_url ),
+            'author'     => apply_filters( 'contextualwp_author', __( 'ContextualWP Team', 'contextualwp' ) ),
         ];
     }
 
@@ -206,8 +206,8 @@ class Manifest {
      */
     private function get_rate_limits() {
         return [
-            'requests_per_minute' => apply_filters( 'contextwp_rate_limit_per_minute', 60 ),
-            'requests_per_hour'   => apply_filters( 'contextwp_rate_limit_per_hour', 1000 ),
+            'requests_per_minute' => apply_filters( 'contextualwp_rate_limit_per_minute', 60 ),
+            'requests_per_hour'   => apply_filters( 'contextualwp_rate_limit_per_hour', 1000 ),
         ];
     }
 
@@ -218,10 +218,10 @@ class Manifest {
      * @return bool
      */
     private function is_rate_limited() {
-        $ip = \ContextWP\Helpers\Utilities::get_client_ip();
-        $key = 'contextwp_rate_limit_' . md5( $ip );
-        $limit_per_minute = apply_filters( 'contextwp_rate_limit_per_minute', 60 );
+        $ip = \ContextualWP\Helpers\Utilities::get_client_ip();
+        $key = 'contextualwp_rate_limit_' . md5( $ip );
+        $limit_per_minute = apply_filters( 'contextualwp_rate_limit_per_minute', 60 );
         
-        return \ContextWP\Helpers\Utilities::is_rate_limited( $key, $limit_per_minute, 60 );
+        return \ContextualWP\Helpers\Utilities::is_rate_limited( $key, $limit_per_minute, 60 );
     }
 }

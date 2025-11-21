@@ -1,4 +1,4 @@
-#contextwp-floating-chat-icon {
+#contextualwp-floating-chat-icon {
     position: fixed;
     bottom: 32px;
     right: 32px;
@@ -15,10 +15,10 @@
     justify-content: center;
     transition: box-shadow 0.2s;
 }
-#contextwp-floating-chat-icon:hover {
+#contextualwp-floating-chat-icon:hover {
     box-shadow: 0 4px 16px rgba(34,113,177,0.25);
 }
-#contextwp-floating-chat-modal {
+#contextualwp-floating-chat-modal {
     position: fixed;
     bottom: 100px;
     right: 40px;
@@ -32,7 +32,7 @@
     flex-direction: column;
     overflow: hidden;
 }
-#contextwp-floating-chat-modal-header {
+#contextualwp-floating-chat-modal-header {
     background: #2271b1;
     color: #fff;
     padding: 12px 16px;
@@ -41,7 +41,7 @@
     justify-content: space-between;
     font-weight: bold;
 }
-#contextwp-floating-chat-modal-close {
+#contextualwp-floating-chat-modal-close {
     background: none;
     border: none;
     color: #fff;
@@ -49,25 +49,25 @@
     cursor: pointer;
     margin-left: 8px;
 }
-#contextwp-floating-chat-modal-body {
+#contextualwp-floating-chat-modal-body {
     padding: 16px;
 }
-#contextwp-floating-chat-prompt {
+#contextualwp-floating-chat-prompt {
     width: 100%;
     min-height: 60px;
     margin-bottom: 10px;
     resize: vertical;
 }
-#contextwp-floating-chat-send {
+#contextualwp-floating-chat-send {
     float: right;
 }
-#contextwp-floating-chat-output {
+#contextualwp-floating-chat-output {
     margin-top: 16px;
     min-height: 40px;
     font-size: 1em;
     color: #222;
 }
-.contextwp-chat-bubble {
+.contextualwp-chat-bubble {
     max-width: 85%;
     margin-bottom: 8px;
     padding: 10px 14px;
@@ -77,19 +77,19 @@
     clear: both;
     display: inline-block;
 }
-.contextwp-chat-user {
+.contextualwp-chat-user {
     background: #e0f3ff;
     color: #1a3a5d;
     float: right;
     text-align: right;
 }
-.contextwp-chat-ai {
+.contextualwp-chat-ai {
     background: #f4f4f4;
     color: #222;
     float: left;
     text-align: left;
 }
-#contextwp-floating-chat-messages {
+#contextualwp-floating-chat-messages {
     min-height: 80px;
     max-height: 260px;
     overflow-y: auto;

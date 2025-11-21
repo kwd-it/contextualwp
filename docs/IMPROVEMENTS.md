@@ -1,4 +1,4 @@
-# ContextWP Roadmap & Improvements
+# ContextualWP Roadmap & Improvements
 
 > **Note:** This is a living roadmap and feature tracker, not a changelog. For a history of changes, see the commit log or a future CHANGELOG.md.
 

@@ -3,7 +3,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-class ContextWP_Admin_Settings {
+class ContextualWP_Admin_Settings {
     public function __construct() {
         add_action( 'admin_menu', [ $this, 'add_menu_pages' ] );
         add_action( 'admin_init', [ $this, 'register_settings' ] );
@@ -12,112 +12,112 @@ class ContextWP_Admin_Settings {
 
     public function add_menu_pages() {
         add_options_page(
-            __( 'ContextWP Settings', 'contextwp' ),
-            'ContextWP',
+            __( 'ContextualWP Settings', 'contextualwp' ),
+            'ContextualWP',
             'manage_options',
-            'contextwp-settings',
+            'contextualwp-settings',
             [ $this, 'render_settings_page' ]
         );
     }
 
     public function enqueue_assets( $hook ) {
         // Only load assets on our settings page
-        if ( $hook !== 'settings_page_contextwp-settings' ) {
+        if ( $hook !== 'settings_page_contextualwp-settings' ) {
             return;
         }
 
         wp_enqueue_style(
-            'contextwp-settings',
+            'contextualwp-settings',
             plugin_dir_url( __FILE__ ) . 'assets/css/settings.css',
             [],
-            CONTEXTWP_VERSION
+            CONTEXTUALWP_VERSION
         );
 
         wp_enqueue_script(
-            'contextwp-settings',
+            'contextualwp-settings',
             plugin_dir_url( __FILE__ ) . 'assets/js/settings.js',
             [],
-            CONTEXTWP_VERSION,
+            CONTEXTUALWP_VERSION,
             true
         );
     }
 
     public function register_settings() {
-        register_setting( 'contextwp_settings_group', 'contextwp_settings', [ $this, 'sanitize_settings' ] );
+        register_setting( 'contextualwp_settings_group', 'contextualwp_settings', [ $this, 'sanitize_settings' ] );
 
         add_settings_section(
-            'contextwp_main_section',
-            __( 'AI Provider Settings', 'contextwp' ),
+            'contextualwp_main_section',
+            __( 'AI Provider Settings', 'contextualwp' ),
             [ $this, 'section_description' ],
-            'contextwp-settings'
+            'contextualwp-settings'
         );
 
         add_settings_field(
             'ai_provider',
-            __( 'AI Provider', 'contextwp' ),
+            __( 'AI Provider', 'contextualwp' ),
             [ $this, 'field_ai_provider' ],
-            'contextwp-settings',
-            'contextwp_main_section'
+            'contextualwp-settings',
+            'contextualwp_main_section'
         );
         add_settings_field(
             'api_key',
-            __( 'API Key', 'contextwp' ),
+            __( 'API Key', 'contextualwp' ),
             [ $this, 'field_api_key' ],
-            'contextwp-settings',
-            'contextwp_main_section'
+            'contextualwp-settings',
+            'contextualwp_main_section'
         );
         add_settings_field(
             'model',
-            __( 'Model', 'contextwp' ),
+            __( 'Model', 'contextualwp' ),
             [ $this, 'field_model' ],
-            'contextwp-settings',
-            'contextwp_main_section'
+            'contextualwp-settings',
+            'contextualwp_main_section'
         );
 
         // Advanced settings section
         add_settings_section(
-            'contextwp_advanced_section',
-            __( 'Advanced Settings', 'contextwp' ),
+            'contextualwp_advanced_section',
+            __( 'Advanced Settings', 'contextualwp' ),
             [ $this, 'advanced_section_description' ],
-            'contextwp-settings'
+            'contextualwp-settings'
         );
 
         add_settings_field(
             'max_tokens',
-            __( 'Max Tokens', 'contextwp' ),
+            __( 'Max Tokens', 'contextualwp' ),
             [ $this, 'field_max_tokens' ],
-            'contextwp-settings',
-            'contextwp_advanced_section'
+            'contextualwp-settings',
+            'contextualwp_advanced_section'
         );
         add_settings_field(
             'temperature',
-            __( 'Temperature', 'contextwp' ),
+            __( 'Temperature', 'contextualwp' ),
             [ $this, 'field_temperature' ],
-            'contextwp-settings',
-            'contextwp_advanced_section'
+            'contextualwp-settings',
+            'contextualwp_advanced_section'
         );
         add_settings_field(
             'smart_model_selection',
-            __( 'Enable Smart Model Selection', 'contextwp' ),
+            __( 'Enable Smart Model Selection', 'contextualwp' ),
             [ $this, 'field_smart_model_selection' ],
-            'contextwp-settings',
-            'contextwp_advanced_section'
+            'contextualwp-settings',
+            'contextualwp_advanced_section'
         );
     }
 
     public function section_description() {
-        echo '<p>' . esc_html__( 'Configure your AI provider settings for ContextWP.', 'contextwp' ) . '</p>';
+        echo '<p>' . esc_html__( 'Configure your AI provider settings for ContextualWP.', 'contextualwp' ) . '</p>';
     }
 
     public function advanced_section_description() {
-        echo '<div class="contextwp-advanced-toggle">';
-        echo '<button type="button" id="contextwp-advanced-toggle" class="button button-secondary">';
-        echo '<span class="toggle-text">' . esc_html__( 'Show Advanced Settings', 'contextwp' ) . '</span>';
+        echo '<div class="contextualwp-advanced-toggle">';
+        echo '<button type="button" id="contextualwp-advanced-toggle" class="button button-secondary">';
+        echo '<span class="toggle-text">' . esc_html__( 'Show Advanced Settings', 'contextualwp' ) . '</span>';
         echo '<span class="toggle-icon">▼</span>';
         echo '</button>';
         echo '</div>';
-        echo '<div id="contextwp-advanced-settings" class="contextwp-advanced-settings" style="display: none;">';
-        echo '<p>' . esc_html__( 'Fine-tune your AI model behavior with these advanced settings.', 'contextwp' ) . '</p>';
+        echo '<div id="contextualwp-advanced-settings" class="contextualwp-advanced-settings" style="display: none;">';
+        echo '<p>' . esc_html__( 'Fine-tune your AI model behavior with these advanced settings.', 'contextualwp' ) . '</p>';
     }
 
     public function sanitize_settings( $input ) {
@@ -179,7 +179,7 @@ class ContextWP_Admin_Settings {
         ];
         
         // Allow filtering of models for extensibility
-        $models = apply_filters( 'contextwp_provider_models', $models, $provider );
+        $models = apply_filters( 'contextualwp_provider_models', $models, $provider );
         
         return $models[ $provider ] ?? [];
     }
@@ -194,7 +194,7 @@ class ContextWP_Admin_Settings {
         ];
         
         // Allow filtering of providers for extensibility
-        return apply_filters( 'contextwp_available_providers', $providers );
+        return apply_filters( 'contextualwp_available_providers', $providers );
     }
 
     public function render_settings_page() {
@@ -202,10 +202,10 @@ class ContextWP_Admin_Settings {
             return;
         }
         echo '<div class="wrap">';
-        echo '<h1>' . esc_html__( 'ContextWP Settings', 'contextwp' ) . '</h1>';
+        echo '<h1>' . esc_html__( 'ContextualWP Settings', 'contextualwp' ) . '</h1>';
         echo '<form method="post" action="options.php">';
-        settings_fields( 'contextwp_settings_group' );
-        do_settings_sections( 'contextwp-settings' );
+        settings_fields( 'contextualwp_settings_group' );
+        do_settings_sections( 'contextualwp-settings' );
         echo '</div>'; // Close advanced settings div
         submit_button();
         echo '</form>';
@@ -213,14 +213,14 @@ class ContextWP_Admin_Settings {
     }
 
     public function field_ai_provider() {
-        $options = get_option( 'contextwp_settings' );
+        $options = get_option( 'contextualwp_settings' );
         $value = esc_attr( $options['ai_provider'] ?? 'OpenAI' );
         
         // Get available providers
         $providers = $this->get_available_providers();
 
-        echo '<div class="contextwp-settings-field">';
-        echo '<select name="contextwp_settings[ai_provider]" id="contextwp-ai-provider">';
+        echo '<div class="contextualwp-settings-field">';
+        echo '<select name="contextualwp_settings[ai_provider]" id="contextualwp-ai-provider">';
         
         foreach ( $providers as $key => $label ) {
             $selected = ( $value === $key ) ? 'selected' : '';
@@ -228,22 +228,22 @@ class ContextWP_Admin_Settings {
         }
         echo '</select>';
         
-        echo '<p class="description">' . esc_html__( 'Select your AI provider.', 'contextwp' ) . '</p>';
+        echo '<p class="description">' . esc_html__( 'Select your AI provider.', 'contextualwp' ) . '</p>';
         echo '</div>';
     }
 
     public function field_api_key() {
-        $options = get_option( 'contextwp_settings' );
+        $options = get_option( 'contextualwp_settings' );
         $value = esc_attr( $options['api_key'] ?? '' );
         
-        echo '<div class="contextwp-settings-field">';
-        echo '<input type="password" name="contextwp_settings[api_key]" value="' . $value . '" class="regular-text" autocomplete="off" />';
-        echo '<p class="description">' . esc_html__( 'Your AI provider API key (hidden for security).', 'contextwp' ) . '</p>';
+        echo '<div class="contextualwp-settings-field">';
+        echo '<input type="password" name="contextualwp_settings[api_key]" value="' . $value . '" class="regular-text" autocomplete="off" />';
+        echo '<p class="description">' . esc_html__( 'Your AI provider API key (hidden for security).', 'contextualwp' ) . '</p>';
         echo '</div>';
     }
 
     public function field_model() {
-        $options = get_option( 'contextwp_settings' );
+        $options = get_option( 'contextualwp_settings' );
         $value = esc_attr( $options['model'] ?? '' );
         
         // Get current provider to show appropriate models
@@ -258,9 +258,9 @@ class ContextWP_Admin_Settings {
             'claude-3-sonnet' => 'Claude 3 Sonnet'
         ];
 
-        echo '<div class="contextwp-settings-field">';
-        echo '<select name="contextwp_settings[model]" id="contextwp-model">';
-        echo '<option value="">' . esc_html__( 'Select a model...', 'contextwp' ) . '</option>';
+        echo '<div class="contextualwp-settings-field">';
+        echo '<select name="contextualwp_settings[model]" id="contextualwp-model">';
+        echo '<option value="">' . esc_html__( 'Select a model...', 'contextualwp' ) . '</option>';
         
         foreach ( $models as $model ) {
             $selected = ( $value === $model ) ? 'selected' : '';
@@ -269,45 +269,45 @@ class ContextWP_Admin_Settings {
         }
         echo '</select>';
         
-        echo '<p class="description">' . esc_html__( 'Select your model. Available models depend on your chosen provider.', 'contextwp' ) . '</p>';
+        echo '<p class="description">' . esc_html__( 'Select your model. Available models depend on your chosen provider.', 'contextualwp' ) . '</p>';
         echo '</div>';
     }
 
     public function field_max_tokens() {
-        $options = get_option( 'contextwp_settings' );
+        $options = get_option( 'contextualwp_settings' );
         $value = esc_attr( $options['max_tokens'] ?? 1024 );
         
-        echo '<div class="contextwp-settings-field">';
-        echo '<input type="number" name="contextwp_settings[max_tokens]" value="' . $value . '" class="small-text" min="1" max="32000" />';
-        echo '<p class="description">' . esc_html__( 'Maximum tokens for generation (1-32000). Default: 1024', 'contextwp' ) . '</p>';
+        echo '<div class="contextualwp-settings-field">';
+        echo '<input type="number" name="contextualwp_settings[max_tokens]" value="' . $value . '" class="small-text" min="1" max="32000" />';
+        echo '<p class="description">' . esc_html__( 'Maximum tokens for generation (1-32000). Default: 1024', 'contextualwp' ) . '</p>';
         echo '</div>';
     }
 
     public function field_temperature() {
-        $options = get_option( 'contextwp_settings' );
+        $options = get_option( 'contextualwp_settings' );
         $value = esc_attr( $options['temperature'] ?? 1.0 );
         
-        echo '<div class="contextwp-settings-field">';
-        echo '<input type="number" step="0.01" name="contextwp_settings[temperature]" value="' . $value . '" class="small-text" min="0" max="2" />';
-        echo '<p class="description">' . esc_html__( 'Sampling temperature (0-2). Lower values are more focused, higher values more creative. Default: 1.0', 'contextwp' ) . '</p>';
+        echo '<div class="contextualwp-settings-field">';
+        echo '<input type="number" step="0.01" name="contextualwp_settings[temperature]" value="' . $value . '" class="small-text" min="0" max="2" />';
+        echo '<p class="description">' . esc_html__( 'Sampling temperature (0-2). Lower values are more focused, higher values more creative. Default: 1.0', 'contextualwp' ) . '</p>';
         echo '</div>';
     }
 
     public function field_smart_model_selection() {
-        $options = get_option( 'contextwp_settings' );
+        $options = get_option( 'contextualwp_settings' );
         $value = isset( $options['smart_model_selection'] ) ? (bool) $options['smart_model_selection'] : true;
         
-        echo '<div class="contextwp-settings-field">';
+        echo '<div class="contextualwp-settings-field">';
         echo '<label>';
-        echo '<input type="checkbox" name="contextwp_settings[smart_model_selection]" value="1" ' . checked( $value, true, false ) . ' />';
-        echo ' ' . esc_html__( 'Automatically select the most efficient model based on prompt length and complexity', 'contextwp' );
+        echo '<input type="checkbox" name="contextualwp_settings[smart_model_selection]" value="1" ' . checked( $value, true, false ) . ' />';
+        echo ' ' . esc_html__( 'Automatically select the most efficient model based on prompt length and complexity', 'contextualwp' );
         echo '</label>';
-        echo '<p class="description">' . esc_html__( 'When enabled, ContextWP will automatically choose between GPT-3.5 Turbo, GPT-4, Claude Sonnet, or Claude Opus based on your prompt. When disabled, it uses the manually selected model.', 'contextwp' ) . '</p>';
+        echo '<p class="description">' . esc_html__( 'When enabled, ContextualWP will automatically choose between GPT-3.5 Turbo, GPT-4, Claude Sonnet, or Claude Opus based on your prompt. When disabled, it uses the manually selected model.', 'contextualwp' ) . '</p>';
         echo '</div>';
     }
 }
 
 // Initialize settings only in admin
 if ( is_admin() ) {
-    new ContextWP_Admin_Settings();
-} 
+    new ContextualWP_Admin_Settings();
+}

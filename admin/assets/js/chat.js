@@ -1,9 +1,9 @@
 jQuery(function($){
-    $('#contextwp-chat-generate').on('click', function(e){
+    $('#contextualwp-chat-generate').on('click', function(e){
         e.preventDefault();
-        var prompt = $('#contextwp-chat-prompt').val();
+        var prompt = $('#contextualwp-chat-prompt').val();
         var $btn = $(this);
-        var $output = $('#contextwp-chat-output');
+        var $output = $('#contextualwp-chat-output');
         $output.empty();
         $btn.prop('disabled', true).text('Loading...');
         if (!prompt) {
@@ -12,9 +12,9 @@ jQuery(function($){
             return;
         }
         $.ajax({
-            url: contextwpChat.endpoint,
+            url: contextualwpChat.endpoint,
             method: 'POST',
-            beforeSend: function(xhr){ xhr.setRequestHeader('X-WP-Nonce', contextwpChat.nonce); },
+            beforeSend: function(xhr){ xhr.setRequestHeader('X-WP-Nonce', contextualwpChat.nonce); },
             contentType: 'application/json',
             dataType: 'json',
             data: JSON.stringify({

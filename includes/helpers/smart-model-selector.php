@@ -1,16 +1,16 @@
 <?php
-namespace ContextWP\Helpers;
+namespace ContextualWP\Helpers;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
 /**
- * Smart Model Selector for ContextWP
+ * Smart Model Selector for ContextualWP
  * 
  * Automatically selects the most efficient AI model based on prompt length and complexity.
  * 
- * @package ContextWP
+ * @package ContextualWP
  * @since 0.2.0
  */
 class Smart_Model_Selector {
@@ -75,19 +75,19 @@ class Smart_Model_Selector {
         $complexity = self::analyze_complexity( $prompt, $context );
         
         // Get thresholds (allow filtering)
-        $thresholds = apply_filters( 'contextwp_smart_model_thresholds', self::$default_thresholds, $provider );
+        $thresholds = apply_filters( 'contextualwp_smart_model_thresholds', self::$default_thresholds, $provider );
         
         // Select model size based on tokens and complexity
         $model_size = self::determine_model_size( $total_tokens, $complexity, $thresholds );
         
         // Get model mapping (allow filtering)
-        $mapping = apply_filters( 'contextwp_smart_model_mapping', self::$model_mapping, $provider );
+        $mapping = apply_filters( 'contextualwp_smart_model_mapping', self::$model_mapping, $provider );
         
         // Get the specific model for the provider and size
         $selected_model = $mapping[ $provider ][ $model_size ] ?? $mapping['openai'][$model_size] ?? $current_model;
         
         // Allow developers to override the selection
-        $selected_model = apply_filters( 'contextwp_smart_model_select', $selected_model, [
+        $selected_model = apply_filters( 'contextualwp_smart_model_select', $selected_model, [
             'prompt' => $prompt,
             'context' => $context,
             'provider' => $provider,
@@ -124,7 +124,7 @@ class Smart_Model_Selector {
         $enabled = $settings['smart_model_selection'] ?? true; // Default to enabled
         
         // Allow filtering
-        return apply_filters( 'contextwp_smart_model_selection_enabled', $enabled, $settings );
+        return apply_filters( 'contextualwp_smart_model_selection_enabled', $enabled, $settings );
     }
 
     /**
@@ -143,7 +143,7 @@ class Smart_Model_Selector {
         $estimated_tokens = strlen( $combined_text ) / 4;
         
         // Allow filtering for more accurate token counting
-        return apply_filters( 'contextwp_estimate_tokens', (int) $estimated_tokens, $prompt, $context );
+        return apply_filters( 'contextualwp_estimate_tokens', (int) $estimated_tokens, $prompt, $context );
     }
 
     /**
@@ -239,7 +239,7 @@ class Smart_Model_Selector {
      * @return array Available models
      */
     public static function get_available_models( $provider ) {
-        $mapping = apply_filters( 'contextwp_smart_model_mapping', self::$model_mapping, $provider );
+        $mapping = apply_filters( 'contextualwp_smart_model_mapping', self::$model_mapping, $provider );
         return $mapping[ $provider ] ?? [];
     }
 
@@ -252,7 +252,7 @@ class Smart_Model_Selector {
      * @return array Model information
      */
     public static function get_model_info( $model, $provider ) {
-        $mapping = apply_filters( 'contextwp_smart_model_mapping', self::$model_mapping, $provider );
+        $mapping = apply_filters( 'contextualwp_smart_model_mapping', self::$model_mapping, $provider );
         
         foreach ( $mapping[ $provider ] ?? [] as $size => $model_name ) {
             if ( $model_name === $model ) {

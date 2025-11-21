@@ -1,5 +1,5 @@
 /**
- * ContextWP Settings Page JavaScript
+ * ContextualWP Settings Page JavaScript
  * Handles dynamic model filtering based on selected AI provider
  */
 
@@ -22,10 +22,10 @@
      * Initialize the settings page functionality
      */
     function initSettings() {
-        const providerSelect = document.getElementById('contextwp-ai-provider');
-        const modelSelect = document.getElementById('contextwp-model');
-        const advancedToggle = document.getElementById('contextwp-advanced-toggle');
-        const advancedSettings = document.getElementById('contextwp-advanced-settings');
+        const providerSelect = document.getElementById('contextualwp-ai-provider');
+        const modelSelect = document.getElementById('contextualwp-model');
+        const advancedToggle = document.getElementById('contextualwp-advanced-toggle');
+        const advancedSettings = document.getElementById('contextualwp-advanced-settings');
 
         if (!providerSelect || !modelSelect) {
             return;
@@ -66,7 +66,7 @@
      * @param {string} currentValue - Current model value to preserve if valid
      */
     function updateModelOptions(provider, currentValue) {
-        const modelSelect = document.getElementById('contextwp-model');
+        const modelSelect = document.getElementById('contextualwp-model');
         const models = providerModels[provider] || [];
 
         // Clear existing options

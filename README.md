@@ -1,10 +1,10 @@
-# ContextWP
+# ContextualWP
 
-ContextWP is a WordPress plugin that exposes structured post and ACF field data via a REST API, following the Model Context Protocol (MCP). It enables AI models to retrieve contextual content and generate new content using AI providers like OpenAI and Claude.
+ContextualWP is a WordPress plugin that exposes structured post and ACF field data via a REST API, following the Model Context Protocol (MCP). It enables AI models to retrieve contextual content and generate new content using AI providers like OpenAI and Claude.
 
 ## Endpoints
 
-### `/wp-json/contextwp/v1/generate_context`
+### `/wp-json/contextualwp/v1/generate_context`
 - **Method:** POST
 - **Description:** Generate AI-powered content using a WordPress post/page as context.
 - **Parameters:**
@@ -18,7 +18,7 @@ ContextWP is a WordPress plugin that exposes structured post and ACF field data 
 
 #### Example Request (curl)
 ```sh
-curl -X POST "https://your-site.test/wp-json/contextwp/v1/generate_context" \
+curl -X POST "https://your-site.test/wp-json/contextualwp/v1/generate_context" \
   -u username:application-password \
   -H "Content-Type: application/json" \
   -d '{
@@ -50,7 +50,7 @@ curl -X POST "https://your-site.test/wp-json/contextwp/v1/generate_context" \
 ```
 
 ## Settings
-- Go to **Settings > ContextWP** in wp-admin.
+- Go to **Settings > ContextualWP** in wp-admin.
 - Configure:
   - **AI Provider**: OpenAI or Claude
   - **API Key**: Your provider's API key (never exposed in API)
@@ -62,29 +62,29 @@ curl -X POST "https://your-site.test/wp-json/contextwp/v1/generate_context" \
 ## Extensibility
 
 ### Filters/Hooks
-- `contextwp_context_data`: Filter the context data before sending to AI
-- `contextwp_ai_provider`: Override or add new AI providers
-- `contextwp_ai_payload`: Modify the AI API payload before sending
-- `contextwp_ai_response`: Modify the AI response before returning
-- `contextwp_prompt_templates`: Customize prompt templates for the global chat
-- `contextwp_available_providers`: Add new AI providers to the settings dropdown
-- `contextwp_provider_models`: Add new models for existing or custom providers
+- `contextualwp_context_data`: Filter the context data before sending to AI
+- `contextualwp_ai_provider`: Override or add new AI providers
+- `contextualwp_ai_payload`: Modify the AI API payload before sending
+- `contextualwp_ai_response`: Modify the AI response before returning
+- `contextualwp_prompt_templates`: Customize prompt templates for the global chat
+- `contextualwp_available_providers`: Add new AI providers to the settings dropdown
+- `contextualwp_provider_models`: Add new models for existing or custom providers
 
 ### Adding a New AI Provider
-1. Use the `contextwp_ai_provider` filter to return your provider slug (e.g., 'anthropic')
-2. Use the `contextwp_ai_payload` filter to build the payload for your provider
-3. Use the `contextwp_ai_response` filter to handle the response
+1. Use the `contextualwp_ai_provider` filter to return your provider slug (e.g., 'anthropic')
+2. Use the `contextualwp_ai_payload` filter to build the payload for your provider
+3. Use the `contextualwp_ai_response` filter to handle the response
 
 #### Example (in a custom plugin):
 ```php
 // Add a new provider to the settings dropdown
-add_filter('contextwp_available_providers', function($providers) {
+add_filter('contextualwp_available_providers', function($providers) {
     $providers['CustomAI'] = 'Custom AI Provider';
     return $providers;
 });
 
 // Add models for the new provider
-add_filter('contextwp_provider_models', function($models, $provider) {
+add_filter('contextualwp_provider_models', function($models, $provider) {
     if ($provider === 'CustomAI') {
         $models['CustomAI'] = ['custom-model-1', 'custom-model-2'];
     }
@@ -92,19 +92,19 @@ add_filter('contextwp_provider_models', function($models, $provider) {
 }, 10, 2);
 
 // Handle the custom provider logic
-add_filter('contextwp_ai_provider', function($provider, $settings, $context, $request) {
+add_filter('contextualwp_ai_provider', function($provider, $settings, $context, $request) {
     if ($settings['ai_provider'] === 'CustomAI') return 'customai';
     return $provider;
 }, 10, 4);
 
-add_filter('contextwp_ai_payload', function($payload, $settings, $context, $request) {
+add_filter('contextualwp_ai_payload', function($payload, $settings, $context, $request) {
     if ($settings['ai_provider'] === 'CustomAI') {
         // Build custom AI payload here
     }
     return $payload;
 }, 10, 4);
 
-add_filter('contextwp_ai_response', function($response, $provider, $settings, $context, $request) {
+add_filter('contextualwp_ai_response', function($response, $provider, $settings, $context, $request) {
     if ($provider === 'customai') {
         // Parse and return custom AI response here
     }
@@ -176,7 +176,7 @@ add_filter('contextwp_ai_response', function($response, $provider, $settings, $c
 
 ## Caching
 `/generate_context` responses are cached for a short period (default 5 minutes)
-to reduce API calls. Adjust the TTL using the `contextwp_ai_cache_ttl` filter or
+to reduce API calls. Adjust the TTL using the `contextualwp_ai_cache_ttl` filter or
 return `0` to disable caching.
 
 ## Contributing

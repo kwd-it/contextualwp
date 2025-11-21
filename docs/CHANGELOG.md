@@ -1,9 +1,16 @@
 # Changelog
 
-All notable changes to ContextWP will be documented in this file.
+All notable changes to ContextualWP will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.3.0] - 2025-11-21
+
+### Changed
+- Renamed plugin from ContextWP to ContextualWP.
+- Updated namespaces, constants, hooks, option keys, script handles, and REST route prefixes to use the `ContextualWP`/`contextualwp` naming.
+- Updated documentation, Composer metadata, and version numbers to `0.3.0`.
 
 ## [0.2.0] - 2024-12-19
 
@@ -13,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Admin toggle for enabling/disabling smart model selection (default: enabled)
 - Support for GPT-3.5 Turbo, GPT-4, Claude Sonnet, and Claude Opus model variants
 - Token-based model selection with complexity analysis
-- Developer filter `contextwp_smart_model_select` for custom model selection logic
+- Developer filter `contextualwp_smart_model_select` for custom model selection logic
 - Additional filters for thresholds and model mapping customization
 
 ### Technical Features
@@ -40,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Extensible architecture with filters and hooks for customization
 
 ### Technical Features
-- `/wp-json/contextwp/v1/generate_context` endpoint for AI-powered content generation
+- `/wp-json/contextualwp/v1/generate_context` endpoint for AI-powered content generation
 - `/wp-json/mcp/v1/list_contexts` endpoint for listing available contexts
 - `/wp-json/mcp/v1/get_context` endpoint for retrieving specific context data
 - `/wp-json/mcp/v1/manifest` endpoint for MCP manifest information

@@ -1,4 +1,4 @@
-.contextwp-acf-askai {
+.contextualwp-acf-askai {
     display: inline-block;
     margin-left: 6px;
     width: 18px;
@@ -10,11 +10,11 @@
     opacity: 0.7;
     transition: opacity 0.2s;
 }
-.contextwp-acf-askai:hover, .contextwp-acf-askai.loading {
+.contextualwp-acf-askai:hover, .contextualwp-acf-askai.loading {
     opacity: 1;
     filter: brightness(1.2);
 }
-.contextwp-acf-askai-tooltip {
+.contextualwp-acf-askai-tooltip {
     position: absolute;
     z-index: 10010;
     background: #fff;

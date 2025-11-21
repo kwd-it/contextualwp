@@ -1,8 +1,8 @@
 <?php
-namespace ContextWP\Endpoints;
+namespace ContextualWP\Endpoints;
 
-use ContextWP\Helpers\Utilities;
-use ContextWP\Helpers\Smart_Model_Selector;
+use ContextualWP\Helpers\Utilities;
+use ContextualWP\Helpers\Smart_Model_Selector;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Generate_Context {
     public function register_route() {
-        register_rest_route( 'contextwp/v1', '/generate_context', [
+        register_rest_route( 'contextualwp/v1', '/generate_context', [
             'methods'  => 'POST',
             'callback' => [ $this, 'handle_request' ],
             'permission_callback' => function () {
@@ -25,8 +25,8 @@ class Generate_Context {
     }
 
     public function handle_request( $request ) {
-        error_log('ContextWP DEBUG: context_id=' . var_export($request->get_param('context_id'), true));
-        $settings = get_option( 'contextwp_settings', [] );
+        error_log('ContextualWP DEBUG: context_id=' . var_export($request->get_param('context_id'), true));
+        $settings = get_option( 'contextualwp_settings', [] );
         $ai_provider = $settings['ai_provider'] ?? '';
         $api_key     = $settings['api_key'] ?? '';
         $model       = $settings['model'] ?? '';
@@ -34,7 +34,7 @@ class Generate_Context {
         $temperature = $settings['temperature'] ?? 1.0;
 
         if ( empty( $ai_provider ) || empty( $api_key ) || empty( $model ) ) {
-            return new \WP_Error( 'contextwp_missing_settings', __( 'AI provider, API key, and model must be configured in ContextWP settings.', 'contextwp' ), [ 'status' => 400 ] );
+            return new \WP_Error( 'contextualwp_missing_settings', __( 'AI provider, API key, and model must be configured in ContextualWP settings.', 'contextualwp' ), [ 'status' => 400 ] );
         }
 
         $context_id = $request->get_param( 'context_id' );
@@ -47,7 +47,7 @@ class Generate_Context {
 
         // Robust multi-post context aggregation check
         if ( strtolower( trim( $context_id ) ) === 'multi' ) {
-            error_log('ContextWP DEBUG: Entered multi-context block');
+            error_log('ContextualWP DEBUG: Entered multi-context block');
             // Fetch recent posts and pages (limit 5 for brevity)
             $query = new \WP_Query([
                 'post_type'      => [ 'post', 'page' ],
@@ -64,7 +64,7 @@ class Generate_Context {
                     try {
                         $acf_fields = get_fields( $post->ID ) ?: [];
                     } catch ( \Exception $e ) {
-                        error_log( 'ContextWP: ACF fields error for post ' . $post->ID . ': ' . $e->getMessage() );
+                        error_log( 'ContextualWP: ACF fields error for post ' . $post->ID . ': ' . $e->getMessage() );
                     }
                 }
                 $acf_summary = Utilities::acf_summary_markdown($acf_fields);
@@ -92,12 +92,12 @@ class Generate_Context {
             $model = Smart_Model_Selector::select_model( $prompt, $content, $provider_slug, $model, $settings );
             
             // AI call (OpenAI/Mistral/Claude)
-            $provider = apply_filters( 'contextwp_ai_provider', $this->map_provider_name( $ai_provider ), $settings, $context_data, $request );
+            $provider = apply_filters( 'contextualwp_ai_provider', $this->map_provider_name( $ai_provider ), $settings, $context_data, $request );
             $ai_response = null;
             $ai_error = null;
             switch ( $provider ) {
                 case 'openai':
-                    $ai_payload = apply_filters( 'contextwp_ai_payload', [
+                    $ai_payload = apply_filters( 'contextualwp_ai_payload', [
                         'model' => $model,
                         'messages' => [
                             [ 'role' => 'system', 'content' => 'You are a helpful assistant. Use the following context to answer.' ],
@@ -106,16 +106,16 @@ class Generate_Context {
                         'max_tokens' => $max_tokens,
                         'temperature' => $temperature,
                     ], $settings, $context_data, $request );
-                    \ContextWP\Helpers\Utilities::log_debug( $ai_payload, 'generate_payload_openai_multi' );
+                    \ContextualWP\Helpers\Utilities::log_debug( $ai_payload, 'generate_payload_openai_multi' );
                     $ai_response = $this->call_openai_api( $ai_payload, $api_key );
-                    \ContextWP\Helpers\Utilities::log_debug( $ai_response, 'generate_response_openai_multi' );
+                    \ContextualWP\Helpers\Utilities::log_debug( $ai_response, 'generate_response_openai_multi' );
                     if ( is_wp_error( $ai_response ) ) {
                         $ai_error = $ai_response->get_error_message();
                         $ai_response = null;
                     }
                     break;
                 case 'mistral':
-                    $ai_payload = apply_filters( 'contextwp_ai_payload', [
+                    $ai_payload = apply_filters( 'contextualwp_ai_payload', [
                         'model' => $model,
                         'messages' => [
                             [ 'role' => 'system', 'content' => 'You are a helpful assistant. Use the following context to answer.' ],
@@ -124,25 +124,25 @@ class Generate_Context {
                         'max_tokens' => $max_tokens,
                         'temperature' => $temperature,
                     ], $settings, $context_data, $request );
-                    \ContextWP\Helpers\Utilities::log_debug( $ai_payload, 'generate_payload_mistral_multi' );
+                    \ContextualWP\Helpers\Utilities::log_debug( $ai_payload, 'generate_payload_mistral_multi' );
                     $ai_response = $this->call_mistral_api( $ai_payload, $api_key );
-                    \ContextWP\Helpers\Utilities::log_debug( $ai_response, 'generate_response_mistral_multi' );
+                    \ContextualWP\Helpers\Utilities::log_debug( $ai_response, 'generate_response_mistral_multi' );
                     if ( is_wp_error( $ai_response ) ) {
                         $ai_error = $ai_response->get_error_message();
                         $ai_response = null;
                     }
                     break;
                 case 'claude':
-                    $ai_payload = apply_filters( 'contextwp_ai_payload', [
+                    $ai_payload = apply_filters( 'contextualwp_ai_payload', [
                         'model' => $model,
                         'max_tokens' => $max_tokens,
                         'messages' => [
                             [ 'role' => 'user', 'content' => $prompt . "\n\nContext:\n" . $content ]
                         ],
                     ], $settings, $context_data, $request );
-                    \ContextWP\Helpers\Utilities::log_debug( $ai_payload, 'generate_payload_claude_multi' );
+                    \ContextualWP\Helpers\Utilities::log_debug( $ai_payload, 'generate_payload_claude_multi' );
                     $ai_response = $this->call_claude_api( $ai_payload, $api_key );
-                    \ContextWP\Helpers\Utilities::log_debug( $ai_response, 'generate_response_claude_multi' );
+                    \ContextualWP\Helpers\Utilities::log_debug( $ai_response, 'generate_response_claude_multi' );
                     if ( is_wp_error( $ai_response ) ) {
                         $ai_error = $ai_response->get_error_message();
                         $ai_response = null;
@@ -152,9 +152,9 @@ class Generate_Context {
                     $ai_error = 'Unsupported AI provider: ' . esc_html( $ai_provider );
                     break;
             }
-            $ai_response = apply_filters( 'contextwp_ai_response', $ai_response, $provider, $settings, $context_data, $request );
+            $ai_response = apply_filters( 'contextualwp_ai_response', $ai_response, $provider, $settings, $context_data, $request );
             if ( $ai_error ) {
-                error_log( 'ContextWP AI error: ' . $ai_error );
+                error_log( 'ContextualWP AI error: ' . $ai_error );
             }
             $response = [
                 'message'    => $ai_error ? 'AI provider error: ' . $ai_error : 'AI response generated.',
@@ -205,12 +205,12 @@ class Generate_Context {
             try {
                 $acf_fields = get_fields( $post->ID ) ?: [];
             } catch ( \Exception $e ) {
-                error_log( 'ContextWP: ACF fields error for post ' . $post->ID . ': ' . $e->getMessage() );
+                error_log( 'ContextualWP: ACF fields error for post ' . $post->ID . ': ' . $e->getMessage() );
             }
         }
 
         // Allow other plugins to filter/modify the context before sending to AI
-        $context_data = apply_filters( 'contextwp_context_data', [
+        $context_data = apply_filters( 'contextualwp_context_data', [
             'id'      => $context_id,
             'content' => $content,
             'meta'    => [
@@ -228,8 +228,8 @@ class Generate_Context {
         $model = Smart_Model_Selector::select_model( $prompt, $content, $provider_slug, $model, $settings );
 
         // Cache key uses provider, model and context parameters
-        $cache_key = apply_filters( 'contextwp_ai_cache_key', \ContextWP\Helpers\Utilities::get_cache_key(
-            'contextwp_generate', [
+        $cache_key = apply_filters( 'contextualwp_ai_cache_key', \ContextualWP\Helpers\Utilities::get_cache_key(
+            'contextualwp_generate', [
                 'provider'   => $ai_provider,
                 'model'      => $model,
                 'context_id' => $context_id,
@@ -238,7 +238,7 @@ class Generate_Context {
                 'modified'   => $post->post_modified_gmt,
             ]
         ), $request, $context_data, $settings );
-        $cached = wp_cache_get( $cache_key, 'contextwp' );
+        $cached = wp_cache_get( $cache_key, 'contextualwp' );
         if ( $cached !== false ) {
             return rest_ensure_response( array_merge( $cached, [ 'cached' => true ] ) );
         }
@@ -246,10 +246,10 @@ class Generate_Context {
         // Provider extensibility: allow other plugins to register/override AI providers
         $ai_response = null;
         $ai_error = null;
-        $provider = apply_filters( 'contextwp_ai_provider', $this->map_provider_name( $ai_provider ), $settings, $context_data, $request );
+        $provider = apply_filters( 'contextualwp_ai_provider', $this->map_provider_name( $ai_provider ), $settings, $context_data, $request );
         switch ( $provider ) {
             case 'openai':
-                $ai_payload = apply_filters( 'contextwp_ai_payload', [
+                $ai_payload = apply_filters( 'contextualwp_ai_payload', [
                     'model' => $model,
                     'messages' => [
                         [ 'role' => 'system', 'content' => 'You are a helpful assistant. Use the following context to answer.' ],
@@ -258,16 +258,16 @@ class Generate_Context {
                     'max_tokens' => $max_tokens,
                     'temperature' => $temperature,
                 ], $settings, $context_data, $request );
-                \ContextWP\Helpers\Utilities::log_debug( $ai_payload, 'generate_payload_openai' );
+                \ContextualWP\Helpers\Utilities::log_debug( $ai_payload, 'generate_payload_openai' );
                 $ai_response = $this->call_openai_api( $ai_payload, $api_key );
-                \ContextWP\Helpers\Utilities::log_debug( $ai_response, 'generate_response_openai' );
+                \ContextualWP\Helpers\Utilities::log_debug( $ai_response, 'generate_response_openai' );
                 if ( is_wp_error( $ai_response ) ) {
                     $ai_error = $ai_response->get_error_message();
                     $ai_response = null;
                 }
                 break;
             case 'mistral':
-                $ai_payload = apply_filters( 'contextwp_ai_payload', [
+                $ai_payload = apply_filters( 'contextualwp_ai_payload', [
                     'model' => $model,
                     'messages' => [
                         [ 'role' => 'system', 'content' => 'You are a helpful assistant. Use the following context to answer.' ],
@@ -276,25 +276,25 @@ class Generate_Context {
                     'max_tokens' => $max_tokens,
                     'temperature' => $temperature,
                 ], $settings, $context_data, $request );
-                \ContextWP\Helpers\Utilities::log_debug( $ai_payload, 'generate_payload_mistral' );
+                \ContextualWP\Helpers\Utilities::log_debug( $ai_payload, 'generate_payload_mistral' );
                 $ai_response = $this->call_mistral_api( $ai_payload, $api_key );
-                \ContextWP\Helpers\Utilities::log_debug( $ai_response, 'generate_response_mistral' );
+                \ContextualWP\Helpers\Utilities::log_debug( $ai_response, 'generate_response_mistral' );
                 if ( is_wp_error( $ai_response ) ) {
                     $ai_error = $ai_response->get_error_message();
                     $ai_response = null;
                 }
                 break;
             case 'claude':
-                $ai_payload = apply_filters( 'contextwp_ai_payload', [
+                $ai_payload = apply_filters( 'contextualwp_ai_payload', [
                     'model' => $model,
                     'max_tokens' => $max_tokens,
                     'messages' => [
                         [ 'role' => 'user', 'content' => $prompt . "\n\nContext:\n" . $content ]
                     ],
                 ], $settings, $context_data, $request );
-                \ContextWP\Helpers\Utilities::log_debug( $ai_payload, 'generate_payload_claude' );
+                \ContextualWP\Helpers\Utilities::log_debug( $ai_payload, 'generate_payload_claude' );
                 $ai_response = $this->call_claude_api( $ai_payload, $api_key );
-                \ContextWP\Helpers\Utilities::log_debug( $ai_response, 'generate_response_claude' );
+                \ContextualWP\Helpers\Utilities::log_debug( $ai_response, 'generate_response_claude' );
                 if ( is_wp_error( $ai_response ) ) {
                     $ai_error = $ai_response->get_error_message();
                     $ai_response = null;
@@ -307,11 +307,11 @@ class Generate_Context {
         }
 
         // Allow filtering/modification of the AI response before returning
-        $ai_response = apply_filters( 'contextwp_ai_response', $ai_response, $provider, $settings, $context_data, $request );
+        $ai_response = apply_filters( 'contextualwp_ai_response', $ai_response, $provider, $settings, $context_data, $request );
 
         // Log errors for debugging (never expose API keys)
         if ( $ai_error ) {
-            error_log( 'ContextWP AI error: ' . $ai_error );
+            error_log( 'ContextualWP AI error: ' . $ai_error );
         }
 
         $response = [
@@ -327,9 +327,9 @@ class Generate_Context {
             'ai'         => $ai_response,
         ];
 
-        $cache_ttl = apply_filters( 'contextwp_ai_cache_ttl', 5 * MINUTE_IN_SECONDS, $provider, $context_data, $request );
+        $cache_ttl = apply_filters( 'contextualwp_ai_cache_ttl', 5 * MINUTE_IN_SECONDS, $provider, $context_data, $request );
         if ( ! $ai_error && $cache_ttl > 0 ) {
-            wp_cache_set( $cache_key, $response, 'contextwp', $cache_ttl );
+            wp_cache_set( $cache_key, $response, 'contextualwp', $cache_ttl );
         }
 
         return $response;
@@ -350,7 +350,7 @@ class Generate_Context {
 
     private function format_content( $post, $format ) {
         $title   = get_the_title( $post );
-        $content = apply_filters( 'contextwp_content_before_format', $post->post_content, $post, $format );
+        $content = apply_filters( 'contextualwp_content_before_format', $post->post_content, $post, $format );
         switch ( $format ) {
             case 'html':
                 $output = sprintf(
@@ -375,7 +375,7 @@ class Generate_Context {
                 );
                 break;
         }
-        return apply_filters( 'contextwp_formatted_content', $output, $post, $format );
+        return apply_filters( 'contextualwp_formatted_content', $output, $post, $format );
     }
 
     private function call_openai_api( $payload, $api_key ) {
