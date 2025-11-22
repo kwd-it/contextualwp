@@ -2,6 +2,12 @@
 
 > **Note:** This is a living roadmap and feature tracker, not a changelog. For a history of changes, see the commit log or a future CHANGELOG.md.
 
+## 0.3.1 — Added missing helper
+
+- Added missing `is_public_post()` method required by `can_access_post()`.
+
+- Ensures consistent access-control logic across all endpoints.
+
 ## Roadmap (Status & Notes)
 - [x] Admin settings screen (AI provider, API key, model, etc.)
   - Implemented in `admin/settings.php`.

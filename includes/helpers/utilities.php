@@ -77,6 +77,29 @@ class Utilities {
     }
 
     /**
+     * Check if a post is publicly accessible
+     *
+     * @since 0.3.1
+     * @param \WP_Post $post The post object
+     * @return bool
+     */
+    public static function is_public_post( $post ) {
+        if ( ! $post || ! is_object( $post ) ) {
+            return false;
+        }
+        // Post must be published
+        if ( $post->post_status !== 'publish' ) {
+            return false;
+        }
+        // Check if post type is publicly queryable
+        $post_type_obj = get_post_type_object( $post->post_type );
+        if ( ! $post_type_obj || ! $post_type_obj->publicly_queryable ) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Universal can_access_post helper for endpoints
      *
      * @param \WP_Post $post
