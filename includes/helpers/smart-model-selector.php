@@ -129,7 +129,13 @@ class Smart_Model_Selector {
     /**
      * Estimate token count for prompt and context
      * 
-     * @since 0.2.0
+     * Uses an improved estimation algorithm that accounts for:
+     * - Word boundaries and whitespace
+     * - Punctuation and special characters
+     * - Different character types (letters, numbers, symbols)
+     * - HTML/formatting tags if present
+     * 
+     * @since 0.3.3
      * @param string $prompt The user prompt
      * @param string $context The context content
      * @return int Estimated token count
@@ -137,12 +143,64 @@ class Smart_Model_Selector {
     private static function estimate_tokens( $prompt, $context ) {
         $combined_text = $prompt . "\n\n" . $context;
         
-        // Simple token estimation: ~4 characters per token
-        // This is a rough approximation - in production you might want to use a proper tokenizer
-        $estimated_tokens = strlen( $combined_text ) / 4;
+        // Remove HTML tags for more accurate estimation (count text content only)
+        $text_only = strip_tags( $combined_text );
         
-        // Allow filtering for more accurate token counting
-        return apply_filters( 'contextualwp_estimate_tokens', (int) $estimated_tokens, $prompt, $context );
+        // Trim and normalize whitespace
+        $text_only = trim( $text_only );
+        $text_only = preg_replace( '/\s+/', ' ', $text_only );
+        
+        if ( empty( $text_only ) ) {
+            return 0;
+        }
+        
+        // Count words (split on whitespace and punctuation boundaries)
+        $words = preg_split( '/[\s\p{P}]+/u', $text_only, -1, PREG_SPLIT_NO_EMPTY );
+        $word_count = count( $words );
+        
+        // Count characters by type for better estimation
+        $char_count = mb_strlen( $text_only, 'UTF-8' );
+        $letter_count = preg_match_all( '/[\p{L}]/u', $text_only );
+        $number_count = preg_match_all( '/[\p{N}]/u', $text_only );
+        $punctuation_count = preg_match_all( '/[\p{P}]/u', $text_only );
+        
+        // Improved token estimation algorithm:
+        // - Most tokens are sub-word units, averaging ~0.75 tokens per word
+        // - Punctuation often forms separate tokens (~0.5 tokens per punctuation mark)
+        // - Numbers can be tokenized variably (~0.8 tokens per number sequence)
+        // - Remaining characters contribute ~0.25 tokens each
+        $estimated_tokens = 0;
+        
+        // Base estimation from words (most accurate predictor)
+        $estimated_tokens += $word_count * 0.75;
+        
+        // Add tokens for punctuation (often separate tokens)
+        $estimated_tokens += $punctuation_count * 0.5;
+        
+        // Account for numbers (can be tokenized as sequences)
+        $estimated_tokens += $number_count * 0.3;
+        
+        // Add small contribution for remaining characters (spaces, special chars)
+        $remaining_chars = $char_count - $letter_count - $number_count - $punctuation_count;
+        $estimated_tokens += $remaining_chars * 0.25;
+        
+        // Fallback: if word count is unreliable, use character-based estimation
+        // This handles edge cases like very long words or non-standard text
+        $char_based_estimate = $char_count / 3.5; // Slightly more accurate than 4
+        
+        // Use the higher estimate to avoid underestimation (better to overestimate slightly)
+        $estimated_tokens = max( $estimated_tokens, $char_based_estimate );
+        
+        // Round to nearest integer
+        $estimated_tokens = (int) round( $estimated_tokens );
+        
+        // Ensure minimum of 1 token for non-empty text
+        if ( $estimated_tokens < 1 && ! empty( $text_only ) ) {
+            $estimated_tokens = 1;
+        }
+        
+        // Allow filtering for more accurate token counting or custom implementations
+        return apply_filters( 'contextualwp_estimate_tokens', $estimated_tokens, $prompt, $context );
     }
 
     /**

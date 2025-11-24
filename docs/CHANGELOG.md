@@ -5,6 +5,24 @@ All notable changes to ContextualWP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3] - Improved Token Estimation
+
+### Improved
+- **Enhanced token estimation algorithm**: Replaced simple character-based estimation with a more sophisticated algorithm that:
+  - Accounts for word boundaries and sub-word tokenization patterns
+  - Handles punctuation and special characters more accurately
+  - Distinguishes between letters, numbers, and symbols for better estimation
+  - Strips HTML tags before estimation for text-only accuracy
+  - Normalizes whitespace for consistent results
+  - Includes fallback mechanism for edge cases
+- Token estimation now uses word-based calculation (~0.75 tokens per word) with adjustments for punctuation, numbers, and special characters
+- More accurate model selection due to improved token counting
+
+### Technical Details
+- Updated `Smart_Model_Selector::estimate_tokens()` method with multi-factor estimation
+- Maintains backward compatibility with existing filter hooks
+- Improved accuracy without requiring external tokenizer libraries
+
 ## [0.3.2] - Model Selection Cleanup & UI Sync
 
 ### Changed
