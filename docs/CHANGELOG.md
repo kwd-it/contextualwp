@@ -5,6 +5,15 @@ All notable changes to ContextualWP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - Model Selection Cleanup & UI Sync
+
+### Changed
+- Removed Mistral references entirely.
+- Admin model dropdown now dynamically reflects backend Smart Model Selector.
+- JavaScript no longer contains hardcoded model lists.
+- Model mappings now come from a single backend source of truth.
+- Improved consistency between provider selection and available models.
+
 ## [0.3.0] - 2025-11-21
 
 ### Changed

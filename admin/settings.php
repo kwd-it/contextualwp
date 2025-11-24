@@ -40,6 +40,13 @@ class ContextualWP_Admin_Settings {
             CONTEXTUALWP_VERSION,
             true
         );
+
+        // Localize model mappings for JavaScript
+        wp_localize_script(
+            'contextualwp-settings',
+            'ContextualWPModels',
+            \ContextualWP\Helpers\Smart_Model_Selector::get_all_models()
+        );
     }
 
     public function register_settings() {
@@ -170,18 +177,23 @@ class ContextualWP_Admin_Settings {
     }
 
     /**
-     * Get valid models for a provider
+     * Get valid models for a provider (uses single source of truth from Smart Model Selector)
      */
     private function get_valid_models_for_provider( $provider ) {
-        $models = [
-            'OpenAI' => ['gpt-4', 'gpt-3.5-turbo'],
-            'Claude' => ['claude-3-opus', 'claude-3-sonnet']
+        // Map UI provider names to internal slugs
+        $provider_map = [
+            'OpenAI' => 'openai',
+            'Claude' => 'claude',
         ];
         
-        // Allow filtering of models for extensibility
-        $models = apply_filters( 'contextualwp_provider_models', $models, $provider );
+        $provider_slug = $provider_map[ $provider ] ?? strtolower( $provider );
         
-        return $models[ $provider ] ?? [];
+        // Get all models from single source of truth
+        $all_models = \ContextualWP\Helpers\Smart_Model_Selector::get_all_models();
+        $provider_models = $all_models[ $provider_slug ] ?? [];
+        
+        // Convert from associative array (nano/mini/large => model_name) to simple array of model names
+        return array_values( $provider_models );
     }
 
     /**
@@ -248,24 +260,29 @@ class ContextualWP_Admin_Settings {
         
         // Get current provider to show appropriate models
         $current_provider = $options['ai_provider'] ?? 'OpenAI';
-        $models = $this->get_valid_models_for_provider( $current_provider );
         
-        // Model labels for display
-        $model_labels = [
-            'gpt-4' => 'GPT-4',
-            'gpt-3.5-turbo' => 'GPT-3.5 Turbo',
-            'claude-3-opus' => 'Claude 3 Opus',
-            'claude-3-sonnet' => 'Claude 3 Sonnet'
+        // Map UI provider names to internal slugs
+        $provider_map = [
+            'OpenAI' => 'openai',
+            'Claude' => 'claude',
         ];
+        $provider_slug = $provider_map[ $current_provider ] ?? strtolower( $current_provider );
+        
+        // Get all models from single source of truth
+        $all_models = \ContextualWP\Helpers\Smart_Model_Selector::get_all_models();
+        $provider_models = $all_models[ $provider_slug ] ?? [];
 
         echo '<div class="contextualwp-settings-field">';
         echo '<select name="contextualwp_settings[model]" id="contextualwp-model">';
         echo '<option value="">' . esc_html__( 'Select a model...', 'contextualwp' ) . '</option>';
         
-        foreach ( $models as $model ) {
-            $selected = ( $value === $model ) ? 'selected' : '';
-            $label = $model_labels[ $model ] ?? $model;
-            echo '<option value="' . esc_attr($model) . '" ' . $selected . '>' . esc_html($label) . '</option>';
+        foreach ( $provider_models as $size => $model_name ) {
+            printf(
+                '<option value="%s" %s>%s</option>',
+                esc_attr( $model_name ),
+                selected( $value, $model_name, false ),
+                esc_html( $model_name )
+            );
         }
         echo '</select>';
         
@@ -302,7 +319,7 @@ class ContextualWP_Admin_Settings {
         echo '<input type="checkbox" name="contextualwp_settings[smart_model_selection]" value="1" ' . checked( $value, true, false ) . ' />';
         echo ' ' . esc_html__( 'Automatically select the most efficient model based on prompt length and complexity', 'contextualwp' );
         echo '</label>';
-        echo '<p class="description">' . esc_html__( 'When enabled, ContextualWP will automatically choose between GPT-3.5 Turbo, GPT-4, Claude Sonnet, or Claude Opus based on your prompt. When disabled, it uses the manually selected model.', 'contextualwp' ) . '</p>';
+        echo '<p class="description">' . esc_html__( 'Automatically selects 4o-mini, 4o, 4.1 or Haiku, Sonnet, Opus depending on prompt size and complexity. Only models from your selected provider will be used.', 'contextualwp' ) . '</p>';
         echo '</div>';
     }
 }

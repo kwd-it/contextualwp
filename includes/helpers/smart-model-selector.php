@@ -32,22 +32,21 @@ class Smart_Model_Selector {
      * 
      * @since 0.2.0
      * @var array
+     * 
+     * @note Model lists evolve quickly. Recommend reviewing this mapping every 3-6 months
+     *       to ensure models are current and optimal. Use the contextualwp_smart_model_mapping
+     *       filter to customize mappings without modifying core code.
      */
     private static $model_mapping = [
         'openai' => [
-            'nano'  => 'gpt-3.5-turbo',
-            'mini'  => 'gpt-3.5-turbo',
-            'large' => 'gpt-4',
+            'nano'  => 'gpt-4o-mini',
+            'mini'  => 'gpt-4o',
+            'large' => 'gpt-4.1',
         ],
         'claude' => [
-            'nano'  => 'claude-3-sonnet',
-            'mini'  => 'claude-3-sonnet',
-            'large' => 'claude-3-opus',
-        ],
-        'mistral' => [
-            'nano'  => 'mistral-7b',
-            'mini'  => 'mistral-8x7b',
-            'large' => 'mistral-8x22b',
+            'nano'  => 'claude-3-haiku',
+            'mini'  => 'claude-3.5-sonnet',
+            'large' => 'claude-3.5-opus',
         ],
     ];
 
@@ -57,7 +56,7 @@ class Smart_Model_Selector {
      * @since 0.2.0
      * @param string $prompt The user prompt
      * @param string $context The context content
-     * @param string $provider The AI provider (openai, claude, mistral)
+     * @param string $provider The AI provider (openai, claude)
      * @param string $current_model The currently selected model
      * @param array $settings Plugin settings
      * @return string The selected model
@@ -229,6 +228,16 @@ class Smart_Model_Selector {
         } else {
             return 'large';
         }
+    }
+
+    /**
+     * Get all models for all providers (single source of truth)
+     * 
+     * @since 0.3.2
+     * @return array All model mappings
+     */
+    public static function get_all_models() {
+        return apply_filters( 'contextualwp_model_list', self::$model_mapping );
     }
 
     /**

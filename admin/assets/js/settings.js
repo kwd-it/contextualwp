@@ -6,17 +6,8 @@
 (function() {
     'use strict';
 
-    // Model configurations for each provider
-    const providerModels = {
-        'OpenAI': [
-            { value: 'gpt-4', label: 'GPT-4' },
-            { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo' }
-        ],
-        'Claude': [
-            { value: 'claude-3-opus', label: 'Claude 3 Opus' },
-            { value: 'claude-3-sonnet', label: 'Claude 3 Sonnet' }
-        ]
-    };
+    // Model configurations from backend (single source of truth)
+    const providerModels = window.ContextualWPModels || {};
 
     /**
      * Initialize the settings page functionality
@@ -67,7 +58,12 @@
      */
     function updateModelOptions(provider, currentValue) {
         const modelSelect = document.getElementById('contextualwp-model');
-        const models = providerModels[provider] || [];
+        const providerKey = provider.toLowerCase();
+        const modelMap = providerModels[providerKey] || {};
+        const models = Object.values(modelMap).map(name => ({
+            value: name,
+            label: name
+        }));
 
         // Clear existing options
         modelSelect.innerHTML = '';

@@ -1,12 +1,6 @@
 # ContextualWP Roadmap & Improvements
 
-> **Note:** This is a living roadmap and feature tracker, not a changelog. For a history of changes, see the commit log or a future CHANGELOG.md.
-
-## 0.3.1 — Added missing helper
-
-- Added missing `is_public_post()` method required by `can_access_post()`.
-
-- Ensures consistent access-control logic across all endpoints.
+> **Note:** This is a living roadmap and feature tracker, not a changelog. For a history of changes, see [CHANGELOG.md](CHANGELOG.md).
 
 ## Roadmap (Status & Notes)
 - [x] Admin settings screen (AI provider, API key, model, etc.)
@@ -22,7 +16,7 @@
 - [x] Caching of AI responses (configurable TTL)
   - Implemented in endpoints with `wp_cache_set`/`wp_cache_get`.
 - [~] Support for additional AI providers (Mistral, Anthropic, etc.)
-  - Claude: Supported. Mistral: Not yet implemented.
+  - Claude: Supported. Mistral: Scaffolded in code (commented out), ready for UI/API implementation.
 - [~] Rate limiting and abuse prevention
   - Implemented for /manifest and via helper, but not global for all endpoints.
 - [ ] Advanced error handling and logging (admin viewable)
@@ -33,8 +27,8 @@
   - No tests present.
 - [ ] Documentation improvements (examples, troubleshooting)
   - Check README.md for completeness.
-- [ ] Use the right model for each request to reduce costs
-  - Currently, all requests may use expensive models (e.g., GPT-4). Add logic to select cheaper models (e.g., GPT-3.5) where appropriate to reduce per-request cost.
+- [x] Use the right model for each request to reduce costs
+  - Implemented via Smart Model Selector. Automatically selects optimal model (4o-mini, 4o, 4.1, Haiku, Sonnet, Opus) based on prompt size and complexity.
 
 ## Suggestions / Backlog
 - Add a provider class/interface for easier extension

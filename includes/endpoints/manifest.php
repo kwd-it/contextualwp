@@ -131,15 +131,15 @@ class Manifest {
         }
 
         $manifest = apply_filters( 'contextualwp_manifest', [
-            'name'        => $site_name . ' – ContextualWP',
-            'description' => $site_description,
-            'version'     => defined( 'CONTEXTUALWP_VERSION' ) ? CONTEXTUALWP_VERSION : '0.3.1',
-            'endpoints'   => $this->get_endpoints(),
-            'formats'     => [ 'markdown', 'plain', 'html' ],
-            'context_types' => apply_filters( 'contextualwp_supported_post_types', [ 'post', 'page' ] ),
-            'branding'    => $this->get_branding(),
-            'capabilities' => $this->get_capabilities(),
-            'rate_limits' => $this->get_rate_limits(),
+            'name'           => $site_name . ' – ContextualWP',
+            'description'    => $site_description,
+            'version'        => defined( 'CONTEXTUALWP_VERSION' ) ? CONTEXTUALWP_VERSION : '0.3.2',
+            'endpoints'      => $this->get_endpoints(),
+            'formats'        => [ 'markdown', 'plain', 'html' ],
+            'context_types'  => apply_filters( 'contextualwp_supported_post_types', [ 'post', 'page' ] ),
+            'branding'       => $this->get_branding(),
+            'capabilities'   => $this->get_capabilities(),
+            'rate_limits'    => $this->get_rate_limits(),
         ] );
 
         return $manifest;
