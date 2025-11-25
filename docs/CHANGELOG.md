@@ -5,6 +5,28 @@ All notable changes to ContextualWP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.4] - Refactored Complexity Analysis
+
+### Improved
+- **Scoring-based complexity analysis**: Replaced keyword-based complexity detection with a comprehensive multi-factor scoring system
+- Complexity now calculated using:
+  - Word count (1 point per 10 words)
+  - Conjunctions and connecting words (+1 each)
+  - Analytical verbs (+2 each)
+  - Sentence count (1 point per additional sentence beyond first)
+  - Question marks (1 point per question mark beyond first)
+  - WH-words at beginning (-1 each, weak simple indicator)
+- More accurate complexity assessment leading to better model selection
+
+### Added
+- Filter hooks for extensibility: `contextualwp_complexity_wh_words`, `contextualwp_complexity_conjunctions`, `contextualwp_complexity_analytical_verbs`
+- PHPUnit test suite for complexity analysis with comprehensive test coverage
+
+### Technical Details
+- Refactored `Smart_Model_Selector::analyze_complexity()` method with scoring algorithm
+- Maintains backward compatibility (returns same values: "simple", "medium", "complex")
+- Improved documentation with comprehensive PHPDoc and inline comments
+
 ## [0.3.3] - Improved Token Estimation
 
 ### Improved

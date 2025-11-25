@@ -204,56 +204,123 @@ class Smart_Model_Selector {
     }
 
     /**
-     * Analyze prompt and context complexity
+     * Analyze prompt and context complexity using a scoring-based system
+     * 
+     * Calculates a complexity score based on multiple linguistic factors:
+     * - Word count (1 point per 10 words)
+     * - Conjunctions and connecting words (+1 each)
+     * - Analytical verbs (+2 each)
+     * - Sentence count (1 point per additional sentence beyond first)
+     * - Question marks (1 point per question mark beyond first)
+     * - WH-words at beginning (-1 each, weak simple indicator)
+     * 
+     * Scoring thresholds:
+     * - score <= 2: "simple"
+     * - score 3-5: "medium"
+     * - score >= 6: "complex"
+     * 
+     * All keyword lists are filterable via WordPress filters for extensibility.
      * 
      * @since 0.2.0
      * @param string $prompt The user prompt
-     * @param string $context The context content
+     * @param string $context The context content (unused in scoring, kept for API compatibility)
      * @return string Complexity level (simple, medium, complex)
      */
     private static function analyze_complexity( $prompt, $context ) {
-        $complexity_indicators = [
-            'simple' => [
-                'keywords' => ['what', 'when', 'where', 'who', 'how'],
-                'patterns' => ['\?$', '^[A-Z][^.!?]*\?$'], // Simple questions
-            ],
-            'complex' => [
-                'keywords' => ['analyze', 'compare', 'explain', 'describe', 'evaluate', 'critique'],
-                'patterns' => ['\b(and|or|but|however|therefore|moreover|furthermore)\b'],
-            ],
-        ];
+        // Get filterable keyword lists
+        $wh_words = apply_filters(
+            'contextualwp_complexity_wh_words',
+            ['what', 'when', 'where', 'who', 'how']
+        );
         
-        $prompt_lower = strtolower( $prompt );
-        $context_lower = strtolower( $context );
+        $conjunctions = apply_filters(
+            'contextualwp_complexity_conjunctions',
+            ['and', 'or', 'but', 'however', 'therefore', 'moreover']
+        );
         
-        // Check for complex indicators
-        foreach ( $complexity_indicators['complex']['keywords'] as $keyword ) {
-            if ( strpos( $prompt_lower, $keyword ) !== false ) {
-                return 'complex';
+        $analytical_verbs = apply_filters(
+            'contextualwp_complexity_analytical_verbs',
+            ['analyze', 'explain', 'compare', 'evaluate', 'critique', 'describe']
+        );
+        
+        // Initialize score
+        $score = 0;
+        
+        // Normalize prompt for analysis (lowercase for keyword matching)
+        $prompt_lower = strtolower( trim( $prompt ) );
+        $prompt_original = trim( $prompt );
+        
+        // Calculate word count (split on whitespace and punctuation boundaries)
+        $words = preg_split( '/[\s\p{P}]+/u', $prompt_original, -1, PREG_SPLIT_NO_EMPTY );
+        $word_count = count( $words );
+        
+        // Score: +1 point per 10 words
+        $score += (int) floor( $word_count / 10 );
+        
+        // Count conjunctions in the prompt
+        // Check each conjunction word as a whole word match (case-insensitive)
+        foreach ( $conjunctions as $conjunction ) {
+            // Use word boundary regex to match whole words only
+            $pattern = '/\b' . preg_quote( $conjunction, '/' ) . '\b/i';
+            $matches = preg_match_all( $pattern, $prompt_original );
+            if ( $matches !== false ) {
+                $score += $matches; // +1 point per occurrence
             }
         }
         
-        foreach ( $complexity_indicators['complex']['patterns'] as $pattern ) {
-            if ( preg_match( '/' . $pattern . '/i', $prompt ) ) {
-                return 'complex';
+        // Count analytical verbs (weighted higher)
+        foreach ( $analytical_verbs as $verb ) {
+            // Use word boundary regex to match whole words only
+            $pattern = '/\b' . preg_quote( $verb, '/' ) . '\b/i';
+            $matches = preg_match_all( $pattern, $prompt_original );
+            if ( $matches !== false ) {
+                $score += $matches * 2; // +2 points per occurrence
             }
         }
         
-        // Check for simple indicators
-        foreach ( $complexity_indicators['simple']['keywords'] as $keyword ) {
-            if ( strpos( $prompt_lower, $keyword ) !== false ) {
-                return 'simple';
+        // Count sentences (split on sentence-ending punctuation)
+        // Count punctuation marks followed by whitespace or end of string
+        $sentence_count = preg_match_all( '/[.!?]+(?=[\s\n\r]|$)/', $prompt_original );
+        
+        // If no sentence-ending punctuation found, assume at least one sentence
+        if ( $sentence_count === 0 ) {
+            $sentence_count = 1;
+        }
+        
+        // Score: +1 point for each additional sentence beyond the first
+        if ( $sentence_count > 1 ) {
+            $score += $sentence_count - 1;
+        }
+        
+        // Count question marks
+        $question_mark_count = substr_count( $prompt_original, '?' );
+        
+        // Score: +1 point for each question mark beyond the first
+        if ( $question_mark_count > 1 ) {
+            $score += $question_mark_count - 1;
+        }
+        
+        // Check for WH-words at the beginning of the prompt (weak simple indicators)
+        // Match WH-words that appear at the start (after optional whitespace)
+        $prompt_start = preg_replace( '/^\s+/', '', $prompt_lower );
+        foreach ( $wh_words as $wh_word ) {
+            // Check if WH-word appears at the beginning (with optional leading whitespace)
+            if ( preg_match( '/^' . preg_quote( $wh_word, '/' ) . '\b/', $prompt_start ) ) {
+                $score -= 1; // -1 point for each WH-word at beginning
             }
         }
         
-        foreach ( $complexity_indicators['simple']['patterns'] as $pattern ) {
-            if ( preg_match( '/' . $pattern . '/i', $prompt ) ) {
-                return 'simple';
-            }
-        }
+        // Ensure score doesn't go below 0
+        $score = max( 0, $score );
         
-        // Default to medium complexity
-        return 'medium';
+        // Determine complexity level based on score
+        if ( $score <= 2 ) {
+            return 'simple';
+        } elseif ( $score <= 5 ) {
+            return 'medium';
+        } else {
+            return 'complex';
+        }
     }
 
     /**
@@ -357,3 +424,4 @@ class Smart_Model_Selector {
         return $descriptions[ $size ] ?? 'Unknown model size';
     }
 }
+
