@@ -377,51 +377,5 @@ class Smart_Model_Selector {
         return $mapping[ $provider ] ?? [];
     }
 
-    /**
-     * Get model information for display
-     * 
-     * @since 0.2.0
-     * @param string $model The model name
-     * @param string $provider The AI provider
-     * @return array Model information
-     */
-    public static function get_model_info( $model, $provider ) {
-        $mapping = apply_filters( 'contextualwp_smart_model_mapping', self::$model_mapping, $provider );
-        
-        foreach ( $mapping[ $provider ] ?? [] as $size => $model_name ) {
-            if ( $model_name === $model ) {
-                return [
-                    'name' => $model_name,
-                    'size' => $size,
-                    'provider' => $provider,
-                    'description' => self::get_model_description( $size ),
-                ];
-            }
-        }
-        
-        return [
-            'name' => $model,
-            'size' => 'unknown',
-            'provider' => $provider,
-            'description' => 'Custom model',
-        ];
-    }
-
-    /**
-     * Get model size description
-     * 
-     * @since 0.2.0
-     * @param string $size Model size
-     * @return string Description
-     */
-    private static function get_model_description( $size ) {
-        $descriptions = [
-            'nano'  => 'Fast and efficient for simple tasks',
-            'mini'  => 'Balanced performance for medium complexity',
-            'large' => 'High capability for complex tasks',
-        ];
-        
-        return $descriptions[ $size ] ?? 'Unknown model size';
-    }
 }
 
