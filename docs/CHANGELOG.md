@@ -5,6 +5,18 @@ All notable changes to ContextualWP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.6] - Documentation Updates
+
+### Changed
+- Updated README.md with current AI model names (gpt-4o-mini, gpt-4o, gpt-4.1, claude-3-haiku, claude-3.5-sonnet, claude-3.5-opus)
+- Added missing changelog entries for versions 0.3.1 and 0.3.5
+
+## [0.3.5] - Code Cleanup
+
+### Removed
+- Removed unused `get_model_info()` and `get_model_description()` methods from `Smart_Model_Selector` class
+- Cleaned up dead code to improve maintainability
+
 ## [0.3.4] - Refactored Complexity Analysis
 
 ### Improved
@@ -53,6 +65,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - JavaScript no longer contains hardcoded model lists.
 - Model mappings now come from a single backend source of truth.
 - Improved consistency between provider selection and available models.
+
+## [0.3.1] - 2025-11-22
+
+### Added
+- Added missing `is_public_post()` helper function to `utilities.php`
+- Helper function checks if a post is publicly accessible (published and not password-protected)
+- Used by manifest endpoint to properly filter public contexts
 
 ## [0.3.0] - 2025-11-21
 
