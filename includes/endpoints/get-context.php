@@ -35,8 +35,12 @@ class Get_Context {
         }
 
         $id = $request->get_param( 'id' );
-        if ( $this->is_public_content( $id ) ) {
-            return true;
+        $parsed = Utilities::parse_post_id( $id );
+        if ( $parsed ) {
+            $post = get_post( $parsed['id'] );
+            if ( $post && Utilities::is_public_post( $post ) ) {
+                return true;
+            }
         }
 
         return new \WP_Error(
@@ -65,12 +69,6 @@ class Get_Context {
                 implode( ', ', array_map( fn( $p ) => $p . '-{id}', $supported_prefixes ) )
             )
         );
-    }
-
-    private function is_public_content( $id ) {
-        $parsed = Utilities::parse_post_id( $id );
-        $post   = $parsed ? get_post( $parsed['id'] ) : null;
-        return $post && $post->post_status === 'publish';
     }
 
     public function handle_request( $request ) {
@@ -116,7 +114,7 @@ class Get_Context {
             return rest_ensure_response( $cached );
         }
     
-        $content = $this->format_content( $post, $format );
+        $content = Utilities::format_content( $post, $format );
     
         // 🔍 Pull ACF fields if available with error handling
         $acf_fields = [];
@@ -149,39 +147,5 @@ class Get_Context {
         wp_cache_set( $cache_key, $response, 'contextualwp', $cache_ttl );
         
         return rest_ensure_response( $response );
-    }    
-
-    private function format_content( $post, $format ) {
-        $title   = get_the_title( $post );
-        $content = apply_filters( 'contextualwp_content_before_format', $post->post_content, $post, $format );
-
-        switch ( $format ) {
-            case 'html':
-                $output = sprintf(
-                    '<h2>%s</h2><div>%s</div>',
-                    esc_html( $title ),
-                    wp_kses_post( $content )
-                );
-                break;
-
-            case 'plain':
-                $output = sprintf(
-                    "%s\n\n%s",
-                    $title,
-                    wp_strip_all_tags( $content )
-                );
-                break;
-
-            case 'markdown':
-            default:
-                $output = sprintf(
-                    "## %s\n\n%s\n",
-                    $title,
-                    wp_strip_all_tags( $content )
-                );
-                break;
-        }
-
-        return apply_filters( 'contextualwp_formatted_content', $output, $post, $format );
     }
 }

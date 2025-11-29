@@ -25,7 +25,6 @@ class Generate_Context {
     }
 
     public function handle_request( $request ) {
-        error_log('ContextualWP DEBUG: context_id=' . var_export($request->get_param('context_id'), true));
         $settings = get_option( 'contextualwp_settings', [] );
         $ai_provider = $settings['ai_provider'] ?? '';
         $api_key     = $settings['api_key'] ?? '';
@@ -47,7 +46,6 @@ class Generate_Context {
 
         // Robust multi-post context aggregation check
         if ( strtolower( trim( $context_id ) ) === 'multi' ) {
-            error_log('ContextualWP DEBUG: Entered multi-context block');
             // Fetch recent posts and pages (limit 5 for brevity)
             $query = new \WP_Query([
                 'post_type'      => [ 'post', 'page' ],
@@ -197,7 +195,7 @@ class Generate_Context {
         }
 
         // Format content (markdown/plain/html)
-        $content = $this->format_content( $post, $format );
+        $content = Utilities::format_content( $post, $format );
 
         // Fetch ACF fields if available
         $acf_fields = [];
@@ -346,36 +344,6 @@ class Generate_Context {
         ];
         
         return $mapping[ $provider ] ?? strtolower( $provider );
-    }
-
-    private function format_content( $post, $format ) {
-        $title   = get_the_title( $post );
-        $content = apply_filters( 'contextualwp_content_before_format', $post->post_content, $post, $format );
-        switch ( $format ) {
-            case 'html':
-                $output = sprintf(
-                    '<h2>%s</h2><div>%s</div>',
-                    esc_html( $title ),
-                    wp_kses_post( $content )
-                );
-                break;
-            case 'plain':
-                $output = sprintf(
-                    "%s\n\n%s",
-                    $title,
-                    wp_strip_all_tags( $content )
-                );
-                break;
-            case 'markdown':
-            default:
-                $output = sprintf(
-                    "## %s\n\n%s\n",
-                    $title,
-                    wp_strip_all_tags( $content )
-                );
-                break;
-        }
-        return apply_filters( 'contextualwp_formatted_content', $output, $post, $format );
     }
 
     private function call_openai_api( $payload, $api_key ) {

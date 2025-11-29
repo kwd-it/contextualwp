@@ -5,6 +5,23 @@ All notable changes to ContextualWP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.7] - Code Refactoring & Cleanup
+
+### Changed
+- **Refactored duplicate `format_content()` methods**: Removed duplicate `format_content()` methods from `Get_Context` and `Generate_Context` endpoint classes. Both now use the centralized `Utilities::format_content()` method, following DRY principles.
+- **Refactored `is_public_content()` method**: Replaced private `is_public_content()` method in `Get_Context` class with `Utilities::is_public_post()` for better consistency and more comprehensive public post checking.
+
+### Removed
+- Removed debug `error_log()` statements from `Generate_Context` endpoint that were logging context_id and multi-context block entry.
+
+### Fixed
+- Updated hardcoded version fallback in `manifest.php` from `0.3.3` to current version.
+
+### Technical Details
+- Improved code maintainability by consolidating duplicate formatting logic
+- Better consistency across endpoints using shared utility methods
+- All endpoints now use centralized helper methods from `Utilities` class
+
 ## [0.3.6] - Documentation Updates
 
 ### Changed
