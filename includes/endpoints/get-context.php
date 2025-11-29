@@ -55,20 +55,36 @@ class Get_Context {
             return new \WP_Error( 'invalid_id', 'ID cannot be empty' );
         }
 
-        $supported_prefixes = apply_filters( 'contextualwp_supported_id_prefixes', [ 'post', 'page' ] );
-        foreach ( $supported_prefixes as $prefix ) {
-            if ( strpos( $id, $prefix . '-' ) === 0 ) {
-                return true;
-            }
+        // Parse the ID to extract post type
+        $parsed = Utilities::parse_post_id( $id );
+        if ( ! $parsed ) {
+            return new \WP_Error( 'invalid_id_format', 'Invalid ID format. Expected: {post_type}-{id}' );
         }
 
-        return new \WP_Error(
-            'invalid_id_format',
-            sprintf(
-                'Invalid ID format. Supported: %s',
-                implode( ', ', array_map( fn( $p ) => $p . '-{id}', $supported_prefixes ) )
-            )
-        );
+        // Get allowed post types (same as list_contexts endpoint)
+        $allowed_post_types = Utilities::get_allowed_post_types();
+        
+        // Check if the post type is in the allowed list and exists
+        if ( ! in_array( $parsed['type'], $allowed_post_types, true ) ) {
+            return new \WP_Error(
+                'invalid_post_type',
+                sprintf(
+                    'Post type "%s" is not allowed. Supported: %s',
+                    $parsed['type'],
+                    implode( ', ', $allowed_post_types )
+                )
+            );
+        }
+
+        // Verify the post type actually exists in WordPress
+        if ( ! post_type_exists( $parsed['type'] ) ) {
+            return new \WP_Error(
+                'post_type_not_found',
+                sprintf( 'Post type "%s" does not exist.', $parsed['type'] )
+            );
+        }
+
+        return true;
     }
 
     public function handle_request( $request ) {

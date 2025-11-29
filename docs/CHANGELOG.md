@@ -5,6 +5,23 @@ All notable changes to ContextualWP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.8] - Aligned Post Type Validation
+
+### Changed
+- **Aligned post type validation**: Both `get_context` and `list_contexts` endpoints now use the same filterable list of allowed post types
+- `get_context` endpoint now accepts all allowed post types (not just `post` and `page`), matching the behavior of `list_contexts`
+- Both endpoints validate against the same `contextualwp_allowed_post_types` filter, ensuring consistency
+
+### Added
+- New `Utilities::get_allowed_post_types()` helper method that returns a filterable list of allowed post types (defaults to all public post types)
+- New `contextualwp_allowed_post_types` filter hook for customizing allowed post types across both endpoints
+- Enhanced validation in `list_contexts` endpoint to check against allowed post types list
+
+### Technical Details
+- Improved consistency between endpoints by using shared validation logic
+- Better extensibility through centralized post type filtering
+- Default behavior now supports all public post types instead of being limited to `post` and `page`
+
 ## [0.3.7] - Code Refactoring & Cleanup
 
 ### Changed

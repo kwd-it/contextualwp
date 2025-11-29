@@ -69,6 +69,7 @@ curl -X POST "https://your-site.test/wp-json/contextualwp/v1/generate_context" \
 - `contextualwp_prompt_templates`: Customize prompt templates for the global chat
 - `contextualwp_available_providers`: Add new AI providers to the settings dropdown
 - `contextualwp_provider_models`: Add new models for existing or custom providers
+- `contextualwp_allowed_post_types`: Filter the list of allowed post types for `list_contexts` and `get_context` endpoints (defaults to all public post types)
 
 ### Adding a New AI Provider
 1. Use the `contextualwp_ai_provider` filter to return your provider slug (e.g., 'anthropic')
@@ -118,7 +119,7 @@ add_filter('contextualwp_ai_response', function($response, $provider, $settings,
 - **Method:** GET
 - **Description:** List available contexts (posts/pages) with pagination and search.
 - **Parameters:**
-  - `post_type` (string, optional): e.g., `post`, `page` (default: `post`)
+  - `post_type` (string, optional): Any allowed post type (default: `post`). Both endpoints use the same filterable list of allowed post types via the `contextualwp_allowed_post_types` filter (defaults to all public post types).
   - `limit` (int, optional): Number of items per page (default: 10, max: 100)
   - `page` (int, optional): Page number (default: 1)
   - `search` (string, optional): Search term for post titles/content
@@ -128,7 +129,7 @@ add_filter('contextualwp_ai_response', function($response, $provider, $settings,
 - **Method:** GET
 - **Description:** Retrieve the content and meta for a specific context (post/page).
 - **Parameters:**
-  - `id` (string, required): e.g., `post-123`, `page-2`
+  - `id` (string, required): e.g., `post-123`, `page-2`, or any allowed post type (e.g., `product-456`, `event-789`). Both endpoints use the same filterable list of allowed post types via the `contextualwp_allowed_post_types` filter (defaults to all public post types).
   - `format` (string, optional): `markdown` (default), `plain`, or `html`
 - **Authentication:** Public for published content, otherwise requires login
 

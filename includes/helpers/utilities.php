@@ -120,6 +120,31 @@ class Utilities {
     }
 
     /**
+     * Get allowed post types for context endpoints
+     * 
+     * Returns a filterable list of post types that are allowed for context operations.
+     * Defaults to all public post types, but can be filtered via 'contextualwp_allowed_post_types'.
+     * 
+     * @since 0.3.8
+     * @return array Array of allowed post type slugs
+     */
+    public static function get_allowed_post_types() {
+        // Get all public post types by default
+        $public_post_types = get_post_types( [ 'public' => true ], 'names' );
+        
+        // Allow filtering the list of allowed post types
+        $allowed = apply_filters( 'contextualwp_allowed_post_types', $public_post_types );
+        
+        // Ensure we return an array and filter out invalid post types
+        if ( ! is_array( $allowed ) ) {
+            $allowed = [];
+        }
+        
+        // Validate that each post type actually exists
+        return array_filter( $allowed, 'post_type_exists' );
+    }
+
+    /**
      * Universal parse_post_id helper for endpoints
      *
      * @param string $id

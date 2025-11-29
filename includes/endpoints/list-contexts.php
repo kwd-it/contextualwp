@@ -33,7 +33,7 @@ class List_Contexts {
             'post_type' => [
                 'default'           => 'post',
                 'sanitize_callback' => 'sanitize_text_field',
-                'validate_callback' => 'post_type_exists',
+                'validate_callback' => [ $this, 'validate_post_type' ],
             ],
             'limit' => [
                 'default'           => 10,
@@ -50,6 +50,46 @@ class List_Contexts {
                 'default'           => '',
             ],
         ];
+    }
+
+    /**
+     * Validate post type parameter
+     * 
+     * Ensures the post type exists and is in the allowed list (same as get_context endpoint).
+     * 
+     * @since 0.3.8
+     * @param string $post_type The post type to validate
+     * @return bool|\WP_Error
+     */
+    public function validate_post_type( $post_type ) {
+        if ( empty( $post_type ) ) {
+            return new \WP_Error( 'invalid_post_type', 'Post type cannot be empty' );
+        }
+
+        // Verify the post type exists in WordPress
+        if ( ! post_type_exists( $post_type ) ) {
+            return new \WP_Error(
+                'post_type_not_found',
+                sprintf( 'Post type "%s" does not exist.', $post_type )
+            );
+        }
+
+        // Get allowed post types (same as get_context endpoint)
+        $allowed_post_types = Utilities::get_allowed_post_types();
+        
+        // Check if the post type is in the allowed list
+        if ( ! in_array( $post_type, $allowed_post_types, true ) ) {
+            return new \WP_Error(
+                'post_type_not_allowed',
+                sprintf(
+                    'Post type "%s" is not allowed. Supported: %s',
+                    $post_type,
+                    implode( ', ', $allowed_post_types )
+                )
+            );
+        }
+
+        return true;
     }
 
     public function handle_request( $request ) {
