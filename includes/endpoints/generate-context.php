@@ -2,6 +2,7 @@
 namespace ContextualWP\Endpoints;
 
 use ContextualWP\Helpers\Utilities;
+use ContextualWP\Helpers\Providers;
 use ContextualWP\Helpers\Smart_Model_Selector;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -41,7 +42,7 @@ class Generate_Context {
         $format     = $request->get_param( 'format' );
 
         // Apply smart model selection if enabled
-        $provider_slug = $this->map_provider_name( $ai_provider );
+        $provider_slug = Providers::normalize( $ai_provider );
         $model = Smart_Model_Selector::select_model( $prompt, '', $provider_slug, $model, $settings );
 
         // Robust multi-post context aggregation check
@@ -90,7 +91,7 @@ class Generate_Context {
             $model = Smart_Model_Selector::select_model( $prompt, $content, $provider_slug, $model, $settings );
             
             // AI call (OpenAI/Mistral/Claude)
-            $provider = apply_filters( 'contextualwp_ai_provider', $this->map_provider_name( $ai_provider ), $settings, $context_data, $request );
+            $provider = apply_filters( 'contextualwp_ai_provider', Providers::normalize( $ai_provider ), $settings, $context_data, $request );
             $ai_response = null;
             $ai_error = null;
             switch ( $provider ) {
@@ -147,7 +148,7 @@ class Generate_Context {
                     }
                     break;
                 default:
-                    $ai_error = 'Unsupported AI provider: ' . esc_html( $ai_provider );
+                    $ai_error = 'Unsupported AI provider: ' . esc_html( $provider );
                     break;
             }
             $ai_response = apply_filters( 'contextualwp_ai_response', $ai_response, $provider, $settings, $context_data, $request );
@@ -228,7 +229,7 @@ class Generate_Context {
         // Cache key uses provider, model and context parameters
         $cache_key = apply_filters( 'contextualwp_ai_cache_key', \ContextualWP\Helpers\Utilities::get_cache_key(
             'contextualwp_generate', [
-                'provider'   => $ai_provider,
+                'provider'   => Providers::normalize( $ai_provider ),
                 'model'      => $model,
                 'context_id' => $context_id,
                 'prompt'     => $prompt,
@@ -244,7 +245,7 @@ class Generate_Context {
         // Provider extensibility: allow other plugins to register/override AI providers
         $ai_response = null;
         $ai_error = null;
-        $provider = apply_filters( 'contextualwp_ai_provider', $this->map_provider_name( $ai_provider ), $settings, $context_data, $request );
+        $provider = apply_filters( 'contextualwp_ai_provider', Providers::normalize( $ai_provider ), $settings, $context_data, $request );
         switch ( $provider ) {
             case 'openai':
                 $ai_payload = apply_filters( 'contextualwp_ai_payload', [
@@ -300,7 +301,7 @@ class Generate_Context {
                 break;
             // Add more providers here (e.g., 'anthropic')
             default:
-                $ai_error = 'Unsupported AI provider: ' . esc_html( $ai_provider );
+                $ai_error = 'Unsupported AI provider: ' . esc_html( $provider );
                 break;
         }
 
@@ -333,18 +334,6 @@ class Generate_Context {
         return $response;
     }
 
-    /**
-     * Map UI provider names to internal provider slugs
-     */
-    private function map_provider_name( $provider ) {
-        $mapping = [
-            'OpenAI' => 'openai',
-            'Claude' => 'claude',
-            'Mistral' => 'mistral',
-        ];
-        
-        return $mapping[ $provider ] ?? strtolower( $provider );
-    }
 
     private function call_openai_api( $payload, $api_key ) {
         $response = wp_remote_post( 'https://api.openai.com/v1/chat/completions', [

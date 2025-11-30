@@ -136,7 +136,9 @@ class ContextualWP_Admin_Settings {
         // Validate provider and set default if invalid
         $valid_providers = array_keys( $this->get_available_providers() );
         if ( !in_array( $output['ai_provider'], $valid_providers ) ) {
-            $output['ai_provider'] = 'OpenAI';
+            // Get default from provider labels
+            $labels = \ContextualWP\Helpers\Providers::get_labels();
+            $output['ai_provider'] = $labels['openai'] ?? 'OpenAI';
         }
         
         $output['api_key'] = sanitize_text_field( $input['api_key'] ?? '' );
@@ -180,13 +182,8 @@ class ContextualWP_Admin_Settings {
      * Get valid models for a provider (uses single source of truth from Smart Model Selector)
      */
     private function get_valid_models_for_provider( $provider ) {
-        // Map UI provider names to internal slugs
-        $provider_map = [
-            'OpenAI' => 'openai',
-            'Claude' => 'claude',
-        ];
-        
-        $provider_slug = $provider_map[ $provider ] ?? strtolower( $provider );
+        // Normalize provider name to internal slug
+        $provider_slug = \ContextualWP\Helpers\Providers::normalize( $provider );
         
         // Get all models from single source of truth
         $all_models = \ContextualWP\Helpers\Smart_Model_Selector::get_all_models();
@@ -200,13 +197,8 @@ class ContextualWP_Admin_Settings {
      * Get available providers
      */
     private function get_available_providers() {
-        $providers = [
-            'OpenAI' => 'OpenAI',
-            'Claude' => 'Claude'
-        ];
-        
-        // Allow filtering of providers for extensibility
-        return apply_filters( 'contextualwp_available_providers', $providers );
+        // Use centralized provider registry
+        return \ContextualWP\Helpers\Providers::get_dropdown_options();
     }
 
     public function render_settings_page() {
@@ -261,12 +253,8 @@ class ContextualWP_Admin_Settings {
         // Get current provider to show appropriate models
         $current_provider = $options['ai_provider'] ?? 'OpenAI';
         
-        // Map UI provider names to internal slugs
-        $provider_map = [
-            'OpenAI' => 'openai',
-            'Claude' => 'claude',
-        ];
-        $provider_slug = $provider_map[ $current_provider ] ?? strtolower( $current_provider );
+        // Normalize provider name to internal slug
+        $provider_slug = \ContextualWP\Helpers\Providers::normalize( $current_provider );
         
         // Get all models from single source of truth
         $all_models = \ContextualWP\Helpers\Smart_Model_Selector::get_all_models();

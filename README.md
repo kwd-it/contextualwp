@@ -52,11 +52,12 @@ curl -X POST "https://your-site.test/wp-json/contextualwp/v1/generate_context" \
 ## Settings
 - Go to **Settings > ContextualWP** in wp-admin.
 - Configure:
-  - **AI Provider**: OpenAI or Claude
+  - **AI Provider**: OpenAI, Claude, or Mistral
   - **API Key**: Your provider's API key (never exposed in API)
   - **Model**: Automatically filtered based on selected provider
     - OpenAI: gpt-4o-mini, gpt-4o, gpt-4.1
     - Claude: claude-3-haiku, claude-3.5-sonnet, claude-3.5-opus
+    - Mistral: mistral-tiny, mistral-small, mistral-large
   - **Advanced Settings**: Max tokens (default: 1024) and temperature (default: 1.0)
 
 ## Extensibility
@@ -162,6 +163,10 @@ add_filter('contextualwp_ai_response', function($response, $provider, $settings,
 ### Claude (Anthropic)
 - Models: claude-3-haiku, claude-3.5-sonnet, claude-3.5-opus
 - Endpoint: https://api.anthropic.com/v1/messages
+
+### Mistral
+- Models: mistral-tiny, mistral-small, mistral-large
+- Endpoint: https://api.mistral.ai/v1/chat/completions
 
 ### Custom Providers
 - Support for custom AI providers through the extensibility hooks

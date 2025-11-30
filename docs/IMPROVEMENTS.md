@@ -15,8 +15,8 @@
   - Many filters/hooks present for customization.
 - [x] Caching of AI responses (configurable TTL)
   - Implemented in endpoints with `wp_cache_set`/`wp_cache_get`.
-- [~] Support for additional AI providers (Mistral, Anthropic, etc.)
-  - Claude: Supported. Mistral: Scaffolded in code (commented out), ready for UI/API implementation.
+- [x] Support for additional AI providers (Mistral, Anthropic, etc.)
+  - Claude: Supported. Mistral: Fully supported with UI and API integration.
 - [~] Rate limiting and abuse prevention
   - Implemented for /manifest and via helper, but not global for all endpoints.
 - [ ] Advanced error handling and logging (admin viewable)
