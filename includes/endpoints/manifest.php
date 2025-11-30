@@ -2,6 +2,7 @@
 namespace ContextualWP\Endpoints;
 
 use ContextualWP\Helpers\Utilities;
+use ContextualWP\Helpers\Providers;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -123,10 +124,11 @@ class Manifest {
         $manifest = apply_filters( 'contextualwp_manifest', [
             'name'           => $site_name . ' – ContextualWP',
             'description'    => $site_description,
-            'version'        => defined( 'CONTEXTUALWP_VERSION' ) ? CONTEXTUALWP_VERSION : '0.3.9',
+            'version'        => defined( 'CONTEXTUALWP_VERSION' ) ? CONTEXTUALWP_VERSION : '0.4.0',
             'endpoints'      => $this->get_endpoints(),
             'formats'        => [ 'markdown', 'plain', 'html' ],
             'context_types'  => apply_filters( 'contextualwp_supported_post_types', [ 'post', 'page' ] ),
+            'providers'      => Providers::list(),
             'branding'       => $this->get_branding(),
             'capabilities'   => $this->get_capabilities(),
             'rate_limits'    => $this->get_rate_limits(),

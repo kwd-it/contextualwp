@@ -48,6 +48,11 @@ class Smart_Model_Selector {
             'mini'  => 'claude-3.5-sonnet',
             'large' => 'claude-3.5-opus',
         ],
+        'mistral' => [
+            'nano'  => 'mistral-tiny',
+            'mini'  => 'mistral-small',
+            'large' => 'mistral-large',
+        ],
     ];
 
     /**

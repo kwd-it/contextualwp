@@ -5,6 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Load helper classes
 require_once CONTEXTUALWP_DIR . 'includes/helpers/utilities.php';
+require_once CONTEXTUALWP_DIR . 'includes/helpers/providers.php';
 require_once CONTEXTUALWP_DIR . 'includes/helpers/smart-model-selector.php';
 
 // Autoload endpoint classes

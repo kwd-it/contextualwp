@@ -5,6 +5,28 @@ All notable changes to ContextualWP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - Provider Registry Unification
+
+### Added
+- **Provider Registry**: New `ContextualWP\Helpers\Providers` class as single source of truth for AI provider support
+- **Mistral Support**: Mistral is now fully supported alongside OpenAI and Claude
+- **Provider Normalization**: Centralized provider name normalization (UI labels ↔ internal slugs)
+- **Manifest Providers**: Manifest endpoint now includes `providers` array listing all supported providers
+
+### Changed
+- **Unified Provider Lists**: All hard-coded provider lists replaced with `Providers::list()` throughout the plugin
+- **Admin Settings**: Settings dropdown now uses centralized provider registry
+- **Generate Context**: Provider mapping logic now uses `Providers::normalize()` for consistency
+- **Smart Model Selector**: Added Mistral model mappings (mistral-tiny, mistral-small, mistral-large)
+- **Cache Keys**: Cache keys now use normalized provider slugs for consistency
+
+### Technical Details
+- Provider registry is filterable via `contextualwp_ai_providers` filter
+- Provider labels are filterable via `contextualwp_provider_labels` filter
+- Maintains full backward compatibility with existing filters
+- All provider names normalized to lowercase slugs internally
+- UI labels mapped centrally in `Providers::get_labels()`
+
 ## [0.3.9] - Removed YAML Support from Manifest Endpoint
 
 ### Removed
