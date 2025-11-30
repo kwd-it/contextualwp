@@ -61,7 +61,7 @@ class Manifest {
             'format' => [
                 'default'           => 'json',
                 'sanitize_callback' => 'sanitize_text_field',
-                'enum'              => [ 'json', 'yaml' ],
+                'enum'              => [ 'json' ],
             ],
         ];
     }
@@ -72,18 +72,8 @@ class Manifest {
      * @since 0.1.0
      * @param \WP_REST_Request $request The request object
      * @return \WP_REST_Response|\WP_Error
-     *
-     * Note: Only JSON output is supported. YAML is not implemented.
      */
     public function handle_request( $request ) {
-        $format = $request->get_param('format');
-        if ( strtolower($format) === 'yaml' ) {
-            return new \WP_Error(
-                'not_implemented',
-                __( 'YAML output is not supported. Please use format=json.', 'contextualwp' ),
-                [ 'status' => 400 ]
-            );
-        }
         try {
             // Check for cached response
             $cache_key = \ContextualWP\Helpers\Utilities::get_cache_key( 'contextualwp_manifest', $request->get_params() );
@@ -133,7 +123,7 @@ class Manifest {
         $manifest = apply_filters( 'contextualwp_manifest', [
             'name'           => $site_name . ' – ContextualWP',
             'description'    => $site_description,
-            'version'        => defined( 'CONTEXTUALWP_VERSION' ) ? CONTEXTUALWP_VERSION : '0.3.8',
+            'version'        => defined( 'CONTEXTUALWP_VERSION' ) ? CONTEXTUALWP_VERSION : '0.3.9',
             'endpoints'      => $this->get_endpoints(),
             'formats'        => [ 'markdown', 'plain', 'html' ],
             'context_types'  => apply_filters( 'contextualwp_supported_post_types', [ 'post', 'page' ] ),

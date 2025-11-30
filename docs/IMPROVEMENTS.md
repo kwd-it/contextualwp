@@ -36,4 +36,9 @@
 - Add usage analytics (opt-in)
 - Add a debug mode for verbose logging
 - Add a UI for viewing recent AI requests/responses (admin only)
-- Add support for streaming/partial AI responses (where provider supports) 
+- Add support for streaming/partial AI responses (where provider supports)
+
+## Design Decisions
+
+### YAML Support Removal (v0.3.9)
+YAML format support was removed from the manifest endpoint as it was never implemented and added unnecessary complexity. The endpoint now exclusively supports JSON format, which is the standard for REST API responses and aligns with WordPress REST API conventions. The `format` parameter remains in the API for potential future extensibility, but currently only accepts `json`. 

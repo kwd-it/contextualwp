@@ -5,6 +5,23 @@ All notable changes to ContextualWP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.9] - Removed YAML Support from Manifest Endpoint
+
+### Removed
+- **YAML format support**: Removed YAML from the manifest endpoint parameters and enum list
+- Removed unimplemented YAML error handling block
+- Removed YAML-related validation branches and comments
+
+### Changed
+- Manifest endpoint now only supports JSON format
+- Updated documentation to reflect JSON-only support
+- Simplified manifest endpoint code by removing dead code paths
+
+### Technical Details
+- This is an internal cleanup removing an unimplemented feature
+- The `format` parameter remains for future extensibility but now only accepts `json`
+- No functional changes to existing JSON output behavior
+
 ## [0.3.8] - Aligned Post Type Validation
 
 ### Changed

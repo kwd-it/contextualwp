@@ -137,10 +137,8 @@ add_filter('contextualwp_ai_response', function($response, $provider, $settings,
 - **Method:** GET
 - **Description:** Returns metadata about this context provider for AI agents (MCP manifest).
 - **Parameters:**
-  - `format` (string, optional): `json` (default) or `yaml`
+  - `format` (string, optional): `json` (default) - JSON is the only supported format
 - **Authentication:** Public, but rate-limited
-
-**Note:** Only JSON output is currently supported for the manifest endpoint. YAML is not implemented.
 
 ## Admin Features
 
