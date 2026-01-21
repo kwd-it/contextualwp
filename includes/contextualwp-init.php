@@ -13,6 +13,7 @@ require_once CONTEXTUALWP_DIR . 'includes/endpoints/list-contexts.php';
 require_once CONTEXTUALWP_DIR . 'includes/endpoints/get-context.php';
 require_once CONTEXTUALWP_DIR . 'includes/endpoints/manifest.php';
 require_once CONTEXTUALWP_DIR . 'includes/endpoints/generate-context.php';
+require_once CONTEXTUALWP_DIR . 'includes/endpoints/schema.php';
 
 // Load admin settings only in admin
 if ( is_admin() ) {
@@ -26,6 +27,7 @@ add_action( 'rest_api_init', function () {
     ( new ContextualWP\Endpoints\Get_Context )->register_route();
     ( new ContextualWP\Endpoints\Manifest )->register_route();
     ( new ContextualWP\Endpoints\Generate_Context )->register_route();
+    ( new ContextualWP\Endpoints\Schema )->register_route();
 });
 
 

@@ -141,6 +141,79 @@ add_filter('contextualwp_ai_response', function($response, $provider, $settings,
   - `format` (string, optional): `json` (default) - JSON is the only supported format
 - **Authentication:** Public, but rate-limited
 
+### `/wp-json/contextualwp/v1/schema`
+- **Method:** GET
+- **Description:** Returns schema information about the site including plugin details, post types, taxonomies, and ACF field groups (if ACF is active).
+- **Authentication:** Requires `manage_options` capability (admin-protected)
+- **Caching:** Responses are cached for 5 minutes by default. Adjust TTL using the `contextualwp_schema_cache_ttl` filter.
+
+#### Example Response
+```json
+{
+  "plugin": {
+    "name": "ContextualWP",
+    "version": "0.4.0"
+  },
+  "site": {
+    "home_url": "https://example.com",
+    "wp_version": "6.4.2"
+  },
+  "post_types": [
+    {
+      "slug": "post",
+      "label": "Posts",
+      "supports": ["title", "editor", "thumbnail"],
+      "taxonomies": ["category", "post_tag"]
+    },
+    {
+      "slug": "page",
+      "label": "Pages",
+      "supports": ["title", "editor", "thumbnail"],
+      "taxonomies": []
+    }
+  ],
+  "taxonomies": [
+    {
+      "slug": "category",
+      "label": "Categories",
+      "object_types": ["post"]
+    },
+    {
+      "slug": "post_tag",
+      "label": "Tags",
+      "object_types": ["post"]
+    }
+  ],
+  "acf_field_groups": [
+    {
+      "title": "Page Settings",
+      "key": "group_123abc",
+      "location": [[{
+        "param": "post_type",
+        "operator": "==",
+        "value": "page"
+      }]],
+      "fields": [
+        {
+          "label": "Hero Image",
+          "name": "hero_image",
+          "key": "field_456def",
+          "type": "image"
+        },
+        {
+          "label": "Related Posts",
+          "name": "related_posts",
+          "key": "field_789ghi",
+          "type": "relationship",
+          "post_type": ["post"]
+        }
+      ]
+    }
+  ],
+  "generated_at": "2024-01-15T10:30:00+00:00"
+}
+```
+
 ## Admin Features
 
 ### Global Floating Chat
