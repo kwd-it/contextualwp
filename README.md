@@ -152,7 +152,7 @@ add_filter('contextualwp_ai_response', function($response, $provider, $settings,
 {
   "plugin": {
     "name": "ContextualWP",
-    "version": "0.4.0"
+    "version": "0.5.0"
   },
   "site": {
     "home_url": "https://example.com",
