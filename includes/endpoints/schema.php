@@ -90,6 +90,25 @@ class Schema {
     }
 
     /**
+     * Return schema data (cached). Used by generate-context for structure answers.
+     * Reuses existing schema cache/TTL.
+     *
+     * @since 0.4.0
+     * @return array Schema array (post_types, taxonomies, acf_field_groups, generated_at, etc.)
+     */
+    public function get_schema_data() {
+        $cache_key = Utilities::get_cache_key( 'contextualwp_schema', [] );
+        $cached    = wp_cache_get( $cache_key, 'contextualwp' );
+        if ( $cached !== false ) {
+            return $cached;
+        }
+        $schema = $this->generate_schema();
+        $cache_ttl = apply_filters( 'contextualwp_schema_cache_ttl', 5 * MINUTE_IN_SECONDS );
+        wp_cache_set( $cache_key, $schema, 'contextualwp', $cache_ttl );
+        return $schema;
+    }
+
+    /**
      * Generate the schema data
      * 
      * @since 0.4.0
