@@ -5,6 +5,11 @@ All notable changes to ContextualWP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] – 2026-01-26
+
+### Added
+- **Copy Context Pack**: Admin settings page now includes a "Copy Context Pack" section allowing admins to copy the site's ContextualWP schema JSON to clipboard for sharing with AI tools, debugging, audits, or external workflows.
+
 ## [0.5.0] – Schema Export Endpoint
 
 ### Added

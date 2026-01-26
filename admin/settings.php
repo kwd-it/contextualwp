@@ -47,6 +47,16 @@ class ContextualWP_Admin_Settings {
             'ContextualWPModels',
             \ContextualWP\Helpers\Smart_Model_Selector::get_all_models()
         );
+
+        // Localize script with REST API URL and nonce
+        wp_localize_script(
+            'contextualwp-settings',
+            'ContextualWPSettings',
+            [
+                'restUrl' => rest_url( 'contextualwp/v1/schema' ),
+                'nonce'   => wp_create_nonce( 'wp_rest' ),
+            ]
+        );
     }
 
     public function register_settings() {
@@ -109,6 +119,14 @@ class ContextualWP_Admin_Settings {
             [ $this, 'field_smart_model_selection' ],
             'contextualwp-settings',
             'contextualwp_advanced_section'
+        );
+
+        // Copy Context Pack section
+        add_settings_section(
+            'contextualwp_copy_section',
+            __( 'Copy Context Pack', 'contextualwp' ),
+            [ $this, 'copy_section_description' ],
+            'contextualwp-settings'
         );
     }
 
@@ -213,6 +231,10 @@ class ContextualWP_Admin_Settings {
         echo '</div>'; // Close advanced settings div
         submit_button();
         echo '</form>';
+        
+        // Render Copy Context Pack section outside form
+        $this->render_copy_pack_section();
+        
         echo '</div>';
     }
 
@@ -308,6 +330,26 @@ class ContextualWP_Admin_Settings {
         echo ' ' . esc_html__( 'Automatically select the most efficient model based on prompt length and complexity', 'contextualwp' );
         echo '</label>';
         echo '<p class="description">' . esc_html__( 'Automatically selects 4o-mini, 4o, 4.1 or Haiku, Sonnet, Opus depending on prompt size and complexity. Only models from your selected provider will be used.', 'contextualwp' ) . '</p>';
+        echo '</div>';
+    }
+
+    public function copy_section_description() {
+        // Empty - section is rendered separately in render_settings_page()
+    }
+
+    /**
+     * Render the Copy Context Pack section
+     */
+    private function render_copy_pack_section() {
+        echo '<div class="contextualwp-copy-pack">';
+        echo '<h2>' . esc_html__( 'Copy Context Pack', 'contextualwp' ) . '</h2>';
+        echo '<p>' . esc_html__( 'Export a snapshot of your site\'s contextual schema. This can be shared with AI tools, used for debugging or audits, or pasted into external workflows to provide accurate structural context.', 'contextualwp' ) . '</p>';
+        echo '<div class="contextualwp-copy-section">';
+        echo '<button type="button" id="contextualwp-copy-schema" class="button button-primary">' . esc_html__( 'Copy Site Schema JSON', 'contextualwp' ) . '</button>';
+        echo '<span id="contextualwp-copy-notice" class="contextualwp-copy-notice" style="display: none;"></span>';
+        echo '</div>';
+        // Hidden textarea for fallback copy method
+        echo '<textarea id="contextualwp-schema-fallback" style="position: absolute; left: -9999px;" readonly></textarea>';
         echo '</div>';
     }
 }

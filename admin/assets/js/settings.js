@@ -49,6 +49,9 @@
                 }
             });
         }
+
+        // Handle copy schema button
+        initCopySchema();
     }
 
     /**
@@ -98,6 +101,115 @@
         // If current value is not valid for this provider, select first option
         if (!hasValidCurrentValue && models.length > 0) {
             modelSelect.selectedIndex = 0;
+        }
+    }
+
+    /**
+     * Initialize copy schema functionality
+     */
+    function initCopySchema() {
+        const copyButton = document.getElementById('contextualwp-copy-schema');
+        const copyNotice = document.getElementById('contextualwp-copy-notice');
+        const fallbackTextarea = document.getElementById('contextualwp-schema-fallback');
+
+        if (!copyButton || !copyNotice) {
+            return;
+        }
+
+        copyButton.addEventListener('click', async function() {
+            const button = this;
+            const originalText = button.textContent;
+
+            // Disable button during fetch
+            button.disabled = true;
+            button.textContent = 'Loading...';
+            copyNotice.style.display = 'none';
+
+            try {
+                // Fetch schema from REST API
+                const settings = window.ContextualWPSettings || {};
+                const restUrl = settings.restUrl || '/wp-json/contextualwp/v1/schema';
+                const nonce = settings.nonce || '';
+
+                const response = await fetch(restUrl, {
+                    method: 'GET',
+                    headers: {
+                        'X-WP-Nonce': nonce,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch schema: ' + response.statusText);
+                }
+
+                const schema = await response.json();
+                const schemaJson = JSON.stringify(schema, null, 2);
+
+                // Try modern clipboard API first
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(schemaJson);
+                    showSuccessNotice(copyNotice, button, originalText);
+                } else {
+                    // Fallback for older browsers
+                    fallbackCopyToClipboard(schemaJson, fallbackTextarea);
+                    showSuccessNotice(copyNotice, button, originalText);
+                }
+            } catch (error) {
+                console.error('Error copying schema:', error);
+                copyNotice.textContent = 'Error: ' + error.message;
+                copyNotice.className = 'contextualwp-copy-notice contextualwp-copy-error';
+                copyNotice.style.display = 'inline-block';
+                button.disabled = false;
+                button.textContent = originalText;
+            }
+        });
+    }
+
+    /**
+     * Show success notice after copying
+     */
+    function showSuccessNotice(notice, button, originalText) {
+        notice.textContent = 'Schema copied to clipboard';
+        notice.className = 'contextualwp-copy-notice contextualwp-copy-success';
+        notice.style.display = 'inline-block';
+
+        // Re-enable button
+        button.disabled = false;
+        button.textContent = originalText;
+
+        // Hide notice after 3 seconds
+        setTimeout(function() {
+            notice.style.display = 'none';
+        }, 3000);
+    }
+
+    /**
+     * Fallback copy method for older browsers
+     */
+    function fallbackCopyToClipboard(text, textarea) {
+        if (!textarea) {
+            return;
+        }
+
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '0';
+        textarea.style.top = '0';
+        textarea.style.opacity = '0';
+        textarea.focus();
+        textarea.select();
+
+        try {
+            const successful = document.execCommand('copy');
+            if (!successful) {
+                throw new Error('Copy command failed');
+            }
+        } catch (err) {
+            throw new Error('Fallback copy failed: ' + err.message);
+        } finally {
+            textarea.style.position = 'absolute';
+            textarea.style.left = '-9999px';
         }
     }
 
