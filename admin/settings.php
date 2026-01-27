@@ -329,7 +329,7 @@ class ContextualWP_Admin_Settings {
         echo '<input type="checkbox" name="contextualwp_settings[smart_model_selection]" value="1" ' . checked( $value, true, false ) . ' />';
         echo ' ' . esc_html__( 'Automatically select the most efficient model based on prompt length and complexity', 'contextualwp' );
         echo '</label>';
-        echo '<p class="description">' . esc_html__( 'Automatically selects 4o-mini, 4o, 4.1 or Haiku, Sonnet, Opus depending on prompt size and complexity. Only models from your selected provider will be used.', 'contextualwp' ) . '</p>';
+        echo '<p class="description">' . esc_html__( 'Automatically selects 5-nano, 5-mini, 5.2 (OpenAI) or Haiku/Sonnet/Opus 4.5 (Claude) or Mistral Small/Medium/Large 3 depending on prompt size and complexity. Only models from your selected provider will be used.', 'contextualwp' ) . '</p>';
         echo '</div>';
     }
 

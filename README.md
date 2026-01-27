@@ -55,9 +55,9 @@ curl -X POST "https://your-site.test/wp-json/contextualwp/v1/generate_context" \
   - **AI Provider**: OpenAI, Claude, or Mistral
   - **API Key**: Your provider's API key (never exposed in API)
   - **Model**: Automatically filtered based on selected provider
-    - OpenAI: gpt-4o-mini, gpt-4o, gpt-4.1
-    - Claude: claude-3-haiku, claude-3.5-sonnet, claude-3.5-opus
-    - Mistral: mistral-tiny, mistral-small, mistral-large
+    - OpenAI: gpt-5-nano, gpt-5-mini, gpt-5.2
+    - Claude: claude-haiku-4-5, claude-sonnet-4-5, claude-opus-4-5
+    - Mistral: mistral-small-2506, mistral-medium-2508, mistral-large-2512
   - **Advanced Settings**: Max tokens (default: 1024) and temperature (default: 1.0)
 
 ## Extensibility
@@ -152,7 +152,7 @@ add_filter('contextualwp_ai_response', function($response, $provider, $settings,
 {
   "plugin": {
     "name": "ContextualWP",
-    "version": "0.6.0"
+    "version": "0.6.1"
   },
   "site": {
     "home_url": "https://example.com",
@@ -230,15 +230,15 @@ add_filter('contextualwp_ai_response', function($response, $provider, $settings,
 ## Supported AI Providers
 
 ### OpenAI
-- Models: gpt-4o-mini, gpt-4o, gpt-4.1
+- Models: gpt-5-nano, gpt-5-mini, gpt-5.2
 - Endpoint: https://api.openai.com/v1/chat/completions
 
 ### Claude (Anthropic)
-- Models: claude-3-haiku, claude-3.5-sonnet, claude-3.5-opus
+- Models: claude-haiku-4-5, claude-sonnet-4-5, claude-opus-4-5
 - Endpoint: https://api.anthropic.com/v1/messages
 
 ### Mistral
-- Models: mistral-tiny, mistral-small, mistral-large
+- Models: mistral-small-2506 (Small 3.2), mistral-medium-2508 (Medium 3.1), mistral-large-2512 (Large 3)
 - Endpoint: https://api.mistral.ai/v1/chat/completions
 
 ### Custom Providers

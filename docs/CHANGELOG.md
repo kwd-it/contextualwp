@@ -5,6 +5,14 @@ All notable changes to ContextualWP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] – 2025-01-27
+
+### Changed
+- **AI model catalog**: Updated built-in model mappings to current offerings:
+  - OpenAI: gpt-4o-mini / 4o / 4.1 → gpt-5-nano, gpt-5-mini, gpt-5.2
+  - Claude: claude-3-haiku / 3.5-sonnet / 3.5-opus → claude-haiku-4-5, claude-sonnet-4-5, claude-opus-4-5
+  - Mistral: mistral-tiny / small / large → mistral-small-2506, mistral-medium-2508, mistral-large-2512 (Small/Medium/Large 3)
+
 ## [0.6.0] – 2026-01-26
 
 ### Added

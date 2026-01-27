@@ -39,19 +39,19 @@ class Smart_Model_Selector {
      */
     private static $model_mapping = [
         'openai' => [
-            'nano'  => 'gpt-4o-mini',
-            'mini'  => 'gpt-4o',
-            'large' => 'gpt-4.1',
+            'nano'  => 'gpt-5-nano',
+            'mini'  => 'gpt-5-mini',
+            'large' => 'gpt-5.2',
         ],
         'claude' => [
-            'nano'  => 'claude-3-haiku',
-            'mini'  => 'claude-3.5-sonnet',
-            'large' => 'claude-3.5-opus',
+            'nano'  => 'claude-haiku-4-5',
+            'mini'  => 'claude-sonnet-4-5',
+            'large' => 'claude-opus-4-5',
         ],
         'mistral' => [
-            'nano'  => 'mistral-tiny',
-            'mini'  => 'mistral-small',
-            'large' => 'mistral-large',
+            'nano'  => 'mistral-small-2506',
+            'mini'  => 'mistral-medium-2508',
+            'large' => 'mistral-large-2512',
         ],
     ];
 

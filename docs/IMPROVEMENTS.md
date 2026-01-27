@@ -28,7 +28,7 @@
 - [ ] Documentation improvements (examples, troubleshooting)
   - Check README.md for completeness.
 - [x] Use the right model for each request to reduce costs
-  - Implemented via Smart Model Selector. Automatically selects optimal model (4o-mini, 4o, 4.1, Haiku, Sonnet, Opus) based on prompt size and complexity.
+  - Implemented via Smart Model Selector. Automatically selects optimal model (5-nano, 5-mini, 5.2 / Haiku/Sonnet/Opus 4.5 / Mistral Small/Medium/Large 3) based on prompt size and complexity.
 
 ## Suggestions / Backlog
 - Add a provider class/interface for easier extension
