@@ -431,6 +431,7 @@ class Generate_Context {
 
     /**
      * Extract post type slug from prompt when asking for ACF (e.g. "ACF for plots", "field groups for post type developments").
+     * Handles synonyms like "plot"/"plots", "Plot CPT", etc.
      *
      * @param string $prompt User prompt.
      * @param array  $custom_pt_slugs Known custom post type slugs.
@@ -441,17 +442,58 @@ class Generate_Context {
             return null;
         }
         $lower = strtolower( trim( $prompt ) );
+        
+        // Build a map of slugs to their singular/plural variants
+        $slug_variants = [];
         foreach ( $custom_pt_slugs as $slug ) {
             if ( $slug === '' ) {
                 continue;
             }
-            if ( preg_match( '/\bfor\s+(?:post\s+type\s+)?' . preg_quote( $slug, '/' ) . '\b/i', $lower ) ) {
-                return $slug;
+            $variants = [ $slug ];
+            // Handle common pluralization patterns
+            if ( substr( $slug, -1 ) === 's' ) {
+                $variants[] = substr( $slug, 0, -1 ); // "plots" -> "plot"
+            } else {
+                $variants[] = $slug . 's'; // "plot" -> "plots"
             }
-            if ( preg_match( '/\b' . preg_quote( $slug, '/' ) . '\b.*\b(?:acf|field\s+group|fields)\b/i', $lower ) ) {
-                return $slug;
+            // Also add with "cpt" suffix/prefix variations
+            $variants[] = $slug . ' cpt';
+            $variants[] = $slug . ' post type';
+            $variants[] = 'post type ' . $slug;
+            $slug_variants[ $slug ] = $variants;
+        }
+        
+        // Check for patterns like "ACF assigned to <post type>", "ACF for <post type>", etc.
+        foreach ( $slug_variants as $slug => $variants ) {
+            foreach ( $variants as $variant ) {
+                $escaped = preg_quote( $variant, '/' );
+                // Pattern: "ACF assigned to plots", "assigned to plot cpt"
+                if ( preg_match( '/\b(?:acf|field\s+group|field\s+groups|fields)\s+(?:assigned\s+to|for)\s+(?:post\s+type\s+)?' . $escaped . '\b/i', $lower ) ) {
+                    return $slug;
+                }
+                // Pattern: "for plots", "for plot cpt"
+                if ( preg_match( '/\bfor\s+(?:post\s+type\s+)?' . $escaped . '\b/i', $lower ) ) {
+                    return $slug;
+                }
+                // Pattern: "plots ACF", "plot field groups"
+                if ( preg_match( '/\b' . $escaped . '\s+(?:cpt\s+)?(?:acf|field\s+group|field\s+groups|fields)\b/i', $lower ) ) {
+                    return $slug;
+                }
+                // Pattern: "ACF plots", "field groups plot"
+                if ( preg_match( '/\b(?:acf|field\s+group|field\s+groups|fields)\s+' . $escaped . '\b/i', $lower ) ) {
+                    return $slug;
+                }
+                // Pattern: "Show ACF field groups for plots"
+                if ( preg_match( '/\bshow\s+(?:acf\s+)?(?:field\s+group|field\s+groups|fields)\s+for\s+(?:post\s+type\s+)?' . $escaped . '\b/i', $lower ) ) {
+                    return $slug;
+                }
+                // Pattern: "List all acf assigned to plot cpt"
+                if ( preg_match( '/\blist\s+(?:all\s+)?(?:acf|field\s+group|field\s+groups|fields)\s+(?:assigned\s+to|for)\s+(?:post\s+type\s+)?' . $escaped . '\b/i', $lower ) ) {
+                    return $slug;
+                }
             }
         }
+        
         return null;
     }
 
@@ -486,21 +528,100 @@ class Generate_Context {
     }
 
     /**
+     * Check if prompt requests ACF blocks to be included.
+     *
+     * @param string $prompt User prompt.
+     * @return bool
+     */
+    private function blocks_requested( $prompt ) {
+        if ( ! is_string( $prompt ) || trim( $prompt ) === '' ) {
+            return false;
+        }
+        $lower = strtolower( trim( $prompt ) );
+        $keywords = [ 'block', 'blocks', 'include block', 'include blocks', 'and include', 'with blocks' ];
+        foreach ( $keywords as $keyword ) {
+            if ( strpos( $lower, $keyword ) !== false ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if an ACF field group is a block group (location param == "block").
+     *
+     * @param array $group ACF field group.
+     * @param string $post_type_slug Post type slug to match block name against.
+     * @return bool
+     */
+    private function is_block_group( array $group, $post_type_slug = '' ) {
+        $location = isset( $group['location'] ) ? $group['location'] : [];
+        if ( ! is_array( $location ) ) {
+            return false;
+        }
+        foreach ( $location as $group_rules ) {
+            if ( ! is_array( $group_rules ) ) {
+                continue;
+            }
+            foreach ( $group_rules as $rule ) {
+                if ( ! is_array( $rule ) ) {
+                    continue;
+                }
+                $param = isset( $rule['param'] ) ? $rule['param'] : '';
+                if ( $param === 'block' ) {
+                    // If post_type_slug provided, check if block name matches
+                    if ( $post_type_slug !== '' ) {
+                        $value = isset( $rule['value'] ) ? $rule['value'] : '';
+                        $title = isset( $group['title'] ) ? strtolower( $group['title'] ) : '';
+                        // Check if block name contains post type slug or title starts with "Block: <PostType>"
+                        if ( is_string( $value ) && ( strpos( strtolower( $value ), $post_type_slug . '-' ) === 0 || strpos( strtolower( $value ), $post_type_slug ) !== false ) ) {
+                            return true;
+                        }
+                        if ( strpos( $title, 'block:' ) === 0 && strpos( $title, $post_type_slug ) !== false ) {
+                            return true;
+                        }
+                    }
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Filter ACF field groups to those that apply to the given post type.
+     * Optionally includes or excludes block groups.
      *
      * @param array  $groups Schema acf_field_groups.
      * @param string $post_type Post type slug.
+     * @param bool   $include_blocks Whether to include block groups.
      * @return array Filtered groups with 'field_count' key added.
      */
-    private function acf_groups_for_post_type( array $groups, $post_type ) {
+    private function acf_groups_for_post_type( array $groups, $post_type, $include_blocks = false ) {
         $filtered = [];
         foreach ( $groups as $g ) {
             $loc = isset( $g['location'] ) ? $g['location'] : [];
+            $is_block = $this->is_block_group( $g, '' ); // Check if it's any block group
+            
+            // Skip block groups unless explicitly requested
+            if ( $is_block && ! $include_blocks ) {
+                continue;
+            }
+            
+            // Check if this is a post_type-targeted group
             $pts = $this->post_types_from_acf_location( $loc );
             if ( in_array( $post_type, $pts, true ) ) {
+                // This group targets the post type
                 $count = isset( $g['fields'] ) && is_array( $g['fields'] ) ? count( $g['fields'] ) : 0;
                 $g['field_count'] = $count;
                 $filtered[] = $g;
+            } elseif ( $is_block && $include_blocks ) {
+                // Check if block group matches the post type (e.g., "plot-*" blocks or "Block: Plot")
+                if ( $this->is_block_group( $g, $post_type ) ) {
+                    $count = isset( $g['fields'] ) && is_array( $g['fields'] ) ? count( $g['fields'] ) : 0;
+                    $g['field_count'] = $count;
+                    $filtered[] = $g;
+                }
             }
         }
         usort( $filtered, function ( $a, $b ) {
@@ -572,22 +693,93 @@ class Generate_Context {
         if ( $show_acf ) {
             $requested_pt = $this->extract_requested_post_type_for_acf( $prompt, $custom_pt_slugs );
             if ( $requested_pt !== null ) {
-                $for_pt = $this->acf_groups_for_post_type( $acf_groups, $requested_pt );
-                $top = array_slice( $for_pt, 0, 10 );
-                $n = count( $top );
-                $lines[] = '';
-                $lines[] = 'ACF field groups for \'' . $requested_pt . '\' (top ' . $n . ' by field count)';
-                $lines[] = '';
-                if ( ! empty( $top ) ) {
-                    foreach ( $top as $g ) {
-                        $title = isset( $g['title'] ) ? $g['title'] : '';
-                        $n = isset( $g['field_count'] ) ? (int) $g['field_count'] : 0;
-                        $lines[] = '- ' . $title . ' — ' . $n . ' field(s)';
+                // Verify the post type exists
+                $pt_exists = false;
+                foreach ( $all_pt as $pt ) {
+                    if ( isset( $pt['slug'] ) && $pt['slug'] === $requested_pt ) {
+                        $pt_exists = true;
+                        break;
                     }
+                }
+                
+                if ( ! $pt_exists ) {
+                    // Unknown post type - return helpful error (skip generic overview)
+                    $available_pts = array_map( function ( $p ) {
+                        return isset( $p['slug'] ) ? $p['slug'] : '';
+                    }, $all_pt );
+                    $available_pts = array_filter( $available_pts );
+                    $lines = []; // Reset lines - skip CPTs/taxonomies when post type is specified (even if invalid)
+                    $lines[] = 'Error: Post type "' . esc_html( $requested_pt ) . '" not found.';
+                    $lines[] = '';
+                    $lines[] = 'Available post types: ' . implode( ', ', $available_pts );
+                    $lines[] = '';
+                    $gen = isset( $schema['generated_at'] ) ? $schema['generated_at'] : '-';
+                    $lines[] = 'Source: schema (generated at ' . $gen . ').';
                 } else {
-                    $lines[] = '- No groups target this post type.';
+                    // Post type exists - show detailed ACF groups
+                    $include_blocks = $this->blocks_requested( $prompt );
+                    $for_pt = $this->acf_groups_for_post_type( $acf_groups, $requested_pt, $include_blocks );
+                    
+                    $lines = []; // Reset lines - skip CPTs/taxonomies when post type is specified
+                    $lines[] = 'ACF Field Groups for "' . esc_html( $requested_pt ) . '"';
+                    $lines[] = '';
+                    
+                    if ( ! empty( $for_pt ) ) {
+                        foreach ( $for_pt as $g ) {
+                            $title = isset( $g['title'] ) ? $g['title'] : '(unnamed)';
+                            $key = isset( $g['key'] ) ? $g['key'] : '';
+                            $field_count = isset( $g['field_count'] ) ? (int) $g['field_count'] : 0;
+                            $fields = isset( $g['fields'] ) && is_array( $g['fields'] ) ? $g['fields'] : [];
+                            
+                            $lines[] = '### ' . esc_html( $title );
+                            if ( $key !== '' ) {
+                                $lines[] = 'Group Key: ' . esc_html( $key );
+                            }
+                            $lines[] = 'Field Count: ' . $field_count;
+                            $lines[] = '';
+                            
+                            if ( ! empty( $fields ) ) {
+                                $lines[] = 'Fields:';
+                                foreach ( $fields as $field ) {
+                                    $field_label = isset( $field['label'] ) ? $field['label'] : '';
+                                    $field_name = isset( $field['name'] ) ? $field['name'] : '';
+                                    $field_key = isset( $field['key'] ) ? $field['key'] : '';
+                                    $field_type = isset( $field['type'] ) ? $field['type'] : '';
+                                    
+                                    $field_line = '  - ' . esc_html( $field_label );
+                                    if ( $field_name !== '' && $field_name !== $field_label ) {
+                                        $field_line .= ' (' . esc_html( $field_name ) . ')';
+                                    }
+                                    $field_line .= ' [' . esc_html( $field_type ) . ']';
+                                    if ( $field_key !== '' ) {
+                                        $field_line .= ' — Key: ' . esc_html( $field_key );
+                                    }
+                                    $lines[] = $field_line;
+                                }
+                            } else {
+                                $lines[] = '  (No fields)';
+                            }
+                            $lines[] = '';
+                        }
+                    } else {
+                        $lines[] = 'No ACF field groups found for this post type.';
+                        if ( ! $include_blocks ) {
+                            $lines[] = '';
+                            $lines[] = 'Note: Block groups are excluded. Include them by asking for "ACF blocks for ' . esc_html( $requested_pt ) . '".';
+                        }
+                    }
+                    
+                    if ( ! $include_blocks ) {
+                        $lines[] = '';
+                        $lines[] = 'Blocks excluded unless requested.';
+                    }
+                    
+                    $lines[] = '';
+                    $gen = isset( $schema['generated_at'] ) ? $schema['generated_at'] : '-';
+                    $lines[] = 'Source: schema (generated at ' . $gen . ').';
                 }
             } else {
+                // No post type specified - show generic overview
                 $with_count = [];
                 foreach ( $acf_groups as $g ) {
                     $c = isset( $g['fields'] ) && is_array( $g['fields'] ) ? count( $g['fields'] ) : 0;

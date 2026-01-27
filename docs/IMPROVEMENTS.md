@@ -38,6 +38,72 @@
 - Add a UI for viewing recent AI requests/responses (admin only)
 - Add support for streaming/partial AI responses (where provider supports)
 
+## Recent Improvements
+
+### Intent-Aware ACF Post Type Queries (v0.6.2)
+
+**Problem:** When users asked for "ACF assigned to <post type>", the system would return a generic overview (CPTs/taxonomies/top 5 groups) and ask the user to specify a post type even when they already did.
+
+**Solution:** Implemented intent-aware filtering that:
+- Detects when users request ACF field groups for a specific post type
+- Resolves post type slugs from various input patterns and synonyms (e.g., "plot", "plots", "plot cpt")
+- Filters ACF field groups to only those targeting the requested post type
+- Provides detailed field information (label, name, key, type) instead of just counts
+- Skips generic overview sections when a post type is detected
+- Handles unknown post types with helpful error messages listing available types
+- Optionally includes block groups when explicitly requested
+
+**Supported Query Patterns:**
+- "List all acf assigned to plot cpt"
+- "ACF for plots"
+- "Show ACF field groups for plots"
+- "acf assigned to post type plots"
+- "ACF blocks for plots" (includes block groups)
+- "ACF for plots and include blocks"
+
+**Output Format:**
+When a post type is detected, the response includes:
+- Group title and key
+- Field count
+- Complete field list with: label, name, key, type
+- Note about block exclusion (unless blocks are requested)
+
+**Examples:**
+
+Query: `"List all acf assigned to plot cpt"`
+
+Response:
+```
+ACF Field Groups for "plots"
+
+### Plot Details
+Group Key: group_plot_details
+Field Count: 5
+
+Fields:
+  - Plot Name (plot_name) [text] — Key: field_plot_name
+  - Plot Size (plot_size) [number] — Key: field_plot_size
+  - Location (location) [google_map] — Key: field_location
+  - Description (description) [textarea] — Key: field_description
+  - Images (images) [gallery] — Key: field_images
+
+Blocks excluded unless requested.
+```
+
+**Error Handling:**
+If an unknown post type is requested, the response lists all available post types:
+```
+Error: Post type "unknown_type" not found.
+
+Available post types: plots, developments, pages, posts
+```
+
+**Technical Details:**
+- Uses improved pattern matching with support for singular/plural variants
+- Filters ACF location rules to find groups with `param == "post_type"` and `value == "<slug>"`
+- Block groups are identified by `param == "block"` and optionally matched by post type slug in block name or title
+- All filtering happens server-side without AI calls for deterministic, fast responses
+
 ## Design Decisions
 
 ### YAML Support Removal (v0.3.9)
