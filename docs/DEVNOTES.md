@@ -13,7 +13,6 @@
 - [ ] `composer.json` version field (keep synchronized with the plugin version)
 - [ ] `README.md` (only if version is referenced)
 - [ ] `CHANGELOG.md`
-- [ ] `IMPROVEMENTS.md` (if used)
 - [ ] Remove any dev/test files (`test-settings.php`, etc)
 
 ## 🧪 Testing

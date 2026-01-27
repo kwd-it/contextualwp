@@ -152,7 +152,7 @@ add_filter('contextualwp_ai_response', function($response, $provider, $settings,
 {
   "plugin": {
     "name": "ContextualWP",
-    "version": "0.6.1"
+    "version": "0.6.2"
   },
   "site": {
     "home_url": "https://example.com",
@@ -263,6 +263,5 @@ return `0` to disable caching.
 ## Documentation
 
 - [CHANGELOG.md](docs/CHANGELOG.md) - Complete list of changes and version history
-- [IMPROVEMENTS.md](docs/IMPROVEMENTS.md) - Planned improvements and feature roadmap
 - [DEVNOTES.md](docs/DEVNOTES.md) - Development notes and technical details
 

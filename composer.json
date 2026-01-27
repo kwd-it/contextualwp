@@ -1,7 +1,7 @@
 {
     "name": "kwd-it/contextualwp",
     "description": "ContextualWP – MCP-compatible WordPress plugin for exposing context endpoints.",
-    "version": "0.6.1",
+    "version": "0.6.2",
     "type": "wordpress-plugin",
     "license": "MIT",
     "keywords": [
