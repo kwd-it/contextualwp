@@ -361,7 +361,97 @@ class Generate_Context {
     }
 
     /**
-     * Handle structure questions: fetch schema, build plain-text answer, return chat-shaped response.
+     * Intent constants for schema-based structure answers.
+     */
+    const INTENT_ACF_BY_POST_TYPE   = 'acf_by_post_type';
+    const INTENT_GENERIC_OVERVIEW  = 'generic_schema_overview';
+    const INTENT_UNKNOWN_POST_TYPE = 'unknown_post_type';
+
+    /**
+     * Detect schema answer intent from prompt and schema.
+     *
+     * @param string $prompt User prompt.
+     * @param array  $schema Schema from Schema::get_schema_data().
+     * @return array { intent: string, post_type_slug: string|null, requested_slug: string|null }
+     */
+    private function get_schema_intent( $prompt, array $schema ) {
+        $all_pt = isset( $schema['post_types'] ) && is_array( $schema['post_types'] ) ? $schema['post_types'] : [];
+        $all_slugs = array_filter( array_map( function ( $p ) {
+            return isset( $p['slug'] ) ? $p['slug'] : '';
+        }, $all_pt ) );
+        $custom_pt_slugs = array_values( array_filter( $all_slugs, function ( $s ) {
+            return ! in_array( $s, [ 'post', 'page', 'attachment' ], true );
+        } ) );
+
+        if ( $this->acf_requested( $prompt ) ) {
+            $resolved = $this->extract_requested_post_type_for_acf( $prompt, array_values( $all_slugs ) );
+            if ( $resolved !== null ) {
+                return [
+                    'intent'          => self::INTENT_ACF_BY_POST_TYPE,
+                    'post_type_slug'  => $resolved,
+                    'requested_slug'  => null,
+                ];
+            }
+            $candidate = $this->extract_candidate_post_type_from_prompt( $prompt );
+            if ( $candidate !== null && $candidate !== '' ) {
+                return [
+                    'intent'          => self::INTENT_UNKNOWN_POST_TYPE,
+                    'post_type_slug'  => null,
+                    'requested_slug'  => $candidate,
+                ];
+            }
+        }
+
+        return [
+            'intent'          => self::INTENT_GENERIC_OVERVIEW,
+            'post_type_slug'  => null,
+            'requested_slug'  => null,
+        ];
+    }
+
+    /**
+     * Extract a candidate post type phrase from prompt (e.g. "ACF for plotz" → "plotz").
+     * Used to detect unknown post type when resolved slug is null.
+     *
+     * @param string $prompt User prompt.
+     * @return string|null
+     */
+    private function extract_candidate_post_type_from_prompt( $prompt ) {
+        if ( ! is_string( $prompt ) || trim( $prompt ) === '' ) {
+            return null;
+        }
+        $lower = strtolower( trim( $prompt ) );
+        $stop_re = $this->get_stopwords_regex();
+        $stopwords = array_fill_keys( $this->get_post_type_stopwords(), true );
+        // Allow optional stopwords between preposition and slug: "assigned to the plot CPT"
+        if ( preg_match( '/\b(?:for|assigned\s+to)\s+' . $stop_re . '(?:post\s+type\s+)?([a-z0-9_-]+)\b/i', $lower, $m ) ) {
+            $candidate = $m[1];
+            if ( ! isset( $stopwords[ $candidate ] ) ) {
+                return $candidate;
+            }
+        }
+        if ( preg_match( '/\b(?:acf|field\s+groups?|fields)\s+([a-z0-9_-]+)\b/i', $lower, $m ) ) {
+            $candidate = $m[1];
+            if ( ! isset( $stopwords[ $candidate ] ) ) {
+                return $candidate;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Build the single schema source footer line. Call once per response to avoid duplication.
+     *
+     * @param array $schema Schema with generated_at.
+     * @return string
+     */
+    private function build_schema_footer( array $schema ) {
+        $gen = isset( $schema['generated_at'] ) ? $schema['generated_at'] : '-';
+        return 'Source: schema (generated at ' . $gen . ').';
+    }
+
+    /**
+     * Handle structure questions: fetch schema, route by intent, build answer, return chat-shaped response.
      * Reuses schema cache/TTL. No AI call.
      *
      * @param \WP_REST_Request $request
@@ -430,8 +520,30 @@ class Generate_Context {
     }
 
     /**
+     * Common stopwords to ignore when extracting post type from prompt (e.g. "ACF assigned to the plot CPT").
+     *
+     * @return array
+     */
+    private function get_post_type_stopwords() {
+        return [ 'the', 'a', 'an', 'to', 'for', 'of', 'in', 'on', 'at', 'by', 'with' ];
+    }
+
+    /**
+     * Regex fragment for optional stopwords before a post type mention (e.g. "the ", "a ").
+     *
+     * @return string
+     */
+    private function get_stopwords_regex() {
+        $stop = $this->get_post_type_stopwords();
+        $parts = array_map( function ( $w ) {
+            return preg_quote( $w, '/' ) . '\s+';
+        }, $stop );
+        return '(?:' . implode( '|', $parts ) . ')*';
+    }
+
+    /**
      * Extract post type slug from prompt when asking for ACF (e.g. "ACF for plots", "field groups for post type developments").
-     * Handles synonyms like "plot"/"plots", "Plot CPT", etc.
+     * Ignores stopwords (the, a, an, etc.). Prefers exact slug match. Handles singular/plural (plot -> plots).
      *
      * @param string $prompt User prompt.
      * @param array  $custom_pt_slugs Known custom post type slugs.
@@ -442,58 +554,52 @@ class Generate_Context {
             return null;
         }
         $lower = strtolower( trim( $prompt ) );
-        
-        // Build a map of slugs to their singular/plural variants
+        $stop_re = $this->get_stopwords_regex();
+
+        // Build a map of slugs to their variants: exact slug first, then singular/plural, then label-style.
         $slug_variants = [];
         foreach ( $custom_pt_slugs as $slug ) {
             if ( $slug === '' ) {
                 continue;
             }
-            $variants = [ $slug ];
-            // Handle common pluralization patterns
+            $variants = [ $slug ]; // Prefer exact match
             if ( substr( $slug, -1 ) === 's' ) {
                 $variants[] = substr( $slug, 0, -1 ); // "plots" -> "plot"
             } else {
                 $variants[] = $slug . 's'; // "plot" -> "plots"
             }
-            // Also add with "cpt" suffix/prefix variations
             $variants[] = $slug . ' cpt';
             $variants[] = $slug . ' post type';
             $variants[] = 'post type ' . $slug;
             $slug_variants[ $slug ] = $variants;
         }
-        
-        // Check for patterns like "ACF assigned to <post type>", "ACF for <post type>", etc.
+
         foreach ( $slug_variants as $slug => $variants ) {
             foreach ( $variants as $variant ) {
                 $escaped = preg_quote( $variant, '/' );
-                // Pattern: "ACF assigned to plots", "assigned to plot cpt"
-                if ( preg_match( '/\b(?:acf|field\s+group|field\s+groups|fields)\s+(?:assigned\s+to|for)\s+(?:post\s+type\s+)?' . $escaped . '\b/i', $lower ) ) {
+                // Optional stopwords between preposition and slug: "assigned to the plot CPT"
+                $re = $stop_re . '(?:post\s+type\s+)?' . $escaped . '\b';
+                if ( preg_match( '/\b(?:acf|field\s+group|field\s+groups|fields)\s+(?:assigned\s+to|for)\s+' . $re . '/i', $lower ) ) {
                     return $slug;
                 }
-                // Pattern: "for plots", "for plot cpt"
-                if ( preg_match( '/\bfor\s+(?:post\s+type\s+)?' . $escaped . '\b/i', $lower ) ) {
+                if ( preg_match( '/\bfor\s+' . $re . '/i', $lower ) ) {
                     return $slug;
                 }
-                // Pattern: "plots ACF", "plot field groups"
                 if ( preg_match( '/\b' . $escaped . '\s+(?:cpt\s+)?(?:acf|field\s+group|field\s+groups|fields)\b/i', $lower ) ) {
                     return $slug;
                 }
-                // Pattern: "ACF plots", "field groups plot"
                 if ( preg_match( '/\b(?:acf|field\s+group|field\s+groups|fields)\s+' . $escaped . '\b/i', $lower ) ) {
                     return $slug;
                 }
-                // Pattern: "Show ACF field groups for plots"
-                if ( preg_match( '/\bshow\s+(?:acf\s+)?(?:field\s+group|field\s+groups|fields)\s+for\s+(?:post\s+type\s+)?' . $escaped . '\b/i', $lower ) ) {
+                if ( preg_match( '/\bshow\s+(?:acf\s+)?(?:field\s+group|field\s+groups|fields)\s+for\s+' . $re . '/i', $lower ) ) {
                     return $slug;
                 }
-                // Pattern: "List all acf assigned to plot cpt"
-                if ( preg_match( '/\blist\s+(?:all\s+)?(?:acf|field\s+group|field\s+groups|fields)\s+(?:assigned\s+to|for)\s+(?:post\s+type\s+)?' . $escaped . '\b/i', $lower ) ) {
+                if ( preg_match( '/\blist\s+(?:all\s+)?(?:acf|field\s+group|field\s+groups|fields)\s+(?:assigned\s+to|for)\s+' . $re . '/i', $lower ) ) {
                     return $slug;
                 }
             }
         }
-        
+
         return null;
     }
 
@@ -631,18 +737,121 @@ class Generate_Context {
     }
 
     /**
-     * Build short plain-text structure answer from schema (custom PTs, custom taxonomies, optional ACF).
-     * Format: headings, bullet lists. Excludes built-in PTs/taxonomies unless explicitly requested.
-     * ACF included only when acf_requested(); by-PT or top summary + instruction.
+     * Build short plain-text structure answer from schema. Routes by intent; appends schema footer once.
      *
      * @param array  $schema From Schema::get_schema_data().
      * @param string $prompt User prompt.
      * @return string
      */
     private function build_structure_answer( array $schema, $prompt = '' ) {
+        $intent_data = $this->get_schema_intent( $prompt, $schema );
+        switch ( $intent_data['intent'] ) {
+            case self::INTENT_ACF_BY_POST_TYPE:
+                $body = $this->format_intent_acf_by_post_type( $schema, $prompt, $intent_data['post_type_slug'] );
+                break;
+            case self::INTENT_UNKNOWN_POST_TYPE:
+                $body = $this->format_intent_unknown_post_type( $schema, $intent_data['requested_slug'] );
+                break;
+            default:
+                $body = $this->format_intent_generic_overview( $schema, $prompt );
+        }
+        return rtrim( $body ) . "\n\n" . $this->build_schema_footer( $schema );
+    }
+
+    /**
+     * Format body for ACF-by-post-type intent. Only groups with location param=post_type value=slug; blocks excluded unless requested.
+     *
+     * @param array  $schema Schema data.
+     * @param string $prompt User prompt.
+     * @param string $post_type_slug Resolved post type slug.
+     * @return string Body only (no footer).
+     */
+    private function format_intent_acf_by_post_type( array $schema, $prompt, $post_type_slug ) {
+        $acf_groups = isset( $schema['acf_field_groups'] ) && is_array( $schema['acf_field_groups'] ) ? $schema['acf_field_groups'] : [];
+        $include_blocks = $this->blocks_requested( $prompt );
+        $for_pt = $this->acf_groups_for_post_type( $acf_groups, $post_type_slug, $include_blocks );
+
+        $lines = [];
+        $lines[] = 'ACF Field Groups for "' . esc_html( $post_type_slug ) . '"';
+        $lines[] = '';
+
+        if ( ! empty( $for_pt ) ) {
+            foreach ( $for_pt as $g ) {
+                $title = isset( $g['title'] ) ? $g['title'] : '(unnamed)';
+                $key = isset( $g['key'] ) ? $g['key'] : '';
+                $field_count = isset( $g['field_count'] ) ? (int) $g['field_count'] : 0;
+                $fields = isset( $g['fields'] ) && is_array( $g['fields'] ) ? $g['fields'] : [];
+                $lines[] = '### ' . esc_html( $title );
+                if ( $key !== '' ) {
+                    $lines[] = 'Group Key: ' . esc_html( $key );
+                }
+                $lines[] = 'Field Count: ' . $field_count;
+                $lines[] = '';
+                if ( ! empty( $fields ) ) {
+                    $lines[] = 'Fields:';
+                    foreach ( $fields as $field ) {
+                        $field_label = isset( $field['label'] ) ? $field['label'] : '';
+                        $field_name = isset( $field['name'] ) ? $field['name'] : '';
+                        $field_key = isset( $field['key'] ) ? $field['key'] : '';
+                        $field_type = isset( $field['type'] ) ? $field['type'] : '';
+                        $field_line = '  - ' . esc_html( $field_label );
+                        if ( $field_name !== '' && $field_name !== $field_label ) {
+                            $field_line .= ' (' . esc_html( $field_name ) . ')';
+                        }
+                        $field_line .= ' [' . esc_html( $field_type ) . ']';
+                        if ( $field_key !== '' ) {
+                            $field_line .= ' — Key: ' . esc_html( $field_key );
+                        }
+                        $lines[] = $field_line;
+                    }
+                } else {
+                    $lines[] = '  (No fields)';
+                }
+                $lines[] = '';
+            }
+        } else {
+            $lines[] = 'No ACF field groups found for this post type.';
+            if ( ! $include_blocks ) {
+                $lines[] = '';
+                $lines[] = 'Note: Block groups are excluded. Include them by asking for "ACF blocks for ' . esc_html( $post_type_slug ) . '".';
+            }
+        }
+        if ( ! $include_blocks ) {
+            $lines[] = '';
+            $lines[] = 'Blocks excluded unless requested.';
+        }
+        return implode( "\n", $lines );
+    }
+
+    /**
+     * Format body for unknown post type intent: helpful message + list of available post types from schema.
+     *
+     * @param array       $schema Schema data.
+     * @param string|null $requested_slug Unresolved slug from prompt (e.g. "plotz").
+     * @return string Body only (no footer).
+     */
+    private function format_intent_unknown_post_type( array $schema, $requested_slug ) {
+        $all_pt = isset( $schema['post_types'] ) && is_array( $schema['post_types'] ) ? $schema['post_types'] : [];
+        $available_pts = array_filter( array_map( function ( $p ) {
+            return isset( $p['slug'] ) ? $p['slug'] : '';
+        }, $all_pt ) );
+        $lines = [];
+        $lines[] = 'Post type "' . esc_html( (string) $requested_slug ) . '" could not be found.';
+        $lines[] = '';
+        $lines[] = 'Available post types: ' . implode( ', ', $available_pts );
+        return implode( "\n", $lines );
+    }
+
+    /**
+     * Format body for generic schema overview: CPTs, taxonomies, optional ACF top-5 when ACF requested.
+     *
+     * @param array  $schema Schema data.
+     * @param string $prompt User prompt.
+     * @return string Body only (no footer).
+     */
+    private function format_intent_generic_overview( array $schema, $prompt = '' ) {
         $builtin_pt = [ 'post', 'page', 'attachment' ];
         $builtin_tax = [ 'category', 'post_tag', 'post_format' ];
-
         $all_pt = isset( $schema['post_types'] ) && is_array( $schema['post_types'] ) ? $schema['post_types'] : [];
         $all_tax = isset( $schema['taxonomies'] ) && is_array( $schema['taxonomies'] ) ? $schema['taxonomies'] : [];
         $custom_pt = array_values( array_filter( $all_pt, function ( $p ) use ( $builtin_pt ) {
@@ -654,13 +863,7 @@ class Generate_Context {
             return $s !== '' && ! in_array( $s, $builtin_tax, true );
         } ) );
 
-        $custom_pt_slugs = array_map( function ( $p ) {
-            return isset( $p['slug'] ) ? $p['slug'] : '';
-        }, $custom_pt );
-        $custom_pt_slugs = array_filter( $custom_pt_slugs );
-
         $lines = [];
-
         $lines[] = 'Custom Post Types';
         $lines[] = '';
         if ( ! empty( $custom_pt ) ) {
@@ -672,7 +875,6 @@ class Generate_Context {
         } else {
             $lines[] = '- None.';
         }
-
         $lines[] = '';
         $lines[] = 'Custom Taxonomies';
         $lines[] = '';
@@ -689,120 +891,25 @@ class Generate_Context {
         }
 
         $acf_groups = isset( $schema['acf_field_groups'] ) && is_array( $schema['acf_field_groups'] ) ? $schema['acf_field_groups'] : [];
-        $show_acf = $this->acf_requested( $prompt ) && ! empty( $acf_groups );
-        if ( $show_acf ) {
-            $requested_pt = $this->extract_requested_post_type_for_acf( $prompt, $custom_pt_slugs );
-            if ( $requested_pt !== null ) {
-                // Verify the post type exists
-                $pt_exists = false;
-                foreach ( $all_pt as $pt ) {
-                    if ( isset( $pt['slug'] ) && $pt['slug'] === $requested_pt ) {
-                        $pt_exists = true;
-                        break;
-                    }
-                }
-                
-                if ( ! $pt_exists ) {
-                    // Unknown post type - return helpful error (skip generic overview)
-                    $available_pts = array_map( function ( $p ) {
-                        return isset( $p['slug'] ) ? $p['slug'] : '';
-                    }, $all_pt );
-                    $available_pts = array_filter( $available_pts );
-                    $lines = []; // Reset lines - skip CPTs/taxonomies when post type is specified (even if invalid)
-                    $lines[] = 'Error: Post type "' . esc_html( $requested_pt ) . '" not found.';
-                    $lines[] = '';
-                    $lines[] = 'Available post types: ' . implode( ', ', $available_pts );
-                    $lines[] = '';
-                    $gen = isset( $schema['generated_at'] ) ? $schema['generated_at'] : '-';
-                    $lines[] = 'Source: schema (generated at ' . $gen . ').';
-                } else {
-                    // Post type exists - show detailed ACF groups
-                    $include_blocks = $this->blocks_requested( $prompt );
-                    $for_pt = $this->acf_groups_for_post_type( $acf_groups, $requested_pt, $include_blocks );
-                    
-                    $lines = []; // Reset lines - skip CPTs/taxonomies when post type is specified
-                    $lines[] = 'ACF Field Groups for "' . esc_html( $requested_pt ) . '"';
-                    $lines[] = '';
-                    
-                    if ( ! empty( $for_pt ) ) {
-                        foreach ( $for_pt as $g ) {
-                            $title = isset( $g['title'] ) ? $g['title'] : '(unnamed)';
-                            $key = isset( $g['key'] ) ? $g['key'] : '';
-                            $field_count = isset( $g['field_count'] ) ? (int) $g['field_count'] : 0;
-                            $fields = isset( $g['fields'] ) && is_array( $g['fields'] ) ? $g['fields'] : [];
-                            
-                            $lines[] = '### ' . esc_html( $title );
-                            if ( $key !== '' ) {
-                                $lines[] = 'Group Key: ' . esc_html( $key );
-                            }
-                            $lines[] = 'Field Count: ' . $field_count;
-                            $lines[] = '';
-                            
-                            if ( ! empty( $fields ) ) {
-                                $lines[] = 'Fields:';
-                                foreach ( $fields as $field ) {
-                                    $field_label = isset( $field['label'] ) ? $field['label'] : '';
-                                    $field_name = isset( $field['name'] ) ? $field['name'] : '';
-                                    $field_key = isset( $field['key'] ) ? $field['key'] : '';
-                                    $field_type = isset( $field['type'] ) ? $field['type'] : '';
-                                    
-                                    $field_line = '  - ' . esc_html( $field_label );
-                                    if ( $field_name !== '' && $field_name !== $field_label ) {
-                                        $field_line .= ' (' . esc_html( $field_name ) . ')';
-                                    }
-                                    $field_line .= ' [' . esc_html( $field_type ) . ']';
-                                    if ( $field_key !== '' ) {
-                                        $field_line .= ' — Key: ' . esc_html( $field_key );
-                                    }
-                                    $lines[] = $field_line;
-                                }
-                            } else {
-                                $lines[] = '  (No fields)';
-                            }
-                            $lines[] = '';
-                        }
-                    } else {
-                        $lines[] = 'No ACF field groups found for this post type.';
-                        if ( ! $include_blocks ) {
-                            $lines[] = '';
-                            $lines[] = 'Note: Block groups are excluded. Include them by asking for "ACF blocks for ' . esc_html( $requested_pt ) . '".';
-                        }
-                    }
-                    
-                    if ( ! $include_blocks ) {
-                        $lines[] = '';
-                        $lines[] = 'Blocks excluded unless requested.';
-                    }
-                    
-                    $lines[] = '';
-                    $gen = isset( $schema['generated_at'] ) ? $schema['generated_at'] : '-';
-                    $lines[] = 'Source: schema (generated at ' . $gen . ').';
-                }
-            } else {
-                // No post type specified - show generic overview
-                $with_count = [];
-                foreach ( $acf_groups as $g ) {
-                    $c = isset( $g['fields'] ) && is_array( $g['fields'] ) ? count( $g['fields'] ) : 0;
-                    $with_count[] = [ 'title' => $g['title'] ?? '', 'field_count' => $c ];
-                }
-                usort( $with_count, function ( $a, $b ) {
-                    return $b['field_count'] - $a['field_count'];
-                } );
-                $top5 = array_slice( $with_count, 0, 5 );
-                $lines[] = '';
-                $lines[] = 'ACF field groups (top 5 by field count)';
-                $lines[] = '';
-                foreach ( $top5 as $g ) {
-                    $lines[] = '- ' . ( $g['title'] ?: '(unnamed)' ) . ' — ' . $g['field_count'] . ' field(s)';
-                }
-                $lines[] = '';
-                $lines[] = 'Specify a post type to see groups, e.g. "ACF for plots" or "Show ACF field groups for plots".';
+        if ( $this->acf_requested( $prompt ) && ! empty( $acf_groups ) ) {
+            $with_count = [];
+            foreach ( $acf_groups as $g ) {
+                $c = isset( $g['fields'] ) && is_array( $g['fields'] ) ? count( $g['fields'] ) : 0;
+                $with_count[] = [ 'title' => $g['title'] ?? '', 'field_count' => $c ];
             }
+            usort( $with_count, function ( $a, $b ) {
+                return $b['field_count'] - $a['field_count'];
+            } );
+            $top5 = array_slice( $with_count, 0, 5 );
+            $lines[] = '';
+            $lines[] = 'ACF field groups (top 5 by field count)';
+            $lines[] = '';
+            foreach ( $top5 as $g ) {
+                $lines[] = '- ' . ( $g['title'] ?: '(unnamed)' ) . ' — ' . $g['field_count'] . ' field(s)';
+            }
+            $lines[] = '';
+            $lines[] = 'Specify a post type to see groups, e.g. "ACF for plots" or "Show ACF field groups for plots".';
         }
-
-        $lines[] = '';
-        $gen = isset( $schema['generated_at'] ) ? $schema['generated_at'] : '-';
-        $lines[] = 'Source: schema (generated at ' . $gen . ').';
         return implode( "\n", $lines );
     }
 

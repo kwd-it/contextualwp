@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ContextualWP
  * Description: MCP-compatible plugin for exposing context endpoints to AI agents.
- * Version: 0.6.2
+ * Version: 0.6.3
  * Author: KWD IT
  * Author URI: https://kwd-it.co.uk
  * Text Domain: contextualwp
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants
-define( 'CONTEXTUALWP_VERSION', '0.6.2' );
+define( 'CONTEXTUALWP_VERSION', '0.6.3' );
 define( 'CONTEXTUALWP_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CONTEXTUALWP_URL', plugin_dir_url( __FILE__ ) );
 

@@ -5,6 +5,19 @@ All notable changes to ContextualWP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.3] – 2026-01-28
+
+### Added
+- **Intent router for schema-based questions**: Structure answers now route by intent instead of one generic schema summary.
+  - **ACF-by-post-type**: Queries like "ACF for plots", "List ACF assigned to plot cpt" return only field groups targeting that post type (param=post_type, value=slug); block groups excluded unless the user asks for blocks.
+  - **Generic schema overview**: Queries like "What CPTs are on this site?" or "List post types and taxonomies" return CPTs + taxonomies (and optional ACF top-5 when ACF is mentioned).
+  - **Unknown post type**: When the user asks for ACF by post type but the post type cannot be resolved, return a helpful message plus the list of available post types from the schema.
+- Golden/fixture tests for the three intents (`tests/IntentRouterTest.php`); output is stable and deterministic.
+- Single "Source: schema (generated at …)" footer per response (deduped).
+
+### Changed
+- Schema structure answers are built by intent-specific formatters; footer is appended once via `build_schema_footer()`.
+
 ## [0.6.2] – 2026-01-27
 
 ### Fixed

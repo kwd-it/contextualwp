@@ -134,6 +134,18 @@ class ACFPostTypeQueryTest extends TestCase {
                 null,
                 'Unknown post type should return null'
             ],
+            [
+                'List all ACF assigned to the plot CPT',
+                [ 'plots', 'developments' ],
+                'plots',
+                'Regression: stopword "the" before slug should not be captured; plot -> plots'
+            ],
+            [
+                'ACF for the developments post type',
+                [ 'plots', 'developments' ],
+                'developments',
+                'Regression: stopword "the" before "developments post type" => developments'
+            ],
         ];
     }
 
