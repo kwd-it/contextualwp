@@ -5,6 +5,16 @@ All notable changes to ContextualWP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] – 2026-01-29
+
+### Added
+- **Markdown rendering for chat**: AI responses in the global chat widget now render as markdown (bold, italic, code blocks, lists, headings, blockquotes, links).
+- **Maximize/restore toggle**: Chat window can be expanded to use most of the viewport and restored to default size.
+
+### Changed
+- **Larger chat window**: Default size increased to 520×560px for better readability.
+- **Scrollable messages area**: Messages area scrolls correctly within the chat window; scroll no longer propagates to the page behind.
+
 ## [0.6.3] – 2026-01-28
 
 ### Added
