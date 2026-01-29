@@ -22,9 +22,16 @@ class ContextualWP_Global_Chat {
             CONTEXTUALWP_VERSION
         );
         wp_enqueue_script(
+            'marked',
+            'https://cdn.jsdelivr.net/npm/marked@12.0.0/lib/marked.umd.js',
+            [],
+            '12.0.0',
+            true
+        );
+        wp_enqueue_script(
             'contextualwp-global-chat',
             CONTEXTUALWP_URL . 'admin/assets/js/global-chat.js',
-            [ 'jquery' ],
+            [ 'jquery', 'marked' ],
             CONTEXTUALWP_VERSION,
             true
         );
@@ -49,7 +56,10 @@ class ContextualWP_Global_Chat {
             <div id="contextualwp-floating-chat-modal" style="display:none">
                 <div id="contextualwp-floating-chat-modal-header">
                     <span>ContextualWP Chat</span>
-                    <button id="contextualwp-floating-chat-modal-close" type="button">&times;</button>
+                    <div id="contextualwp-floating-chat-modal-actions">
+                        <button id="contextualwp-floating-chat-modal-expand" type="button" title="Expand chat" aria-label="Expand chat">&#x2922;</button>
+                        <button id="contextualwp-floating-chat-modal-close" type="button" title="Close chat" aria-label="Close chat">&times;</button>
+                    </div>
                 </div>
                 <div id="contextualwp-floating-chat-modal-body">
                     <div id="contextualwp-floating-chat-messages" style="margin-bottom:12px;"></div>

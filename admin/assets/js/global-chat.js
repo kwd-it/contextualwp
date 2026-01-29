@@ -7,36 +7,66 @@ jQuery(function($){
     var $modal = $('#contextualwp-floating-chat-modal');
     var $container = $('#contextualwp-floating-chat');
     if ($container.length === 0) {
-        // fallback: create container if not present
         $container = $('<div id="contextualwp-floating-chat"></div>').appendTo('body');
     }
     $container.show();
     $icon = $('#contextualwp-floating-chat-icon');
     $modal = $('#contextualwp-floating-chat-modal');
+    var $expandBtn = $('#contextualwp-floating-chat-modal-expand');
 
-    // Open modal
+    // Maximize / restore toggle
+    $expandBtn.attr('aria-label', 'Expand chat').on('click', function(){
+        var isMax = $modal.hasClass('contextualwp-chat-maximized');
+        $modal.toggleClass('contextualwp-chat-maximized');
+        if (isMax) {
+            $expandBtn.attr({ 'title': 'Expand chat', 'aria-label': 'Expand chat' }).html('&#x2922;');
+        } else {
+            $expandBtn.attr({ 'title': 'Restore chat', 'aria-label': 'Restore chat' }).html('&#x2921;');
+        }
+    });
+
+    // Open modal (use display:flex so flex layout works for scrollable messages)
     $icon.on('click', function(){
         $modal.attr({'role':'dialog','aria-modal':'true','aria-label':'ContextualWP Chat'});
-        $modal.show();
+        $modal.css('display', 'flex');
         setTimeout(function(){ $('#contextualwp-floating-chat-prompt').focus(); }, 100);
     });
     // Close modal
     $('#contextualwp-floating-chat-modal-close').attr('aria-label','Close chat').on('click', function(){
-        $modal.hide();
+        $modal.css('display', 'none');
         $icon.focus();
     });
     // ESC closes modal
     $(document).on('keydown', function(e){
-        if (e.key === 'Escape') $modal.hide();
+        if (e.key === 'Escape') $modal.css('display', 'none');
     });
 
     var $messages = $('#contextualwp-floating-chat-messages');
+
+    function renderMarkdown(text) {
+        if (typeof marked !== 'undefined' && marked.parse) {
+            try {
+                marked.setOptions({ breaks: true });
+                return marked.parse(String(text || ''));
+            } catch (err) {
+                return $('<div>').text(text).html();
+            }
+        }
+        return $('<div>').text(text).html().replace(/\n/g, '<br>');
+    }
+
     function appendMessage(role, text) {
         var cls = role === 'user' ? 'contextualwp-chat-user' : 'contextualwp-chat-ai';
-        var bubble = $('<div>').addClass('contextualwp-chat-bubble').addClass(cls).text(text);
+        var bubble = $('<div>').addClass('contextualwp-chat-bubble').addClass(cls);
+        if (role === 'user') {
+            bubble.text(text);
+        } else {
+            bubble.html(renderMarkdown(text));
+        }
         $messages.append(bubble);
         $messages.scrollTop($messages[0].scrollHeight);
     }
+
     $('#contextualwp-floating-chat-send').attr('aria-label','Send message').on('click', function(){
         var prompt = $('#contextualwp-floating-chat-prompt').val();
         if (!prompt) return;
@@ -52,7 +82,8 @@ jQuery(function($){
             dataType: 'json',
             data: JSON.stringify({
                 context_id: 'multi',
-                prompt: prompt
+                prompt: prompt,
+                format: 'markdown'
             })
         }).done(function(res){
             if(res.ai && res.ai.output){
@@ -70,4 +101,4 @@ jQuery(function($){
             $btn.prop('disabled', false).text('Send');
         });
     });
-}); 
+});
