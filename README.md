@@ -74,6 +74,7 @@ curl -X POST "https://your-site.test/wp-json/contextualwp/v1/generate_context" \
 - `contextualwp_manifest_schema`: Filter the full schema object in the manifest response (post types and taxonomies metadata)
 - `contextualwp_manifest_schema_post_types`: Filter the post types array in the manifest schema (includes `taxonomies` relationship)
 - `contextualwp_manifest_schema_taxonomies`: Filter the taxonomies array in the manifest schema (includes `object_types` relationship)
+- `contextualwp_manifest_schema_relationships`: Populate `schema.relationships` in the manifest (empty by default)
 
 ### Adding a New AI Provider
 1. Use the `contextualwp_ai_provider` filter to return your provider slug (e.g., 'anthropic')
@@ -143,6 +144,25 @@ add_filter('contextualwp_ai_response', function($response, $provider, $settings,
 - **Parameters:**
   - `format` (string, optional): `json` (default) - JSON is the only supported format
 - **Authentication:** Public, but rate-limited
+
+#### Schema relationships
+`schema.relationships` is empty by default and can be populated via the `contextualwp_manifest_schema_relationships` filter. Each relationship should include `source_type`, `target_type`, and `description`.
+
+```php
+add_filter( 'contextualwp_manifest_schema_relationships', function ( $relationships ) {
+    $relationships[] = [
+        'source_type' => 'plots',
+        'target_type' => 'developments',
+        'description' => 'Plots belong to a development.',
+    ];
+    $relationships[] = [
+        'source_type' => 'plots',
+        'target_type' => 'house_types',
+        'description' => 'Plots reference one or more house types.',
+    ];
+    return $relationships;
+} );
+```
 
 ### `/wp-json/contextualwp/v1/schema`
 - **Method:** GET
