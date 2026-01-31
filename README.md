@@ -71,6 +71,9 @@ curl -X POST "https://your-site.test/wp-json/contextualwp/v1/generate_context" \
 - `contextualwp_available_providers`: Add new AI providers to the settings dropdown
 - `contextualwp_provider_models`: Add new models for existing or custom providers
 - `contextualwp_allowed_post_types`: Filter the list of allowed post types for `list_contexts` and `get_context` endpoints (defaults to all public post types)
+- `contextualwp_manifest_schema`: Filter the full schema object in the manifest response (post types and taxonomies metadata)
+- `contextualwp_manifest_schema_post_types`: Filter the post types array in the manifest schema (includes `taxonomies` relationship)
+- `contextualwp_manifest_schema_taxonomies`: Filter the taxonomies array in the manifest schema (includes `object_types` relationship)
 
 ### Adding a New AI Provider
 1. Use the `contextualwp_ai_provider` filter to return your provider slug (e.g., 'anthropic')
@@ -136,7 +139,7 @@ add_filter('contextualwp_ai_response', function($response, $provider, $settings,
 
 ### `/wp-json/mcp/v1/manifest`
 - **Method:** GET
-- **Description:** Returns metadata about this context provider for AI agents (MCP manifest).
+- **Description:** Returns metadata about this context provider for AI agents (MCP manifest). Includes a `schema` section with public post types and taxonomies (metadata only, no content).
 - **Parameters:**
   - `format` (string, optional): `json` (default) - JSON is the only supported format
 - **Authentication:** Public, but rate-limited

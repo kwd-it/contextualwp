@@ -132,6 +132,7 @@ class Manifest {
             'branding'       => $this->get_branding(),
             'capabilities'   => $this->get_capabilities(),
             'rate_limits'    => $this->get_rate_limits(),
+            'schema'         => $this->get_schema(),
         ] );
 
         return $manifest;
@@ -201,6 +202,75 @@ class Manifest {
             'requests_per_minute' => apply_filters( 'contextualwp_rate_limit_per_minute', 60 ),
             'requests_per_hour'   => apply_filters( 'contextualwp_rate_limit_per_hour', 1000 ),
         ];
+    }
+
+    /**
+     * Get schema (post types and taxonomies metadata)
+     *
+     * Uses WordPress core APIs. Returns simple metadata only—no content or field values.
+     * Filter hooks allow customisation of schema and relationships.
+     *
+     * @since 0.6.0
+     * @return array
+     */
+    private function get_schema() {
+        $post_types = apply_filters( 'contextualwp_manifest_schema_post_types', $this->get_schema_post_types() );
+        $taxonomies = apply_filters( 'contextualwp_manifest_schema_taxonomies', $this->get_schema_taxonomies() );
+
+        $schema = [
+            'post_types' => $post_types,
+            'taxonomies' => $taxonomies,
+        ];
+
+        return apply_filters( 'contextualwp_manifest_schema', $schema );
+    }
+
+    /**
+     * Get public post types as simple metadata
+     *
+     * @since 0.6.0
+     * @return array
+     */
+    private function get_schema_post_types() {
+        $post_types = [];
+        $public_post_types = get_post_types( [ 'public' => true ], 'objects' );
+
+        foreach ( $public_post_types as $post_type ) {
+            $post_types[] = [
+                'name'        => $post_type->name,
+                'label'       => $post_type->label,
+                'description' => $post_type->description ?? '',
+                'hierarchical' => (bool) $post_type->hierarchical,
+                'rest_base'   => $post_type->rest_base ?? '',
+                'taxonomies'  => get_object_taxonomies( $post_type->name, 'names' ),
+            ];
+        }
+
+        return $post_types;
+    }
+
+    /**
+     * Get public taxonomies as simple metadata
+     *
+     * @since 0.6.0
+     * @return array
+     */
+    private function get_schema_taxonomies() {
+        $taxonomies = [];
+        $public_taxonomies = get_taxonomies( [ 'public' => true ], 'objects' );
+
+        foreach ( $public_taxonomies as $taxonomy ) {
+            $taxonomies[] = [
+                'name'         => $taxonomy->name,
+                'label'        => $taxonomy->label,
+                'description'  => $taxonomy->description ?? '',
+                'hierarchical' => (bool) $taxonomy->hierarchical,
+                'rest_base'    => $taxonomy->rest_base ?? '',
+                'object_types' => (array) $taxonomy->object_type,
+            ];
+        }
+
+        return $taxonomies;
     }
 
     /**
