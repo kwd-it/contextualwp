@@ -5,6 +5,25 @@ All notable changes to ContextualWP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] – 2026-01-31
+
+### Added
+- **Manifest schema section**: `/manifest` now exposes a `schema` section describing post types and taxonomies (metadata only, no content).
+- **Schema relationships**: Support for declaring relationships via `schema.relationships`, with a documented filter (`contextualwp_manifest_schema_relationships`).
+- **Field complexity signals**:
+  - Global `schema.core_field_count` (number of wp_posts table columns).
+  - Per-post-type `field_sources.acf_fields` (ACF field count when ACF is active).
+- **Usage contract section** in `/manifest`, including:
+  - Preferred entrypoint path.
+  - Caching expectations.
+  - Rate limiting guidance.
+  - Explicit discouragement of HTML crawling in favour of MCP endpoints.
+- **Admin-only `/site_diagnostics` endpoint** (`/wp-json/mcp/v1/site_diagnostics`), providing:
+  - Site URLs and environment.
+  - WordPress and PHP versions.
+  - Active theme details (including parent theme when applicable).
+  - Active plugins with versions.
+
 ## [0.7.0] – 2026-01-29
 
 ### Added

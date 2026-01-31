@@ -140,7 +140,7 @@ add_filter('contextualwp_ai_response', function($response, $provider, $settings,
 
 ### `/wp-json/mcp/v1/manifest`
 - **Method:** GET
-- **Description:** Returns metadata about this context provider for AI agents (MCP manifest). Includes a `schema` section with public post types and taxonomies (metadata only, no content).
+- **Description:** Returns metadata about this context provider for AI agents (MCP manifest). Includes a `schema` section with public post types and taxonomies (metadata only, no content), and a `usage_contract` section (preferred entrypoint, caching expectations, rate limiting guidance, discouragement of HTML crawling).
 - **Parameters:**
   - `format` (string, optional): `json` (default) - JSON is the only supported format
 - **Authentication:** Public, but rate-limited
@@ -170,6 +170,11 @@ add_filter( 'contextualwp_manifest_schema_relationships', function ( $relationsh
 } );
 ```
 
+### `/wp-json/mcp/v1/site_diagnostics`
+- **Method:** GET
+- **Description:** Admin-only endpoint returning a structured snapshot: site URLs and environment, WordPress and PHP versions, active theme details (including parent when applicable), and active plugins with versions.
+- **Authentication:** Requires `manage_options` capability
+
 ### `/wp-json/contextualwp/v1/schema`
 - **Method:** GET
 - **Description:** Returns schema information about the site including plugin details, post types, taxonomies, and ACF field groups (if ACF is active).
@@ -181,7 +186,7 @@ add_filter( 'contextualwp_manifest_schema_relationships', function ( $relationsh
 {
   "plugin": {
     "name": "ContextualWP",
-    "version": "0.7.0"
+    "version": "0.8.0"
   },
   "site": {
     "home_url": "https://example.com",
