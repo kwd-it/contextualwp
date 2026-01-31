@@ -132,6 +132,7 @@ class Manifest {
             'branding'       => $this->get_branding(),
             'capabilities'   => $this->get_capabilities(),
             'rate_limits'    => $this->get_rate_limits(),
+            'usage_contract' => $this->get_usage_contract(),
             'schema'         => $this->get_schema(),
         ] );
 
@@ -202,6 +203,59 @@ class Manifest {
             'requests_per_minute' => apply_filters( 'contextualwp_rate_limit_per_minute', 60 ),
             'requests_per_hour'   => apply_filters( 'contextualwp_rate_limit_per_hour', 1000 ),
         ];
+    }
+
+    /**
+     * Get usage contract: descriptive guidance for how AI agents should interact with this site.
+     * Purely informational; no enforcement logic.
+     *
+     * Reuses endpoints, capabilities, and rate_limits data where applicable.
+     *
+     * @since 0.6.0
+     * @return array
+     */
+    private function get_usage_contract() {
+        $capabilities = $this->get_capabilities();
+        $rate_limits  = $this->get_rate_limits();
+        $manifest_url = rest_url( 'mcp/v1/manifest' );
+
+        return apply_filters( 'contextualwp_usage_contract', [
+            'preferred_entrypoint' => [
+                'url'           => $manifest_url,
+                'path'          => '/' . rest_get_url_prefix() . '/mcp/v1/manifest',
+                'description'   => __(
+                    'Agents should fetch this manifest first to discover available endpoints, schema, and capabilities. Use list_contexts to enumerate content, then get_context for specific items.',
+                    'contextualwp'
+                ),
+            ],
+            'caching_expectations' => [
+                'manifest_cached'   => $capabilities['caching_enabled'] ?? true,
+                'description'       => __(
+                    'The manifest and context responses are cached server-side. Agents are encouraged to cache the manifest and list_contexts results locally for a short period (e.g. 10–60 minutes) to reduce load.',
+                    'contextualwp'
+                ),
+            ],
+            'rate_limiting' => [
+                'requests_per_minute' => $rate_limits['requests_per_minute'],
+                'requests_per_hour'   => $rate_limits['requests_per_hour'],
+                'description'         => sprintf(
+                    /* translators: 1: requests per minute, 2: requests per hour */
+                    __(
+                        'Requests are rate-limited to %1$d per minute and %2$d per hour per client. Agents should batch requests where possible and respect 429 responses.',
+                        'contextualwp'
+                    ),
+                    $rate_limits['requests_per_minute'],
+                    $rate_limits['requests_per_hour']
+                ),
+            ],
+            'html_crawling' => [
+                'discouraged'  => true,
+                'description'  => __(
+                    'HTML crawling of the public site is discouraged. Structured content is available via the MCP API (list_contexts, get_context). Prefer these endpoints for reliable, schema-aligned data.',
+                    'contextualwp'
+                ),
+            ],
+        ] );
     }
 
     /**
