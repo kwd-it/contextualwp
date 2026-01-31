@@ -205,10 +205,13 @@ class Manifest {
     }
 
     /**
-     * Get schema (post types and taxonomies metadata)
+     * Get schema (post types, taxonomies, and relationships metadata)
      *
      * Uses WordPress core APIs. Returns simple metadata only—no content or field values.
      * Filter hooks allow customisation of schema and relationships.
+     *
+     * Relationships are provided via the contextualwp_manifest_schema_relationships filter.
+     * Each relationship should have: source_type, target_type, and description.
      *
      * @since 0.6.0
      * @return array
@@ -216,10 +219,12 @@ class Manifest {
     private function get_schema() {
         $post_types = apply_filters( 'contextualwp_manifest_schema_post_types', $this->get_schema_post_types() );
         $taxonomies = apply_filters( 'contextualwp_manifest_schema_taxonomies', $this->get_schema_taxonomies() );
+        $relationships = apply_filters( 'contextualwp_manifest_schema_relationships', [] );
 
         $schema = [
-            'post_types' => $post_types,
-            'taxonomies' => $taxonomies,
+            'post_types'    => $post_types,
+            'taxonomies'    => $taxonomies,
+            'relationships' => $relationships,
         ];
 
         return apply_filters( 'contextualwp_manifest_schema', $schema );
