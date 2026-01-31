@@ -222,9 +222,10 @@ class Manifest {
         $relationships = apply_filters( 'contextualwp_manifest_schema_relationships', [] );
 
         $schema = [
-            'post_types'    => $post_types,
-            'taxonomies'    => $taxonomies,
-            'relationships' => $relationships,
+            'core_field_count' => $this->count_core_post_fields(),
+            'post_types'       => $post_types,
+            'taxonomies'       => $taxonomies,
+            'relationships'    => $relationships,
         ];
 
         return apply_filters( 'contextualwp_manifest_schema', $schema );
@@ -241,17 +242,58 @@ class Manifest {
         $public_post_types = get_post_types( [ 'public' => true ], 'objects' );
 
         foreach ( $public_post_types as $post_type ) {
-            $post_types[] = [
-                'name'        => $post_type->name,
-                'label'       => $post_type->label,
-                'description' => $post_type->description ?? '',
+            $entry = [
+                'name'         => $post_type->name,
+                'label'        => $post_type->label,
+                'description'  => $post_type->description ?? '',
                 'hierarchical' => (bool) $post_type->hierarchical,
-                'rest_base'   => $post_type->rest_base ?? '',
-                'taxonomies'  => get_object_taxonomies( $post_type->name, 'names' ),
+                'rest_base'    => $post_type->rest_base ?? '',
+                'taxonomies'   => get_object_taxonomies( $post_type->name, 'names' ),
             ];
+            $field_sources = $this->get_post_type_field_sources( $post_type->name );
+            if ( ! empty( $field_sources ) ) {
+                $entry['field_sources'] = $field_sources;
+            }
+            $post_types[] = $entry;
         }
 
         return $post_types;
+    }
+
+    /**
+     * Count core wp_posts table columns (same for all post types).
+     *
+     * @since 0.6.0
+     * @return int
+     */
+    private function count_core_post_fields() {
+        global $wpdb;
+        $columns = $wpdb->get_col( "DESCRIBE {$wpdb->posts}" );
+        return is_array( $columns ) ? count( $columns ) : 0;
+    }
+
+    /**
+     * Get field_sources summary (counts only) for a post type.
+     * Returns acf_fields when ACF is active; empty array otherwise.
+     * Core field count is at schema.core_field_count (same for all post types).
+     *
+     * @since 0.6.0
+     * @param string $post_type_name Post type name.
+     * @return array{acf_fields?: int}
+     */
+    private function get_post_type_field_sources( $post_type_name ) {
+        if ( ! function_exists( 'acf_get_field_groups' ) || ! function_exists( 'acf_get_fields' ) ) {
+            return [];
+        }
+
+        $acf_count = 0;
+        $groups = acf_get_field_groups( [ 'post_type' => $post_type_name ] );
+        foreach ( $groups as $group ) {
+            $fields = acf_get_fields( $group );
+            $acf_count += is_array( $fields ) ? count( $fields ) : 0;
+        }
+
+        return [ 'acf_fields' => $acf_count ];
     }
 
     /**

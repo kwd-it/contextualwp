@@ -72,7 +72,7 @@ curl -X POST "https://your-site.test/wp-json/contextualwp/v1/generate_context" \
 - `contextualwp_provider_models`: Add new models for existing or custom providers
 - `contextualwp_allowed_post_types`: Filter the list of allowed post types for `list_contexts` and `get_context` endpoints (defaults to all public post types)
 - `contextualwp_manifest_schema`: Filter the full schema object in the manifest response (post types and taxonomies metadata)
-- `contextualwp_manifest_schema_post_types`: Filter the post types array in the manifest schema (includes `taxonomies` relationship)
+- `contextualwp_manifest_schema_post_types`: Filter the post types array in the manifest schema (includes `taxonomies` and optional `field_sources.acf_fields`)
 - `contextualwp_manifest_schema_taxonomies`: Filter the taxonomies array in the manifest schema (includes `object_types` relationship)
 - `contextualwp_manifest_schema_relationships`: Populate `schema.relationships` in the manifest (empty by default)
 
@@ -144,6 +144,12 @@ add_filter('contextualwp_ai_response', function($response, $provider, $settings,
 - **Parameters:**
   - `format` (string, optional): `json` (default) - JSON is the only supported format
 - **Authentication:** Public, but rate-limited
+
+#### Schema structure
+`schema` includes:
+- `core_field_count` (int): Number of wp_posts table columns (same for all post types).
+- `post_types`: Each post type may include `field_sources.acf_fields` (int) when ACF is active—count of ACF fields assigned to that post type.
+- `taxonomies`, `relationships`: See filters below.
 
 #### Schema relationships
 `schema.relationships` is empty by default and can be populated via the `contextualwp_manifest_schema_relationships` filter. Each relationship should include `source_type`, `target_type`, and `description`.
