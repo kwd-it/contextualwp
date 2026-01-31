@@ -157,6 +157,11 @@ class Manifest {
                 'method' => 'GET',
                 'description' => __( 'Get specific context content', 'contextualwp' ),
             ],
+            'site_diagnostics' => [
+                'url'    => rest_url( 'mcp/v1/site_diagnostics' ),
+                'method' => 'GET',
+                'description' => __( 'Site diagnostics snapshot (admin-only): WP/PHP versions, active theme, active plugins', 'contextualwp' ),
+            ],
         ];
     }
 
