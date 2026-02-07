@@ -4,6 +4,7 @@ namespace ContextualWP\Endpoints;
 use ContextualWP\Helpers\Utilities;
 use ContextualWP\Helpers\Providers;
 use ContextualWP\Helpers\Smart_Model_Selector;
+use ContextualWP\Helpers\ACF_Schema_Helper;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -18,10 +19,12 @@ class Generate_Context {
                 return current_user_can( 'edit_posts' );
             },
             'args' => [
-                'context_id' => [ 'required' => true, 'type' => 'string' ],
-                'prompt'     => [ 'required' => false, 'type' => 'string' ],
-                'format'     => [ 'required' => false, 'type' => 'string', 'default' => 'markdown' ],
-                'source'     => [ 'required' => false, 'type' => 'string' ],
+                'context_id'  => [ 'required' => true, 'type' => 'string' ],
+                'prompt'      => [ 'required' => false, 'type' => 'string' ],
+                'format'      => [ 'required' => false, 'type' => 'string', 'default' => 'markdown' ],
+                'source'      => [ 'required' => false, 'type' => 'string' ],
+                'field_name'  => [ 'required' => false, 'type' => 'string' ],
+                'field_type'  => [ 'required' => false, 'type' => 'string' ],
             ],
         ] );
     }
@@ -35,6 +38,8 @@ class Generate_Context {
         if ( strtolower( trim( (string) $context_id ) ) === 'multi' && $this->is_structure_question( $prompt ) ) {
             return $this->handle_structure_question( $request );
         }
+
+        $prompt = $this->enhance_prompt_for_true_false_schema( $prompt, $request );
 
         $settings = get_option( 'contextualwp_settings', [] );
         $ai_provider = $settings['ai_provider'] ?? '';
@@ -97,6 +102,9 @@ class Generate_Context {
             $model = Smart_Model_Selector::select_model( $prompt, $content, $provider_slug, $model, $settings );
             
             $is_field_helper = ( $request->get_param( 'source' ) === 'acf_field_helper' );
+            if ( $is_field_helper ) {
+                ACF_Schema_Helper::get_schema();
+            }
             
             // AI call (OpenAI/Mistral/Claude)
             $provider = apply_filters( 'contextualwp_ai_provider', Providers::normalize( $ai_provider ), $settings, $context_data, $request );
@@ -239,6 +247,9 @@ class Generate_Context {
         $model = Smart_Model_Selector::select_model( $prompt, $content, $provider_slug, $model, $settings );
 
         $is_field_helper = ( $request->get_param( 'source' ) === 'acf_field_helper' );
+        if ( $is_field_helper ) {
+            ACF_Schema_Helper::get_schema();
+        }
 
         // Cache key uses provider, model and context parameters
         $cache_key = apply_filters( 'contextualwp_ai_cache_key', \ContextualWP\Helpers\Utilities::get_cache_key(
@@ -350,6 +361,48 @@ class Generate_Context {
         }
 
         return $response;
+    }
+
+    /**
+     * Enhance AskAI prompt for true_false fields when schema metadata is available.
+     * Injects instructions, controlled_fields_summary, and conditional_logic_summary
+     * so the AI can explain ON/OFF behaviour in practical terms without hedging.
+     *
+     * @param string         $prompt  Original prompt.
+     * @param \WP_REST_Request $request Request.
+     * @return string Enhanced prompt (unchanged if not true_false or no schema).
+     */
+    private function enhance_prompt_for_true_false_schema( $prompt, $request ) {
+        if ( ! is_string( $prompt ) ) {
+            return $prompt;
+        }
+        $source     = $request->get_param( 'source' );
+        $field_type = strtolower( trim( (string) $request->get_param( 'field_type' ) ) );
+        $field_name = $request->get_param( 'field_name' );
+        if ( $source !== 'acf_field_helper' || $field_type !== 'true_false' || empty( $field_name ) || ! is_string( $field_name ) ) {
+            return $prompt;
+        }
+        $field_name = trim( $field_name );
+        $schema     = ACF_Schema_Helper::get_field_by_name( $field_name );
+        if ( ! $schema || ! is_array( $schema ) ) {
+            return $prompt;
+        }
+        $parts = [];
+        if ( ! empty( $schema['instructions'] ) ) {
+            $parts[] = 'Instructions: ' . $schema['instructions'];
+        }
+        if ( ! empty( $schema['controlled_fields_summary'] ) ) {
+            $parts[] = 'What turning ON/OFF does: ' . $schema['controlled_fields_summary'];
+        }
+        if ( ! empty( $schema['conditional_logic_summary'] ) ) {
+            $parts[] = 'This field is shown when: ' . $schema['conditional_logic_summary'];
+        }
+        if ( empty( $parts ) ) {
+            return $prompt;
+        }
+        $schema_block = "---\nAuthoritative schema for this true/false field (use this to explain ON vs OFF behaviour):\n" . implode( "\n", $parts ) . "\n---\n\n";
+        $instruction  = "\n\nUse the schema above to explain what turning this field ON vs OFF does. Be direct and editor-focused. Do not hedge or say 'depends on implementation'.";
+        return $schema_block . $prompt . $instruction;
     }
 
     /**

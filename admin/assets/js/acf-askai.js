@@ -627,7 +627,9 @@
             data: JSON.stringify({
                 context_id: contextId,
                 prompt: prompt,
-                source: 'acf_field_helper'
+                source: 'acf_field_helper',
+                field_name: fieldContext.name || '',
+                field_type: (fieldContext.type || '').toLowerCase()
             })
         }).done(function(res) {
             var output = (res.ai && res.ai.output) ? String(res.ai.output).trim() : '';

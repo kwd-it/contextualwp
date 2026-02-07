@@ -51,35 +51,46 @@ class ACF_Schema {
      * @return \WP_REST_Response|\WP_Error
      */
     public function handle_request( $request ) {
+        $schema = $this->get_schema_data();
         if ( ! function_exists( 'acf_get_field_groups' ) || ! function_exists( 'acf_get_fields' ) ) {
-            return rest_ensure_response( [
+            $schema['message'] = __( 'ACF is not active.', 'contextualwp' );
+        }
+        return rest_ensure_response( $schema );
+    }
+
+    /**
+     * Return ACF schema data (cached). Used by AskAI helper and other server-side code.
+     * Reuses existing cache/TTL. Fails gracefully if ACF is inactive or generation fails.
+     *
+     * @since 0.6.0
+     * @return array Schema with field_groups, generated_at.
+     */
+    public function get_schema_data() {
+        if ( ! function_exists( 'acf_get_field_groups' ) || ! function_exists( 'acf_get_fields' ) ) {
+            return [
                 'field_groups' => [],
                 'generated_at' => current_time( 'c', true ),
-                'message'     => __( 'ACF is not active.', 'contextualwp' ),
-            ] );
+            ];
+        }
+
+        $cache_key = Utilities::get_cache_key( 'contextualwp_acf_schema', [] );
+        $cached    = wp_cache_get( $cache_key, 'contextualwp' );
+
+        if ( $cached !== false ) {
+            return $cached;
         }
 
         try {
-            $cache_key = Utilities::get_cache_key( 'contextualwp_acf_schema', [] );
-            $cached    = wp_cache_get( $cache_key, 'contextualwp' );
-
-            if ( $cached !== false ) {
-                return rest_ensure_response( $cached );
-            }
-
             $schema = $this->generate_schema();
-
             $cache_ttl = apply_filters( 'contextualwp_acf_schema_cache_ttl', 5 * MINUTE_IN_SECONDS );
             wp_cache_set( $cache_key, $schema, 'contextualwp', $cache_ttl );
-
-            return rest_ensure_response( $schema );
+            return $schema;
         } catch ( \Exception $e ) {
             Utilities::log_debug( $e->getMessage(), 'acf_schema_error' );
-            return new \WP_Error(
-                'acf_schema_failed',
-                __( 'Failed to generate ACF schema.', 'contextualwp' ),
-                [ 'status' => 500 ]
-            );
+            return [
+                'field_groups' => [],
+                'generated_at' => current_time( 'c', true ),
+            ];
         }
     }
 
