@@ -186,7 +186,7 @@ add_filter( 'contextualwp_manifest_schema_relationships', function ( $relationsh
 {
   "plugin": {
     "name": "ContextualWP",
-    "version": "0.8.0"
+    "version": "0.9.0"
   },
   "site": {
     "home_url": "https://example.com",

@@ -5,6 +5,15 @@ All notable changes to ContextualWP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] – 2026-02-07
+
+### Added
+- **Editor-safe ACF schema endpoint** (`/wp-json/contextualwp/v1/acf_schema`): Returns ACF field metadata for AI and editor use, with conditional logic and controlled-fields summaries in plain terms. Excludes field keys, internal IDs, and file paths.
+
+### Changed
+- **AskAI icon coverage**: Expanded across more ACF field types for consistent inline AI assistance.
+- **AskAI true/false fields**: Improved responses using ACF schema for better context and suggestions.
+
 ## [0.8.0] – 2026-01-31
 
 ### Added
