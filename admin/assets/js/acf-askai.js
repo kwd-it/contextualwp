@@ -21,6 +21,7 @@
         'email': 'acf-field-email',
         'url': 'acf-field-url',
         'select': 'acf-field-select',
+        'radio': 'acf-field-radio',
         'true_false': 'acf-field-true_false',
         'relationship': 'acf-field-relationship',
         'post_object': 'acf-field-post_object',
@@ -217,6 +218,10 @@
             var $select = $field.find('.acf-input select').first();
             return $select.length ? ($select.val() || '') : '';
         }
+        if (type === 'radio') {
+            var $radio = $field.find('.acf-input input[type="radio"]:checked');
+            return $radio.length ? ($radio.closest('label').text().trim() || $radio.val() || '') : '';
+        }
         if (type === 'image') {
             var $imgInput = $field.find('.acf-image-uploader input[type="hidden"]').first();
             if ($imgInput.length) {
@@ -258,6 +263,13 @@
         if (type === 'select') {
             var $select = $field.find('.acf-input select').first();
             if ($select.length) $select.val(value).trigger('change');
+            return;
+        }
+        if (type === 'radio') {
+            var $radios = $field.find('.acf-input input[type="radio"]');
+            $radios.prop('checked', false);
+            var $match = $radios.filter(function() { return $(this).val() === String(value); });
+            if ($match.length) $match.first().prop('checked', true).trigger('change');
             return;
         }
         if (type === 'true_false') {
