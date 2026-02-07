@@ -17,6 +17,7 @@ define( 'CONTEXTUALWP_VERSION', '0.8.0' );
 define( 'CONTEXTUALWP_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CONTEXTUALWP_URL', plugin_dir_url( __FILE__ ) );
 
+
 // Load plugin
 require_once CONTEXTUALWP_DIR . 'includes/contextualwp-init.php';
 

@@ -107,6 +107,18 @@ Commit this separately with a release-style commit, for example:
 
 ---
 
+## ACF AskAI Debug Logging
+
+To verify the ACF AskAI scripts are running and fields are being enhanced, add to `wp-config.php`:
+
+```php
+define( 'CONTEXTUALWP_ACF_ASKAI_DEBUG', true );
+```
+
+When enabled, the browser console will show `[ContextualWP ACF AskAI]` logs for field enhancements. Disabled by default.
+
+---
+
 ## Notes
 
 - DEVNOTES is intentionally domain-agnostic.

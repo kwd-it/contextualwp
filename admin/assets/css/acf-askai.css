@@ -1,33 +1,101 @@
 .contextualwp-acf-askai {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     margin-left: 6px;
     width: 18px;
     height: 18px;
-    background: url('logo.png') no-repeat center center;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232271b1'%3E%3Cpath d='M12 2L9 9l-7 3 7 3 3 7 3-7 7-3-7-3-3-7z'/%3E%3C/svg%3E") no-repeat center center;
     background-size: contain;
     vertical-align: middle;
     cursor: pointer;
     opacity: 0.7;
     transition: opacity 0.2s;
+    flex-shrink: 0;
 }
-.contextualwp-acf-askai:hover, .contextualwp-acf-askai.loading {
+.contextualwp-acf-askai:hover,
+.contextualwp-acf-askai:focus {
     opacity: 1;
     filter: brightness(1.2);
+    outline: none;
+}
+.contextualwp-acf-askai.loading {
+    opacity: 0.9;
+    animation: contextualwp-acf-askai-pulse 0.8s ease-in-out infinite;
+}
+@keyframes contextualwp-acf-askai-pulse {
+    50% { opacity: 0.6; }
+}
+.contextualwp-acf-askai-wrap {
+    display: inline;
+    position: relative;
+}
+.contextualwp-acf-askai-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #646970;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 2px;
+}
+.contextualwp-acf-askai-close:hover {
+    color: #1d2327;
+    background: #f0f0f1;
 }
 .contextualwp-acf-askai-tooltip {
     position: absolute;
-    z-index: 10010;
+    padding: 12px 40px 10px 14px;
+    z-index: 100010;
+    left: 0;
+    top: 100%;
     background: #fff;
     color: #222;
     border: 1px solid #2271b1;
     border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(34,113,177,0.12);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
     padding: 10px 14px;
     min-width: 220px;
-    max-width: 350px;
-    font-size: 0.97em;
+    max-width: 400px;
+    max-height: 60vh;
+    overflow-y: auto;
+    font-size: 13px;
+    line-height: 1.5;
     margin-top: 4px;
-    margin-left: 4px;
-    white-space: pre-line;
+    white-space: pre-wrap;
+    word-wrap: break-word;
     pointer-events: auto;
+}
+.contextualwp-acf-askai-prompt-label {
+    margin: 0 0 8px;
+    font-size: 12px;
+    color: #1d2327;
+}
+.contextualwp-acf-askai-input {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 8px 10px;
+    border: 1px solid #8c8f94;
+    border-radius: 3px;
+    font-size: 13px;
+    resize: vertical;
+}
+.contextualwp-acf-askai-input:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+    outline: none;
+}
+.contextualwp-acf-askai-loading {
+    margin: 0;
+    color: #50575e;
+}
+.contextualwp-acf-askai-response {
+    max-height: 300px;
+    overflow-y: auto;
 } 

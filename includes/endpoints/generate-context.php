@@ -107,7 +107,7 @@ class Generate_Context {
                             [ 'role' => 'system', 'content' => 'You are a helpful assistant. Use the following context to answer.' ],
                             [ 'role' => 'user', 'content' => $prompt . "\n\nContext:\n" . $content ]
                         ],
-                        'max_tokens' => $max_tokens,
+                        'max_completion_tokens' => $max_tokens,
                         'temperature' => $temperature,
                     ], $settings, $context_data, $request );
                     \ContextualWP\Helpers\Utilities::log_debug( $ai_payload, 'generate_payload_openai_multi' );
@@ -259,7 +259,7 @@ class Generate_Context {
                         [ 'role' => 'system', 'content' => 'You are a helpful assistant. Use the following context to answer.' ],
                         [ 'role' => 'user', 'content' => $prompt . "\n\nContext:\n" . $content ]
                     ],
-                    'max_tokens' => $max_tokens,
+                    'max_completion_tokens' => $max_tokens,
                     'temperature' => $temperature,
                 ], $settings, $context_data, $request );
                 \ContextualWP\Helpers\Utilities::log_debug( $ai_payload, 'generate_payload_openai' );

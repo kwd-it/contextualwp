@@ -1,115 +1,251 @@
-jQuery(function($){
-    function addAskAIIcons() {
-        // ACF fields have .acf-field, label is .acf-label label, input is .acf-input :input
-        $('.acf-field').each(function(){
-            var $field = $(this);
-            if ($field.find('.contextualwp-acf-askai').length) return; // already added
-            var $label = $field.find('.acf-label label').first();
-            if ($label.length === 0) return;
-            var $icon = $('<span class="contextualwp-acf-askai" title="Ask AI about this field"></span>');
-            $label.after($icon);
-        });
-    }
-    addAskAIIcons();
-    // In case of dynamic ACF fields (repeaters, etc.)
-    $(document).on('acf/setup_fields', addAskAIIcons);
+/**
+ * ContextualWP ACF AskAI – adds "Ask AI" control next to supported ACF fields.
+ * Uses ACF's ready_field and append_field lifecycle hooks for reliability with
+ * repeaters, flexible content, and dynamically added fields.
+ */
+(function($){
+    'use strict';
 
-    $(document).on('click', '.contextualwp-acf-askai', function(e){
+    var config = window.contextualwpACFAskAI || {};
+    if (window.console && window.console.log) {
+        window.console.log('[ContextualWP ACF AskAI] Script loaded. Config:', config && Object.keys(config).length ? 'present' : 'missing', 'debug:', !!(config && config.debug), 'acf:', typeof window.acf !== 'undefined' ? 'defined' : 'undefined');
+    }
+    var supportedTypes = (config.supportedTypes || ['text', 'textarea', 'wysiwyg']).map(function(t){ return t.toLowerCase(); });
+    var debugEnabled = !!config.debug;
+
+    function log() {
+        if (debugEnabled && window.console && window.console.log) {
+            var args = ['[ContextualWP ACF AskAI]'].concat(Array.prototype.slice.call(arguments));
+            window.console.log.apply(window.console, args);
+        }
+    }
+
+    function getFieldType(field) {
+        var type = '';
+        if (field && field.get && typeof field.get === 'function') {
+            type = field.get('type') || '';
+        } else if (field && field.type) {
+            type = field.type;
+        } else if (field && field.$el) {
+            var $el = $(field.$el);
+            if ($el.hasClass('acf-field-wysiwyg')) return 'wysiwyg';
+            if ($el.hasClass('acf-field-textarea')) return 'textarea';
+            if ($el.hasClass('acf-field-text')) return 'text';
+        }
+        return String(type).toLowerCase();
+    }
+
+    function isSupportedType(field) {
+        var type = getFieldType(field);
+        if (!type && field && field.$el) {
+            var $el = $(field.$el);
+            if ($el.hasClass('acf-field-wysiwyg') || $el.hasClass('acf-field-textarea') || $el.hasClass('acf-field-text')) {
+                return true;
+            }
+        }
+        return type && supportedTypes.indexOf(type) !== -1;
+    }
+
+    function addAskAIControl(field) {
+        var $el;
+        if (field && field.$el) {
+            $el = $(field.$el);
+        } else if (field && field.jquery) {
+            $el = field;
+        } else {
+            return;
+        }
+        if (!$el || !$el.length) return;
+
+        if ($el.find('.contextualwp-acf-askai').length) return;
+        if (!isSupportedType(field)) return;
+
+        var $label = $el.find('.acf-label label').first();
+        if ($label.length === 0) return;
+
+        var $wrap = $('<span class="contextualwp-acf-askai-wrap"></span>');
+        var $icon = $('<span class="contextualwp-acf-askai" title="Ask AI about this field" role="button" tabindex="0" aria-label="Ask AI about this field"></span>');
+        $wrap.append($icon);
+        $label.after($wrap);
+        var name = field && field.get ? field.get('name') : (field.name || '');
+        var type = getFieldType(field);
+        log('Ask AI control added to field:', name, 'type:', type);
+    }
+
+    function attachFieldHooks() {
+        if (typeof acf === 'undefined') {
+            log('ACF not available, skipping hooks');
+            return;
+        }
+
+        acf.addAction('ready_field', function(field) {
+            addAskAIControl(field);
+        });
+
+        acf.addAction('append_field', function(field) {
+            addAskAIControl(field);
+        });
+
+        // Process existing fields immediately – our script may load after ACF's
+        // 'ready' has fired (e.g. when enqueued in footer), so we would otherwise
+        // miss initial fields and only see append_field for new repeater rows.
+        var fields = (acf.getFields && acf.getFields()) || [];
+        if (!fields.length && $('.acf-field').length) {
+            fields = $('.acf-field').map(function() { return $(this); }).get();
+        }
+        if (fields && fields.length) {
+            for (var i = 0; i < fields.length; i++) {
+                addAskAIControl(fields[i]);
+            }
+            log('Processed', fields.length, 'existing fields');
+        }
+
+        log('ACF ready_field and append_field hooks attached');
+    }
+
+    function init() {
+        if (typeof acf !== 'undefined') {
+            acf.addAction('ready', function() {
+                attachFieldHooks();
+            });
+            // Run immediately too – we may have loaded after ACF's ready fired
+            attachFieldHooks();
+        } else {
+            log('ACF global not found – ensure acf-input is loaded before this script');
+        }
+
+        $(document).on('click', '.contextualwp-acf-askai', onAskAIClick);
+        $(document).on('keydown', '.contextualwp-acf-askai', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                $(this).trigger('click');
+            }
+        });
+
+        $(document).on('mousedown', function(e) {
+            $('.contextualwp-acf-askai-tooltip').each(function() {
+                if (!$(e.target).closest('.contextualwp-acf-askai-tooltip, .contextualwp-acf-askai, .contextualwp-acf-askai-wrap').length) {
+                    $(this).remove();
+                }
+            });
+        });
+
+    }
+
+    function getFieldTypeFromEl($field) {
+        if ($field.data('field-type')) return $field.data('field-type');
+        if ($field.hasClass('acf-field-wysiwyg')) return 'wysiwyg';
+        if ($field.hasClass('acf-field-textarea')) return 'textarea';
+        return 'text';
+    }
+
+    function getFieldValue($field) {
+        var type = getFieldTypeFromEl($field);
+        if (type === 'wysiwyg') {
+            var $textarea = $field.find('.acf-input textarea.wp-editor-area');
+            if ($textarea.length) {
+                var id = $textarea.attr('id');
+                if (id && typeof tinymce !== 'undefined' && tinymce.get(id)) {
+                    return tinymce.get(id).getContent();
+                }
+                return $textarea.val() || '';
+            }
+        }
+        var $input = $field.find('.acf-input input[type="text"], .acf-input textarea').first();
+        return $input.length ? ($input.val() || '') : '';
+    }
+
+    function setFieldValue($field, value) {
+        var type = getFieldTypeFromEl($field);
+        if (type === 'wysiwyg') {
+            var $textarea = $field.find('.acf-input textarea.wp-editor-area');
+            if ($textarea.length) {
+                var id = $textarea.attr('id');
+                if (id && typeof tinymce !== 'undefined' && tinymce.get(id)) {
+                    tinymce.get(id).setContent(value);
+                    return;
+                }
+                $textarea.val(value);
+                return;
+            }
+        }
+        var $input = $field.find('.acf-input input[type="text"], .acf-input textarea').first();
+        if ($input.length) $input.val(value).trigger('change');
+    }
+
+    function onAskAIClick(e) {
         e.preventDefault();
         var $icon = $(this);
         var $field = $icon.closest('.acf-field');
         var label = $field.find('.acf-label label').text().trim();
         var instructions = $field.find('.acf-label .description').text().trim();
-        var $input = $field.find('.acf-input :input').first();
-        var value = $input.val();
-        var prompt = 'Field: ' + label + '\n';
-        if (instructions) prompt += 'Instructions: ' + instructions + '\n';
-        prompt += 'Current value: ' + (value || '[empty]');
-        $icon.addClass('loading');
-        // Remove any previous tooltip
+        var value = getFieldValue($field);
+
         $field.find('.contextualwp-acf-askai-tooltip').remove();
-        var $tooltip = $('<div class="contextualwp-acf-askai-tooltip" role="tooltip" tabindex="0">Asking AI...</div>');
-        $icon.after($tooltip);
-        $tooltip.focus();
+        var $tooltip = $('<div class="contextualwp-acf-askai-tooltip" role="dialog" tabindex="0">' +
+            '<button type="button" class="contextualwp-acf-askai-close" aria-label="Close">×</button>' +
+            '<p class="contextualwp-acf-askai-prompt-label">Ask a question about <strong>' + $('<span>').text(label).html() + '</strong></p>' +
+            '<textarea class="contextualwp-acf-askai-input" rows="3" placeholder="Ask a question about this field..."></textarea>' +
+            '<button type="button" class="button button-primary contextualwp-acf-askai-send">Ask AI</button>' +
+            '</div>');
+        $icon.closest('.contextualwp-acf-askai-wrap').append($tooltip);
+        $tooltip.find('.contextualwp-acf-askai-input').focus();
+
+        $tooltip.on('click', '.contextualwp-acf-askai-close', function() { $tooltip.remove(); });
+        $tooltip.on('click', '.contextualwp-acf-askai-send', function() {
+            var userQuestion = $tooltip.find('.contextualwp-acf-askai-input').val().trim();
+            if (!userQuestion) return;
+            $tooltip.off('click', '.contextualwp-acf-askai-send');
+            sendAskAIRequest($icon, $field, $tooltip, userQuestion, { label: label, instructions: instructions, value: value });
+        });
+    }
+
+    function sendAskAIRequest($icon, $field, $tooltip, userQuestion, fieldContext) {
+        var prompt = userQuestion + '\n\n---\nField: ' + fieldContext.label;
+        if (fieldContext.instructions) prompt += '\nInstructions: ' + fieldContext.instructions;
+        prompt += '\nCurrent value: ' + (fieldContext.value || '[empty]');
+        prompt += '\n\nGive a clear, definitive answer. Do not hedge or cover multiple options unless the answer genuinely depends on site-specific code you cannot inspect.';
+
+        $icon.addClass('loading');
+        $tooltip.html('<div class="contextualwp-acf-askai-loading">Asking AI…</div>').find('.contextualwp-acf-askai-loading').focus();
+
+        var contextId = config.contextId || (config.postType + '-' + config.postId);
+        if (!contextId || contextId === '-0') contextId = 'multi';
+
         $.ajax({
-            url: contextualwpACFAskAI.endpoint,
+            url: config.endpoint,
             method: 'POST',
-            beforeSend: function(xhr){ xhr.setRequestHeader('X-WP-Nonce', contextualwpACFAskAI.nonce); },
+            beforeSend: function(xhr) { xhr.setRequestHeader('X-WP-Nonce', config.nonce); },
             contentType: 'application/json',
             dataType: 'json',
             data: JSON.stringify({
-                context_id: contextualwpACFAskAI.postType + '-' + contextualwpACFAskAI.postId,
+                context_id: contextId,
                 prompt: prompt
             })
-        }).done(function(res){
-            if(res.ai && res.ai.output){
-                $tooltip.html('<div class="contextualwp-acf-askai-response">' +
+        }).done(function(res) {
+            if (res.ai && res.ai.output) {
+                $tooltip.html(
+                    '<button type="button" class="contextualwp-acf-askai-close" aria-label="Close">×</button>' +
+                    '<div class="contextualwp-acf-askai-response">' +
                     $('<div>').text(res.ai.output).html() +
-                    '</div>' +
-                    '<div class="contextualwp-acf-askai-actions">' +
-                        '<button type="button" class="button button-small contextualwp-insert-into-post" aria-label="Insert AI output into post">Insert into post</button>' +
-                        '<button type="button" class="button button-small contextualwp-replace-post-content" aria-label="Replace post content with AI output">Replace post content</button>' +
                     '</div>'
                 );
-                $tooltip.data('ai-output', res.ai.output);
             } else {
-                $tooltip.text('No response');
+                var errMsg = (res && res.message) ? res.message : 'No response';
+                if (res && res.code) errMsg = (res.code + ': ') + errMsg;
+                $tooltip.text(errMsg);
             }
-        }).fail(function(xhr){
-            var msg = 'Error';
-            if(xhr.responseJSON && xhr.responseJSON.message){
-                msg = xhr.responseJSON.message;
-            }
+        }).fail(function(xhr) {
+            var msg = 'Request failed';
+            if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+            else if (xhr.responseJSON && xhr.responseJSON.code) msg = xhr.responseJSON.code + ': ' + (xhr.responseJSON.message || '');
+            else if (xhr.status) msg = 'HTTP ' + xhr.status + (xhr.statusText ? ' ' + xhr.statusText : '');
             $tooltip.text(msg);
-        }).always(function(){
+        }).always(function() {
             $icon.removeClass('loading');
         });
-    });
-    // Dismiss tooltip on click outside
-    $(document).on('mousedown', function(e){
-        $('.contextualwp-acf-askai-tooltip').each(function(){
-            if (!$(e.target).closest('.contextualwp-acf-askai-tooltip, .contextualwp-acf-askai').length) {
-                $(this).remove();
-            }
-        });
-    });
+    }
 
-    // Insert/replace post content handlers
-    $(document).on('click', '.contextualwp-insert-into-post', function(){
-        var $tooltip = $(this).closest('.contextualwp-acf-askai-tooltip');
-        var aiOutput = $tooltip.data('ai-output');
-        if (!aiOutput) return;
-        // Try block editor first
-        if (window.wp && wp.data && wp.data.dispatch) {
-            try {
-                var current = wp.data.select('core/editor').getEditedPostAttribute('content') || '';
-                wp.data.dispatch('core/editor').editPost({ content: current + '\n' + aiOutput });
-                $tooltip.text('Inserted into post content!');
-                return;
-            } catch (e) {}
-        }
-        // Fallback: TinyMCE
-        if (window.tinymce && tinymce.activeEditor) {
-            tinymce.activeEditor.execCommand('mceInsertContent', false, aiOutput);
-            $tooltip.text('Inserted into post content!');
-        }
-    });
-    $(document).on('click', '.contextualwp-replace-post-content', function(){
-        var $tooltip = $(this).closest('.contextualwp-acf-askai-tooltip');
-        var aiOutput = $tooltip.data('ai-output');
-        if (!aiOutput) return;
-        // Try block editor first
-        if (window.wp && wp.data && wp.data.dispatch) {
-            try {
-                wp.data.dispatch('core/editor').editPost({ content: aiOutput });
-                $tooltip.text('Post content replaced!');
-                return;
-            } catch (e) {}
-        }
-        // Fallback: TinyMCE
-        if (window.tinymce && tinymce.activeEditor) {
-            tinymce.activeEditor.setContent(aiOutput);
-            $tooltip.text('Post content replaced!');
-        }
-    });
-}); 
+    $(function() { init(); });
+
+})(jQuery);
