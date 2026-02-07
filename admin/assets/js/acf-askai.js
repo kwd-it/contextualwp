@@ -21,7 +21,10 @@
         'email': 'acf-field-email',
         'url': 'acf-field-url',
         'select': 'acf-field-select',
-        'true_false': 'acf-field-true_false'
+        'true_false': 'acf-field-true_false',
+        'relationship': 'acf-field-relationship',
+        'post_object': 'acf-field-post_object',
+        'taxonomy': 'acf-field-taxonomy'
     };
 
     function log() {
@@ -167,6 +170,46 @@
                 }
                 return $textarea.val() || '';
             }
+        }
+        if (type === 'relationship') {
+            var titles = $field.find('.acf-relationship .values-list .acf-rel-item').map(function() {
+                return $(this).clone().children().remove().end().text().trim();
+            }).get();
+            return titles.length ? titles.join(', ') : '';
+        }
+        if (type === 'post_object') {
+            var $select = $field.find('.acf-input select').first();
+            if ($select.length) {
+                var vals = $select.val();
+                if (Array.isArray(vals)) {
+                    return $select.find('option:selected').map(function() { return $(this).text().trim(); }).get().join(', ') || '';
+                }
+                var $opt = $select.find('option:selected');
+                return $opt.length ? $opt.text().trim() : '';
+            }
+            return '';
+        }
+        if (type === 'taxonomy') {
+            var $checkboxes = $field.find('.acf-input input[type="checkbox"]:checked');
+            if ($checkboxes.length) {
+                return $checkboxes.map(function() {
+                    return $(this).closest('label').text().trim() || $(this).val();
+                }).get().join(', ') || '';
+            }
+            var $radio = $field.find('.acf-input input[type="radio"]:checked');
+            if ($radio.length) {
+                return $radio.closest('label').text().trim() || $radio.val() || '';
+            }
+            var $taxSelect = $field.find('.acf-input select').first();
+            if ($taxSelect.length) {
+                var taxVals = $taxSelect.val();
+                if (Array.isArray(taxVals)) {
+                    return $taxSelect.find('option:selected').map(function() { return $(this).text().trim(); }).get().join(', ') || '';
+                }
+                var $taxOpt = $taxSelect.find('option:selected');
+                return $taxOpt.length ? $taxOpt.text().trim() : '';
+            }
+            return '';
         }
         if (type === 'select') {
             var $select = $field.find('.acf-input select').first();
