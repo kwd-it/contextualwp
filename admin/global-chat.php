@@ -128,7 +128,7 @@ class ContextualWP_ACF_AskAI {
                 'postType'   => $post_type,
                 'contextId'  => $context_id,
                 'debug'      => $debug,
-                'supportedTypes' => apply_filters( 'contextualwp_acf_askai_field_types', [ 'text', 'textarea', 'wysiwyg' ] ),
+                'supportedTypes' => apply_filters( 'contextualwp_acf_askai_field_types', [ 'text', 'textarea', 'wysiwyg', 'number', 'email', 'url', 'select', 'true_false' ] ),
             ]
         );
     }

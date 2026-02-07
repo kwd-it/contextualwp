@@ -10,8 +10,19 @@
     if (window.console && window.console.log) {
         window.console.log('[ContextualWP ACF AskAI] Script loaded. Config:', config && Object.keys(config).length ? 'present' : 'missing', 'debug:', !!(config && config.debug), 'acf:', typeof window.acf !== 'undefined' ? 'defined' : 'undefined');
     }
-    var supportedTypes = (config.supportedTypes || ['text', 'textarea', 'wysiwyg']).map(function(t){ return t.toLowerCase(); });
+    var supportedTypes = (config.supportedTypes || ['text', 'textarea', 'wysiwyg', 'number', 'email', 'url', 'select', 'true_false']).map(function(t){ return t.toLowerCase(); });
     var debugEnabled = !!config.debug;
+
+    var TYPE_CLASS_MAP = {
+        'text': 'acf-field-text',
+        'textarea': 'acf-field-textarea',
+        'wysiwyg': 'acf-field-wysiwyg',
+        'number': 'acf-field-number',
+        'email': 'acf-field-email',
+        'url': 'acf-field-url',
+        'select': 'acf-field-select',
+        'true_false': 'acf-field-true_false'
+    };
 
     function log() {
         if (debugEnabled && window.console && window.console.log) {
@@ -28,9 +39,10 @@
             type = field.type;
         } else if (field && field.$el) {
             var $el = $(field.$el);
-            if ($el.hasClass('acf-field-wysiwyg')) return 'wysiwyg';
-            if ($el.hasClass('acf-field-textarea')) return 'textarea';
-            if ($el.hasClass('acf-field-text')) return 'text';
+            var k;
+            for (k in TYPE_CLASS_MAP) {
+                if (TYPE_CLASS_MAP.hasOwnProperty(k) && $el.hasClass(TYPE_CLASS_MAP[k])) return k;
+            }
         }
         return String(type).toLowerCase();
     }
@@ -39,8 +51,11 @@
         var type = getFieldType(field);
         if (!type && field && field.$el) {
             var $el = $(field.$el);
-            if ($el.hasClass('acf-field-wysiwyg') || $el.hasClass('acf-field-textarea') || $el.hasClass('acf-field-text')) {
-                return true;
+            var k;
+            for (k in TYPE_CLASS_MAP) {
+                if (TYPE_CLASS_MAP.hasOwnProperty(k) && $el.hasClass(TYPE_CLASS_MAP[k]) && supportedTypes.indexOf(k) !== -1) {
+                    return true;
+                }
             }
         }
         return type && supportedTypes.indexOf(type) !== -1;
@@ -134,8 +149,10 @@
 
     function getFieldTypeFromEl($field) {
         if ($field.data('field-type')) return $field.data('field-type');
-        if ($field.hasClass('acf-field-wysiwyg')) return 'wysiwyg';
-        if ($field.hasClass('acf-field-textarea')) return 'textarea';
+        var k;
+        for (k in TYPE_CLASS_MAP) {
+            if (TYPE_CLASS_MAP.hasOwnProperty(k) && $field.hasClass(TYPE_CLASS_MAP[k])) return k;
+        }
         return 'text';
     }
 
@@ -151,7 +168,15 @@
                 return $textarea.val() || '';
             }
         }
-        var $input = $field.find('.acf-input input[type="text"], .acf-input textarea').first();
+        if (type === 'select') {
+            var $select = $field.find('.acf-input select').first();
+            return $select.length ? ($select.val() || '') : '';
+        }
+        if (type === 'true_false') {
+            var $cb = $field.find('.acf-input input[type="checkbox"]').first();
+            return $cb.length ? ($cb.prop('checked') ? '1' : '0') : '';
+        }
+        var $input = $field.find('.acf-input input[type="text"], .acf-input input[type="number"], .acf-input input[type="email"], .acf-input input[type="url"], .acf-input textarea').first();
         return $input.length ? ($input.val() || '') : '';
     }
 
@@ -169,7 +194,17 @@
                 return;
             }
         }
-        var $input = $field.find('.acf-input input[type="text"], .acf-input textarea').first();
+        if (type === 'select') {
+            var $select = $field.find('.acf-input select').first();
+            if ($select.length) $select.val(value).trigger('change');
+            return;
+        }
+        if (type === 'true_false') {
+            var $cb = $field.find('.acf-input input[type="checkbox"]').first();
+            if ($cb.length) $cb.prop('checked', value === '1' || value === 1).trigger('change');
+            return;
+        }
+        var $input = $field.find('.acf-input input[type="text"], .acf-input input[type="number"], .acf-input input[type="email"], .acf-input input[type="url"], .acf-input textarea').first();
         if ($input.length) $input.val(value).trigger('change');
     }
 
