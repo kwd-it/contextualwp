@@ -273,6 +273,281 @@
         return $input.length ? ($input.val() || '') : '';
     }
 
+    /**
+     * Collect full ACF field metadata for the AskAI prompt.
+     * Uses acf.getField() when available; falls back to DOM-only extraction.
+     *
+     * @param {jQuery} $field The .acf-field wrapper element.
+     * @return {Object} Plain object with type, label, name, key, instructions, required,
+     *   default_value, placeholder, choices, conditional_logic_summary, type_specific, value.
+     */
+    function collectFieldMetadata($field) {
+        var         meta = {
+            type: getFieldTypeFromEl($field),
+            label: '',
+            name: '',
+            key: '',
+            instructions: '',
+            required: false,
+            default_value: '',
+            placeholder: '',
+            choices: null,
+            conditional_logic_summary: '',
+            controlled_fields_summary: '',
+            type_specific: {},
+            value: getFieldValue($field)
+        };
+
+        var label = $field.find('.acf-label label').text().trim();
+        if (!label) {
+            var $td = $field.closest('td');
+            if ($td.length) {
+                var colIndex = $td.index();
+                var $th = $td.closest('table').find('thead th').eq(colIndex);
+                label = $th.text().trim();
+            }
+        }
+        meta.label = label || '';
+        meta.instructions = $field.find('.acf-label .description').text().trim();
+
+        var fieldKey = $field.data('key') || $field.attr('data-key') || '';
+        var fieldObj = null;
+        if (typeof acf !== 'undefined' && acf.getField && fieldKey) {
+            fieldObj = acf.getField(fieldKey);
+        }
+        if (!fieldObj && typeof acf !== 'undefined' && acf.getField) {
+            fieldObj = acf.getField($field);
+        }
+
+        if (fieldObj && fieldObj.get && typeof fieldObj.get === 'function') {
+            meta.name = fieldObj.get('name') || '';
+            meta.key = fieldObj.get('key') || fieldKey;
+            meta.instructions = meta.instructions || (fieldObj.get('instructions') || '');
+            meta.required = !!fieldObj.get('required');
+            meta.default_value = fieldObj.get('default_value') || '';
+            meta.placeholder = fieldObj.get('placeholder') || '';
+
+            var choices = fieldObj.get('choices');
+            if (choices && typeof choices === 'object' && Object.keys(choices).length) {
+                meta.choices = choices;
+            }
+
+            var cond = fieldObj.get('conditional_logic');
+            if (cond && Array.isArray(cond) && cond.length) {
+                meta.conditional_logic_summary = formatConditionalLogicSummary(cond, fieldObj);
+            }
+
+            meta.controlled_fields_summary = collectControlledFieldsSummary(meta.key, $field, meta.type);
+
+            var type = (fieldObj.get('type') || meta.type || '').toLowerCase();
+            meta.type = type || meta.type;
+
+            if (type === 'relationship' || type === 'post_object') {
+                var postType = fieldObj.get('post_type');
+                if (postType) {
+                    var arr = Array.isArray(postType) ? postType : (typeof postType === 'string' ? postType.split(/[\s,]+/).filter(Boolean) : [postType]);
+                    if (arr.length) meta.type_specific.allowed_post_types = arr;
+                }
+                var returnFormat = fieldObj.get('return_format');
+                if (returnFormat) meta.type_specific.return_format = returnFormat;
+            }
+            if (type === 'taxonomy') {
+                var tax = fieldObj.get('taxonomy');
+                if (tax) meta.type_specific.taxonomy = tax;
+                var ret = fieldObj.get('return_format');
+                if (ret) meta.type_specific.return_format = ret;
+            }
+            if (type === 'image' || type === 'file') {
+                var mime = fieldObj.get('mime_types');
+                if (mime) meta.type_specific.mime_types = mime;
+                var ret = fieldObj.get('return_format');
+                if (ret) meta.type_specific.return_format = ret;
+            }
+            if (type === 'true_false') {
+                var msg = fieldObj.get('message');
+                if (msg) meta.type_specific.message = msg;
+                if (fieldObj.get('ui')) {
+                    meta.type_specific.ui_on_text = fieldObj.get('ui_on_text') || 'Yes';
+                    meta.type_specific.ui_off_text = fieldObj.get('ui_off_text') || 'No';
+                }
+            }
+        } else {
+            meta.name = $field.data('name') || $field.attr('data-name') || '';
+            meta.key = fieldKey;
+        }
+
+        return meta;
+    }
+
+    /**
+     * Build a human-readable summary of ACF conditional logic rules.
+     *
+     * @param {Array} conditionalLogic ACF conditional_logic array.
+     * @param {Object} fieldObj ACF field instance (for resolving field keys to names).
+     * @return {string}
+     */
+    function formatConditionalLogicSummary(conditionalLogic, fieldObj) {
+        if (!conditionalLogic || !Array.isArray(conditionalLogic)) return '';
+        var parts = [];
+        conditionalLogic.forEach(function(group) {
+            if (!Array.isArray(group)) return;
+            var groupParts = [];
+            group.forEach(function(rule) {
+                if (!rule || !rule.field) return;
+                var fieldName = rule.field;
+                if (typeof acf !== 'undefined' && acf.getField) {
+                    var depField = acf.getField(rule.field);
+                    if (depField && depField.get && depField.get('label')) {
+                        fieldName = depField.get('label');
+                    }
+                }
+                var op = rule.operator || '==';
+                var val = rule.value !== undefined && rule.value !== '' ? String(rule.value) : '[any]';
+                groupParts.push(fieldName + ' ' + op + ' ' + val);
+            });
+            if (groupParts.length) parts.push(groupParts.join(' AND '));
+        });
+        return parts.length ? parts.join(' OR ') : '';
+    }
+
+    /**
+     * Collect a plain-English summary of which fields are shown/hidden when this field's value changes.
+     * Finds sibling fields whose conditional logic references this field.
+     * For true_false fields, uses "When this is ON/OFF, these fields are shown: …" format.
+     *
+     * @param {string} fieldKey This field's key.
+     * @param {jQuery} $field This field's wrapper element.
+     * @param {string} fieldType Optional field type (e.g. 'true_false') for format selection.
+     * @return {string} Empty if none; editor-friendly summary.
+     */
+    function collectControlledFieldsSummary(fieldKey, $field, fieldType) {
+        if (!fieldKey || typeof acf === 'undefined' || !acf.getField) return '';
+        var $parent = $field.closest('.acf-fields');
+        if (!$parent.length) return '';
+        var $siblings = $parent.children('.acf-field').not($field);
+        var isTrueFalse = (fieldType || '').toLowerCase() === 'true_false';
+
+        if (isTrueFalse) {
+            var onFields = [];
+            var offFields = [];
+            $siblings.each(function() {
+                var $sib = $(this);
+                var sibKey = $sib.data('key') || $sib.attr('data-key');
+                if (!sibKey) return;
+                var sibField = acf.getField(sibKey);
+                if (!sibField || !sibField.get) return;
+                var cond = sibField.get('conditional_logic');
+                if (!cond || !Array.isArray(cond)) return;
+                var sibLabel = sibField.get('label') || $sib.find('.acf-label label').first().text().trim() || sibKey;
+                var shownWhenOn = false;
+                var shownWhenOff = false;
+                cond.forEach(function(group) {
+                    if (!Array.isArray(group)) return;
+                    group.forEach(function(rule) {
+                        if (!rule || rule.field !== fieldKey) return;
+                        var val = rule.value !== undefined && rule.value !== '' ? String(rule.value) : '';
+                        var op = rule.operator || '==';
+                        if (val === '1' || val === 1) {
+                            if (op === '==') shownWhenOn = true; else if (op === '!=') shownWhenOff = true;
+                        } else if (val === '0' || val === 0 || val === '') {
+                            if (op === '==') shownWhenOff = true; else if (op === '!=') shownWhenOn = true;
+                        } else {
+                            if (op === '==') shownWhenOn = true; else if (op === '!=') shownWhenOff = true;
+                        }
+                    });
+                });
+                if (shownWhenOn) onFields.push(sibLabel);
+                if (shownWhenOff) offFields.push(sibLabel);
+            });
+            var parts = [];
+            if (onFields.length) parts.push('When this is ON, these fields are shown: ' + onFields.join(', '));
+            if (offFields.length) parts.push('When this is OFF, these fields are shown: ' + offFields.join(', '));
+            return parts.length ? parts.join('. ') : '';
+        }
+
+        var parts = [];
+        $siblings.each(function() {
+            var $sib = $(this);
+            var sibKey = $sib.data('key') || $sib.attr('data-key');
+            if (!sibKey) return;
+            var sibField = acf.getField(sibKey);
+            if (!sibField || !sibField.get) return;
+            var cond = sibField.get('conditional_logic');
+            if (!cond || !Array.isArray(cond)) return;
+            var sibLabel = sibField.get('label') || $sib.find('.acf-label label').first().text().trim() || sibKey;
+            var whenShown = [];
+            cond.forEach(function(group) {
+                if (!Array.isArray(group)) return;
+                group.forEach(function(rule) {
+                    if (!rule || rule.field !== fieldKey) return;
+                    var op = rule.operator || '==';
+                    var val = rule.value !== undefined && rule.value !== '' ? String(rule.value) : 'any value';
+                    whenShown.push(op === '==' ? 'value is "' + val + '"' : (op === '!=' ? 'value is not "' + val + '"' : op + ' "' + val + '"'));
+                });
+            });
+            if (whenShown.length) parts.push(sibLabel + ': shown when ' + whenShown.join(' or '));
+        });
+        return parts.length ? parts.join('. ') : '';
+    }
+
+    /**
+     * Build the AskAI prompt from user question and field metadata.
+     *
+     * @param {string} userQuestion
+     * @param {Object} meta Field metadata from collectFieldMetadata.
+     * @return {string}
+     */
+    function buildFieldHelperPrompt(userQuestion, meta) {
+        var lines = [userQuestion, '', '---', 'ACF Field context:'];
+        lines.push('Type: ' + (meta.type || 'unknown'));
+        lines.push('Label: ' + (meta.label || '[unnamed]'));
+        if (meta.name) lines.push('Name: ' + meta.name);
+        if (meta.instructions) lines.push('Instructions: ' + meta.instructions);
+        if (meta.required) lines.push('Required: yes');
+        if (meta.default_value) lines.push('Default: ' + meta.default_value);
+        if (meta.placeholder) lines.push('Placeholder: ' + meta.placeholder);
+        if (meta.choices && Object.keys(meta.choices).length) {
+            var choiceStr = Object.keys(meta.choices).map(function(v) {
+                var lbl = meta.choices[v];
+                return v === lbl ? v : v + ' => ' + lbl;
+            }).join(', ');
+            lines.push('Choices: ' + choiceStr);
+        }
+        if (meta.conditional_logic_summary) {
+            lines.push('This field is shown when: ' + meta.conditional_logic_summary);
+        }
+        if (meta.controlled_fields_summary) {
+            lines.push('When this field\'s value changes, these fields are shown/hidden: ' + meta.controlled_fields_summary);
+        }
+        var ts = meta.type_specific;
+        if (ts && Object.keys(ts).length) {
+            if (ts.allowed_post_types) lines.push('Allowed post types: ' + ts.allowed_post_types.join(', '));
+            if (ts.taxonomy) lines.push('Taxonomy: ' + ts.taxonomy);
+            if (ts.mime_types) lines.push('Allowed mime types: ' + ts.mime_types);
+            if (ts.return_format) lines.push('Return format: ' + ts.return_format);
+            if (ts.message) lines.push('Message: ' + ts.message);
+            if (ts.ui_on_text || ts.ui_off_text) lines.push('Toggle labels: ON = "' + (ts.ui_on_text || 'Yes') + '", OFF = "' + (ts.ui_off_text || 'No') + '"');
+        }
+        lines.push('Current value: ' + (meta.value || '[empty]'));
+        lines.push('');
+        lines.push('Instructions for the AI (editor-focused):');
+        lines.push('- Reply in two short parts: (1) what this field controls, (2) what changes when its value is toggled (if known from metadata above).');
+        lines.push('- Do not restate basic field mechanics. Do not mention field keys, field group names, IDs, or JSON.');
+        var hasCondOrControl = !!(meta.conditional_logic_summary || meta.controlled_fields_summary);
+        if (hasCondOrControl) {
+            lines.push('- The conditional logic above is authoritative. Describe it confidently in plain English. Do not hedge with "depends on implementation" or suggest searching the codebase or theme.');
+        } else {
+            lines.push('- If there is no conditional logic or instructions describing the effect, state briefly that the effect is not defined in the form. Suggest only: preview the page or check related fields. Do not suggest searching the codebase or theme.');
+        }
+        lines.push('- Keep responses concise and practical for content editors.');
+
+        if ((meta.type || '').toLowerCase() === 'true_false') {
+            lines.push('- For true/false: no invented examples. Only describe effects from metadata. If inferring from label/name, label it as inference and add a step to confirm.');
+        }
+
+        return lines.join('\n');
+    }
+
     function setFieldValue($field, value) {
         var type = getFieldTypeFromEl($field);
         if (type === 'wysiwyg') {
@@ -312,17 +587,8 @@
         e.preventDefault();
         var $icon = $(this);
         var $field = $icon.closest('.acf-field');
-        var label = $field.find('.acf-label label').text().trim();
-        var instructions = $field.find('.acf-label .description').text().trim();
-        if (!label) {
-            var $td = $field.closest('td');
-            if ($td.length) {
-                var colIndex = $td.index();
-                var $th = $td.closest('table').find('thead th').eq(colIndex);
-                label = $th.text().trim();
-            }
-        }
-        var value = getFieldValue($field);
+        var meta = collectFieldMetadata($field);
+        var label = meta.label || 'this field';
 
         $field.find('.contextualwp-acf-askai-tooltip').remove();
         var $tooltip = $('<div class="contextualwp-acf-askai-tooltip" role="dialog" tabindex="0">' +
@@ -339,15 +605,12 @@
             var userQuestion = $tooltip.find('.contextualwp-acf-askai-input').val().trim();
             if (!userQuestion) return;
             $tooltip.off('click', '.contextualwp-acf-askai-send');
-            sendAskAIRequest($icon, $field, $tooltip, userQuestion, { label: label, instructions: instructions, value: value });
+            sendAskAIRequest($icon, $field, $tooltip, userQuestion, meta);
         });
     }
 
     function sendAskAIRequest($icon, $field, $tooltip, userQuestion, fieldContext) {
-        var prompt = userQuestion + '\n\n---\nField: ' + fieldContext.label;
-        if (fieldContext.instructions) prompt += '\nInstructions: ' + fieldContext.instructions;
-        prompt += '\nCurrent value: ' + (fieldContext.value || '[empty]');
-        prompt += '\n\nGive a clear, definitive answer. Do not hedge or cover multiple options unless the answer genuinely depends on site-specific code you cannot inspect.';
+        var prompt = buildFieldHelperPrompt(userQuestion, fieldContext);
 
         $icon.addClass('loading');
         $tooltip.html('<div class="contextualwp-acf-askai-loading">Asking AI…</div>').find('.contextualwp-acf-askai-loading').focus();
@@ -363,14 +626,23 @@
             dataType: 'json',
             data: JSON.stringify({
                 context_id: contextId,
-                prompt: prompt
+                prompt: prompt,
+                source: 'acf_field_helper'
             })
         }).done(function(res) {
-            if (res.ai && res.ai.output) {
+            var output = (res.ai && res.ai.output) ? String(res.ai.output).trim() : '';
+            if (output) {
                 $tooltip.html(
                     '<button type="button" class="contextualwp-acf-askai-close" aria-label="Close">×</button>' +
                     '<div class="contextualwp-acf-askai-response">' +
                     $('<div>').text(res.ai.output).html() +
+                    '</div>'
+                );
+            } else if (res.ai && !output) {
+                $tooltip.html(
+                    '<button type="button" class="contextualwp-acf-askai-close" aria-label="Close">×</button>' +
+                    '<div class="contextualwp-acf-askai-response">' +
+                    '<p>The AI did not produce a visible answer (likely used all tokens on reasoning). Try a shorter question or a different model in Settings.</p>' +
                     '</div>'
                 );
             } else {

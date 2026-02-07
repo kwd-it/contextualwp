@@ -21,6 +21,7 @@ class Generate_Context {
                 'context_id' => [ 'required' => true, 'type' => 'string' ],
                 'prompt'     => [ 'required' => false, 'type' => 'string' ],
                 'format'     => [ 'required' => false, 'type' => 'string', 'default' => 'markdown' ],
+                'source'     => [ 'required' => false, 'type' => 'string' ],
             ],
         ] );
     }
@@ -95,13 +96,15 @@ class Generate_Context {
             // Apply smart model selection for multi-context
             $model = Smart_Model_Selector::select_model( $prompt, $content, $provider_slug, $model, $settings );
             
+            $is_field_helper = ( $request->get_param( 'source' ) === 'acf_field_helper' );
+            
             // AI call (OpenAI/Mistral/Claude)
             $provider = apply_filters( 'contextualwp_ai_provider', Providers::normalize( $ai_provider ), $settings, $context_data, $request );
             $ai_response = null;
             $ai_error = null;
             switch ( $provider ) {
                 case 'openai':
-                    $ai_payload = apply_filters( 'contextualwp_ai_payload', [
+                    $ai_payload = [
                         'model' => $model,
                         'messages' => [
                             [ 'role' => 'system', 'content' => 'You are a helpful assistant. Use the following context to answer.' ],
@@ -109,7 +112,11 @@ class Generate_Context {
                         ],
                         'max_completion_tokens' => $max_tokens,
                         'temperature' => $temperature,
-                    ], $settings, $context_data, $request );
+                    ];
+                    if ( $is_field_helper ) {
+                        $ai_payload['reasoning_effort'] = 'low';
+                    }
+                    $ai_payload = apply_filters( 'contextualwp_ai_payload', $ai_payload, $settings, $context_data, $request );
                     \ContextualWP\Helpers\Utilities::log_debug( $ai_payload, 'generate_payload_openai_multi' );
                     $ai_response = $this->call_openai_api( $ai_payload, $api_key );
                     \ContextualWP\Helpers\Utilities::log_debug( $ai_response, 'generate_response_openai_multi' );
@@ -231,6 +238,8 @@ class Generate_Context {
         // Apply smart model selection for single post context
         $model = Smart_Model_Selector::select_model( $prompt, $content, $provider_slug, $model, $settings );
 
+        $is_field_helper = ( $request->get_param( 'source' ) === 'acf_field_helper' );
+
         // Cache key uses provider, model and context parameters
         $cache_key = apply_filters( 'contextualwp_ai_cache_key', \ContextualWP\Helpers\Utilities::get_cache_key(
             'contextualwp_generate', [
@@ -253,7 +262,7 @@ class Generate_Context {
         $provider = apply_filters( 'contextualwp_ai_provider', Providers::normalize( $ai_provider ), $settings, $context_data, $request );
         switch ( $provider ) {
             case 'openai':
-                $ai_payload = apply_filters( 'contextualwp_ai_payload', [
+                $ai_payload = [
                     'model' => $model,
                     'messages' => [
                         [ 'role' => 'system', 'content' => 'You are a helpful assistant. Use the following context to answer.' ],
@@ -261,7 +270,11 @@ class Generate_Context {
                     ],
                     'max_completion_tokens' => $max_tokens,
                     'temperature' => $temperature,
-                ], $settings, $context_data, $request );
+                ];
+                if ( $is_field_helper ) {
+                    $ai_payload['reasoning_effort'] = 'low';
+                }
+                $ai_payload = apply_filters( 'contextualwp_ai_payload', $ai_payload, $settings, $context_data, $request );
                 \ContextualWP\Helpers\Utilities::log_debug( $ai_payload, 'generate_payload_openai' );
                 $ai_response = $this->call_openai_api( $ai_payload, $api_key );
                 \ContextualWP\Helpers\Utilities::log_debug( $ai_response, 'generate_response_openai' );
@@ -928,11 +941,27 @@ class Generate_Context {
         $code = wp_remote_retrieve_response_code( $response );
         $body = wp_remote_retrieve_body( $response );
         $data = json_decode( $body, true );
-        if ( $code !== 200 || ! isset( $data['choices'][0]['message']['content'] ) ) {
+        if ( $code !== 200 ) {
             return new \WP_Error( 'openai_error', isset( $data['error']['message'] ) ? $data['error']['message'] : 'Unknown error from OpenAI.' );
         }
+        $choice = $data['choices'][0] ?? null;
+        if ( ! $choice ) {
+            return new \WP_Error( 'openai_error', isset( $data['error']['message'] ) ? $data['error']['message'] : 'Unknown error from OpenAI.' );
+        }
+        $content = isset( $choice['message']['content'] ) ? (string) $choice['message']['content'] : '';
+        $finish_reason = $choice['finish_reason'] ?? '';
+        $usage = $data['usage'] ?? [];
+        $completion_tokens = (int) ( $usage['completion_tokens'] ?? 0 );
+        $reasoning_tokens = (int) ( $usage['completion_tokens_details']['reasoning_tokens'] ?? 0 );
+        $is_reasoning_exhausted = (
+            trim( $content ) === '' &&
+            ( $finish_reason === 'length' || ( $completion_tokens > 0 && $reasoning_tokens >= (int) ( $completion_tokens * 0.9 ) ) )
+        );
+        if ( $is_reasoning_exhausted ) {
+            $content = __( 'The AI used its reasoning tokens before producing a visible answer. Try a shorter question, or switch to a non-reasoning model in Settings.', 'contextualwp' );
+        }
         return [
-            'output' => $data['choices'][0]['message']['content'],
+            'output' => $content,
             'raw'    => $data,
         ];
     }
