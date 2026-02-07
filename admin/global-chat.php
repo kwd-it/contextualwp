@@ -128,7 +128,7 @@ class ContextualWP_ACF_AskAI {
                 'postType'   => $post_type,
                 'contextId'  => $context_id,
                 'debug'      => $debug,
-                'supportedTypes' => apply_filters( 'contextualwp_acf_askai_field_types', [ 'text', 'textarea', 'wysiwyg', 'number', 'email', 'url', 'select', 'radio', 'true_false', 'relationship', 'post_object', 'taxonomy', 'image', 'file' ] ),
+                'supportedTypes' => apply_filters( 'contextualwp_acf_askai_field_types', [ 'text', 'textarea', 'wysiwyg', 'number', 'email', 'url', 'select', 'radio', 'true_false', 'relationship', 'post_object', 'taxonomy', 'image', 'file', 'google_map' ] ),
             ]
         );
     }

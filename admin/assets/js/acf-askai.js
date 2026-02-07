@@ -27,7 +27,8 @@
         'post_object': 'acf-field-post_object',
         'taxonomy': 'acf-field-taxonomy',
         'image': 'acf-field-image',
-        'file': 'acf-field-file'
+        'file': 'acf-field-file',
+        'google_map': 'acf-field-google_map'
     };
 
     function log() {
@@ -249,6 +250,20 @@
                 return fid ? ('Attachment ID: ' + fid) : '';
             }
             return '';
+        }
+        if (type === 'google_map') {
+            var $hidden = $field.find('.acf-google-map input[type="hidden"]').first();
+            if ($hidden.length) {
+                try {
+                    var val = $hidden.val();
+                    if (val) {
+                        var parsed = typeof val === 'string' ? JSON.parse(val) : val;
+                        return (parsed && parsed.address) ? parsed.address : (val || '');
+                    }
+                } catch (e) { /* fallback to search input */ }
+            }
+            var $search = $field.find('.acf-google-map .search');
+            return $search.length ? ($search.val() || '') : '';
         }
         if (type === 'true_false') {
             var $cb = $field.find('.acf-input input[type="checkbox"]').first();
