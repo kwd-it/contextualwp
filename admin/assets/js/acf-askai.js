@@ -24,7 +24,9 @@
         'true_false': 'acf-field-true_false',
         'relationship': 'acf-field-relationship',
         'post_object': 'acf-field-post_object',
-        'taxonomy': 'acf-field-taxonomy'
+        'taxonomy': 'acf-field-taxonomy',
+        'image': 'acf-field-image',
+        'file': 'acf-field-file'
     };
 
     function log() {
@@ -214,6 +216,22 @@
         if (type === 'select') {
             var $select = $field.find('.acf-input select').first();
             return $select.length ? ($select.val() || '') : '';
+        }
+        if (type === 'image') {
+            var $imgInput = $field.find('.acf-image-uploader input[type="hidden"]').first();
+            if ($imgInput.length) {
+                var id = $imgInput.val();
+                return id ? ('Attachment ID: ' + id) : '';
+            }
+            return '';
+        }
+        if (type === 'file') {
+            var $fileInput = $field.find('.acf-file-uploader input[type="hidden"]').first();
+            if ($fileInput.length) {
+                var fid = $fileInput.val();
+                return fid ? ('Attachment ID: ' + fid) : '';
+            }
+            return '';
         }
         if (type === 'true_false') {
             var $cb = $field.find('.acf-input input[type="checkbox"]').first();
