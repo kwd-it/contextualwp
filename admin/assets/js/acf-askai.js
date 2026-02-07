@@ -82,12 +82,24 @@
         if (!isSupportedType(field)) return;
 
         var $label = $el.find('.acf-label label').first();
-        if ($label.length === 0) return;
+        var $anchor;
+        if ($label.length) {
+            $anchor = $label;
+        } else {
+            /* Table layout: labels are in thead th, not in .acf-label. Use .acf-input as anchor. */
+            $anchor = $el.find('.acf-input').first();
+            if (!$anchor.length) $anchor = $el;
+            if (!$anchor.length) return;
+        }
 
         var $wrap = $('<span class="contextualwp-acf-askai-wrap"></span>');
         var $icon = $('<span class="contextualwp-acf-askai" title="Ask AI about this field" role="button" tabindex="0" aria-label="Ask AI about this field"></span>');
         $wrap.append($icon);
-        $label.after($wrap);
+        if ($label.length) {
+            $anchor.after($wrap);
+        } else {
+            $anchor.hasClass('acf-input') ? $anchor.before($wrap) : $anchor.prepend($wrap);
+        }
         var name = field && field.get ? field.get('name') : (field.name || '');
         var type = getFieldType(field);
         log('Ask AI control added to field:', name, 'type:', type);
@@ -287,6 +299,14 @@
         var $field = $icon.closest('.acf-field');
         var label = $field.find('.acf-label label').text().trim();
         var instructions = $field.find('.acf-label .description').text().trim();
+        if (!label) {
+            var $td = $field.closest('td');
+            if ($td.length) {
+                var colIndex = $td.index();
+                var $th = $td.closest('table').find('thead th').eq(colIndex);
+                label = $th.text().trim();
+            }
+        }
         var value = getFieldValue($field);
 
         $field.find('.contextualwp-acf-askai-tooltip').remove();
