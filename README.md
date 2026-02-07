@@ -248,6 +248,45 @@ add_filter( 'contextualwp_manifest_schema_relationships', function ( $relationsh
 }
 ```
 
+### `/wp-json/contextualwp/v1/acf_schema`
+- **Method:** GET
+- **Description:** Returns editor-safe ACF field metadata derived from ACF's loaded field definitions (local JSON + DB). Structured for AI/editor use; excludes field keys, internal IDs, file paths, and raw JSON. Includes conditional logic and controlled-fields summaries in plain terms.
+- **Authentication:** Requires `edit_posts` capability
+- **Caching:** Responses are cached for 5 minutes by default. Adjust TTL using the `contextualwp_acf_schema_cache_ttl` filter.
+
+#### Example Response
+```json
+{
+  "field_groups": [
+    {
+      "title": "Page Settings",
+      "location_summary": "page",
+      "fields": [
+        {
+          "label": "Hero Image",
+          "name": "hero_image",
+          "type": "image",
+          "instructions": "Upload a featured image for the page header.",
+          "required": false,
+          "default": null
+        },
+        {
+          "label": "Show extra content",
+          "name": "show_extra",
+          "type": "true_false",
+          "instructions": null,
+          "required": false,
+          "default": null,
+          "conditional_logic_summary": null,
+          "controlled_fields_summary": "Extra content: shown when ON"
+        }
+      ]
+    }
+  ],
+  "generated_at": "2024-01-15T10:30:00+00:00"
+}
+```
+
 ## Admin Features
 
 ### Global Floating Chat
@@ -288,7 +327,9 @@ add_filter( 'contextualwp_manifest_schema_relationships', function ( $relationsh
 ## Caching
 `/generate_context` responses are cached for a short period (default 5 minutes)
 to reduce API calls. Adjust the TTL using the `contextualwp_ai_cache_ttl` filter or
-return `0` to disable caching.
+return `0` to disable caching. The `/schema` and `/acf_schema` endpoints are also
+cached (default 5 minutes); use `contextualwp_schema_cache_ttl` and
+`contextualwp_acf_schema_cache_ttl` to adjust.
 
 ## Contributing
 - PRs and issues welcome!
