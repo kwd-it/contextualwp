@@ -152,4 +152,44 @@ class IntentRouterTest extends TestCase {
         $second = $this->build_structure_answer_for_fixture( $prompt );
         $this->assertSame( $first, $second );
     }
+
+    /**
+     * Regression: Field helper AskAI requests must bypass schema routing.
+     * A prompt like "What should I put here?" with ACF field context would otherwise
+     * trigger schema routing (due to "ACF" / "Instructions for the AI" in the prompt)
+     * and return "Post type 'ai' could not be found" (from "Instructions for the AI").
+     */
+    public function test_field_helper_prompt_bypasses_schema_routing() {
+        $field_helper_prompt = "What should I put here?\n\n---\nACF Field context:\nType: text\nLabel: Hero Title\n"
+            . "Instructions for the AI (editor-focused):\n- Reply briefly...";
+        $request = $this->create_mock_request(
+            [ 'context_id' => 'multi', 'source' => 'acf_field_helper', 'prompt' => $field_helper_prompt ]
+        );
+
+        $reflection = new ReflectionClass( Generate_Context::class );
+        $method = $reflection->getMethod( 'should_use_schema_routing' );
+        $method->setAccessible( true );
+        $instance = new Generate_Context();
+        $result = $method->invoke( $instance, $request );
+
+        $this->assertFalse( $result, 'Field helper requests must not route to schema (would return "post type ai could not be found").' );
+    }
+
+    /**
+     * Create a minimal mock request with get_param.
+     *
+     * @param array $params [ context_id, source, prompt, ... ]
+     * @return object
+     */
+    private function create_mock_request( array $params ) {
+        return new class( $params ) {
+            private $params;
+            public function __construct( array $params ) {
+                $this->params = $params;
+            }
+            public function get_param( $key ) {
+                return $this->params[ $key ] ?? null;
+            }
+        };
+    }
 }

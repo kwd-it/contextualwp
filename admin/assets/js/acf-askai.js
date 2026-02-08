@@ -531,19 +531,27 @@
         lines.push('Current value: ' + (meta.value || '[empty]'));
         lines.push('');
         lines.push('Instructions for the AI (editor-focused):');
-        lines.push('- Reply in two short parts: (1) what this field controls, (2) what changes when its value is toggled (if known from metadata above).');
-        lines.push('- Do not restate basic field mechanics. Do not mention field keys, field group names, IDs, or JSON.');
+        var ft = (meta.type || '').toLowerCase();
+        var choiceToggleTypes = ['true_false', 'checkbox', 'radio', 'select', 'button_group'];
         var hasCondOrControl = !!(meta.conditional_logic_summary || meta.controlled_fields_summary);
-        if (hasCondOrControl) {
-            lines.push('- The conditional logic above is authoritative. Describe it confidently in plain English. Do not hedge with "depends on implementation" or suggest searching the codebase or theme.');
+        var showWhatChanges = choiceToggleTypes.indexOf(ft) >= 0 || hasCondOrControl;
+
+        if (showWhatChanges) {
+            lines.push('- Reply in two short parts: (1) what this field controls, (2) what changes when its value is toggled (if known from metadata above).');
+            lines.push('- Do not restate basic field mechanics. Do not mention field keys, field group names, IDs, or JSON.');
+            if (hasCondOrControl) {
+                lines.push('- The conditional logic above is authoritative. Describe it confidently in plain English. Do not hedge with "depends on implementation" or suggest searching the codebase or theme.');
+            } else {
+                lines.push('- If there is no conditional logic or instructions describing the effect, state briefly that the effect is not defined in the form. Suggest only: preview the page or check related fields. Do not suggest searching the codebase or theme.');
+            }
+            if (ft === 'true_false') {
+                lines.push('- For true/false: no invented examples. Only describe effects from metadata. If inferring from label/name, label it as inference and add a step to confirm.');
+            }
         } else {
-            lines.push('- If there is no conditional logic or instructions describing the effect, state briefly that the effect is not defined in the form. Suggest only: preview the page or check related fields. Do not suggest searching the codebase or theme.');
+            lines.push('- Reply briefly: what this field controls. Do not include a "what changes" section—omit it entirely for this field.');
+            lines.push('- Do not restate basic field mechanics. Do not mention field keys, field group names, IDs, or JSON.');
         }
         lines.push('- Keep responses concise and practical for content editors.');
-
-        if ((meta.type || '').toLowerCase() === 'true_false') {
-            lines.push('- For true/false: no invented examples. Only describe effects from metadata. If inferring from label/name, label it as inference and add a step to confirm.');
-        }
 
         return lines.join('\n');
     }

@@ -35,7 +35,8 @@ class Generate_Context {
         $format     = $request->get_param( 'format' );
 
         // Schema-aware structure answers for floating admin chat (multi): no AI call.
-        if ( strtolower( trim( (string) $context_id ) ) === 'multi' && $this->is_structure_question( $prompt ) ) {
+        // Field helper AskAI requests must bypass schema routing (prevents "post type 'ai' could not be found" etc.).
+        if ( $this->should_use_schema_routing( $request ) ) {
             return $this->handle_structure_question( $request );
         }
 
@@ -105,7 +106,10 @@ class Generate_Context {
             if ( $is_field_helper ) {
                 ACF_Schema_Helper::get_schema();
             }
-            
+            $system_message = $is_field_helper
+                ? $this->get_askai_system_message( $this->detect_askai_intent( $prompt, $request ), $request )
+                : 'You are a helpful assistant. Use the following context to answer.';
+
             // AI call (OpenAI/Mistral/Claude)
             $provider = apply_filters( 'contextualwp_ai_provider', Providers::normalize( $ai_provider ), $settings, $context_data, $request );
             $ai_response = null;
@@ -115,7 +119,7 @@ class Generate_Context {
                     $ai_payload = [
                         'model' => $model,
                         'messages' => [
-                            [ 'role' => 'system', 'content' => 'You are a helpful assistant. Use the following context to answer.' ],
+                            [ 'role' => 'system', 'content' => $system_message ],
                             [ 'role' => 'user', 'content' => $prompt . "\n\nContext:\n" . $content ]
                         ],
                         'max_completion_tokens' => $max_tokens,
@@ -137,7 +141,7 @@ class Generate_Context {
                     $ai_payload = apply_filters( 'contextualwp_ai_payload', [
                         'model' => $model,
                         'messages' => [
-                            [ 'role' => 'system', 'content' => 'You are a helpful assistant. Use the following context to answer.' ],
+                            [ 'role' => 'system', 'content' => $system_message ],
                             [ 'role' => 'user', 'content' => $prompt . "\n\nContext:\n" . $content ]
                         ],
                         'max_tokens' => $max_tokens,
@@ -155,6 +159,7 @@ class Generate_Context {
                     $ai_payload = apply_filters( 'contextualwp_ai_payload', [
                         'model' => $model,
                         'max_tokens' => $max_tokens,
+                        'system' => $system_message,
                         'messages' => [
                             [ 'role' => 'user', 'content' => $prompt . "\n\nContext:\n" . $content ]
                         ],
@@ -250,6 +255,9 @@ class Generate_Context {
         if ( $is_field_helper ) {
             ACF_Schema_Helper::get_schema();
         }
+        $system_message = $is_field_helper
+            ? $this->get_askai_system_message( $this->detect_askai_intent( $prompt, $request ), $request )
+            : 'You are a helpful assistant. Use the following context to answer.';
 
         // Cache key uses provider, model and context parameters
         $cache_key = apply_filters( 'contextualwp_ai_cache_key', \ContextualWP\Helpers\Utilities::get_cache_key(
@@ -276,7 +284,7 @@ class Generate_Context {
                 $ai_payload = [
                     'model' => $model,
                     'messages' => [
-                        [ 'role' => 'system', 'content' => 'You are a helpful assistant. Use the following context to answer.' ],
+                        [ 'role' => 'system', 'content' => $system_message ],
                         [ 'role' => 'user', 'content' => $prompt . "\n\nContext:\n" . $content ]
                     ],
                     'max_completion_tokens' => $max_tokens,
@@ -298,7 +306,7 @@ class Generate_Context {
                 $ai_payload = apply_filters( 'contextualwp_ai_payload', [
                     'model' => $model,
                     'messages' => [
-                        [ 'role' => 'system', 'content' => 'You are a helpful assistant. Use the following context to answer.' ],
+                        [ 'role' => 'system', 'content' => $system_message ],
                         [ 'role' => 'user', 'content' => $prompt . "\n\nContext:\n" . $content ]
                     ],
                     'max_tokens' => $max_tokens,
@@ -316,6 +324,7 @@ class Generate_Context {
                 $ai_payload = apply_filters( 'contextualwp_ai_payload', [
                     'model' => $model,
                     'max_tokens' => $max_tokens,
+                    'system' => $system_message,
                     'messages' => [
                         [ 'role' => 'user', 'content' => $prompt . "\n\nContext:\n" . $content ]
                     ],
@@ -403,6 +412,109 @@ class Generate_Context {
         $schema_block = "---\nAuthoritative schema for this true/false field (use this to explain ON vs OFF behaviour):\n" . implode( "\n", $parts ) . "\n---\n\n";
         $instruction  = "\n\nUse the schema above to explain what turning this field ON vs OFF does. Be direct and editor-focused. Do not hedge or say 'depends on implementation'.";
         return $schema_block . $prompt . $instruction;
+    }
+
+    /**
+     * Detect AskAI intent from user question text (explain vs advise).
+     * Used to route responses to different styles. Returns null if intent cannot be confidently determined.
+     *
+     * @param string         $prompt  Full prompt (may include field metadata).
+     * @param \WP_REST_Request $request Request.
+     * @return string|null 'explain'|'advise'|null
+     */
+    private function detect_askai_intent( $prompt, $request ) {
+        if ( $request->get_param( 'source' ) !== 'acf_field_helper' || ! is_string( $prompt ) ) {
+            return null;
+        }
+        $user_text = $this->extract_askai_user_question( $prompt );
+        if ( $user_text === '' ) {
+            return null;
+        }
+        $lower = strtolower( $user_text );
+
+        $advise_phrases = [
+            'what should', 'what\'s best', 'whats best', 'what is the best', 'best way', 'what to put',
+            'what size', 'what image', 'what dimension', 'what format', 'what value',
+            'recommend', 'suggest', 'what content', 'how long should', 'how many',
+        ];
+        foreach ( $advise_phrases as $p ) {
+            if ( strpos( $lower, $p ) !== false ) {
+                return 'advise';
+            }
+        }
+
+        $explain_phrases = [
+            'what does', 'what is', 'what are', 'why is', 'why does', 'why are',
+            'how does', 'how is', 'explain', 'meaning of', 'purpose of', 'describe',
+            'what\'s this', 'whats this', 'what is this', 'what does this',
+            'why is this', 'why is this here',
+        ];
+        foreach ( $explain_phrases as $p ) {
+            if ( strpos( $lower, $p ) !== false ) {
+                return 'explain';
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract the user's question from an AskAI prompt (before ACF metadata block).
+     *
+     * @param string $prompt Full prompt.
+     * @return string
+     */
+    private function extract_askai_user_question( $prompt ) {
+        if ( ! is_string( $prompt ) ) {
+            return '';
+        }
+        $idx = strpos( $prompt, 'ACF Field context:' );
+        if ( $idx === false ) {
+            return trim( $prompt );
+        }
+        $before = substr( $prompt, 0, $idx );
+        $before = preg_replace( '/^---\s*\n.*?---\s*\n\s*/s', '', $before );
+        return trim( $before );
+    }
+
+    /**
+     * Get system message for AskAI based on detected intent and field type.
+     *
+     * @param string|null $intent 'explain'|'advise'|null
+     * @param \WP_REST_Request $request Request (for field_type).
+     * @return string
+     */
+    private function get_askai_system_message( $intent, $request ) {
+        if ( $intent === 'explain' ) {
+            return 'You are a helpful assistant. Use the following context to answer. Be factual and descriptive only. Do not give recommendations or advice.';
+        }
+        if ( $intent === 'advise' ) {
+            $field_type = strtolower( trim( (string) ( $request->get_param( 'field_type' ) ?? '' ) ) );
+            $text_field_types = [ 'text', 'textarea', 'wysiwyg' ];
+            if ( in_array( $field_type, $text_field_types, true ) ) {
+                return 'You are a helpful assistant for content editors. Use the following context to answer. For text/textarea fields: return 2–4 concise bullets with practical guidance (format, what to include/exclude, example pattern). Avoid repeating the field definition. Do not invent site-specific content (place names, etc).';
+            }
+            return 'You are a helpful assistant for content editors. Use the following context to answer. Give concise, opinionated guidance. Do not explain field mechanics, toggle labels, or metadata—focus on actionable recommendations.';
+        }
+        return 'You are a helpful assistant. Use the following context to answer.';
+    }
+
+    /**
+     * Whether to route this request to schema-based structure answers (no AI call).
+     * Field helper AskAI requests are always bypassed to avoid mis-routing (e.g. "post type 'ai' could not be found").
+     *
+     * @param \WP_REST_Request $request Request.
+     * @return bool
+     */
+    private function should_use_schema_routing( $request ) {
+        if ( strtolower( trim( (string) $request->get_param( 'context_id' ) ) ) !== 'multi' ) {
+            return false;
+        }
+        if ( $request->get_param( 'source' ) === 'acf_field_helper' ) {
+            return false;
+        }
+        $prompt = $request->get_param( 'prompt' );
+        return $this->is_structure_question( is_string( $prompt ) ? $prompt : '' );
     }
 
     /**
