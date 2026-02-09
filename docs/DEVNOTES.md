@@ -5,6 +5,20 @@ It focuses on **process**, not domain-specific behaviour.
 
 ---
 
+### Note on current phase (pre–v1.0)
+
+The workflow below normally begins at Step 1 (identifying the single biggest improvement opportunity).
+
+In the lead-up to the v1.0 release, Step 1 is temporarily deprioritised in favour of
+quality assurance and consistency across existing features.
+
+The focus during this phase is to validate and polish current behaviour rather than
+identify new feature opportunities.
+
+Once v1.0 is released, the workflow resumes from Step 1 as originally intended.
+
+---
+
 ## 1. Decide What to Build Next
 
 - Identify the single biggest pain point or improvement opportunity.
