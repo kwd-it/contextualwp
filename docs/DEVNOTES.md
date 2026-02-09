@@ -10,6 +10,7 @@ It focuses on **process**, not domain-specific behaviour.
 - Identify the single biggest pain point or improvement opportunity.
 - Start a fresh ChatGPT conversation.
 - Share (as relevant):
+  - Current README (authoritative, user-facing contract)
   - Current schema
   - Current CHANGELOG
   - A short explanation of what feels weakest right now
