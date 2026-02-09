@@ -591,21 +591,57 @@
         if ($input.length) $input.val(value).trigger('change');
     }
 
+    /**
+     * Position the Ask AI tooltip within the viewport using fixed positioning.
+     * Prevents horizontal overflow and flips above the trigger when there is not enough space below.
+     *
+     * @param {jQuery} $tooltip The tooltip element.
+     * @param {jQuery} $trigger The trigger element (icon wrap) to position relative to.
+     */
+    function positionAskAITooltipToViewport($tooltip, $trigger) {
+        $tooltip.appendTo(document.body);
+        var w = $tooltip.outerWidth();
+        var h = $tooltip.outerHeight();
+        var triggerRect = $trigger[0].getBoundingClientRect();
+        var vw = window.innerWidth;
+        var vh = window.innerHeight;
+        var gap = 4;
+        var padding = 8;
+
+        var left = triggerRect.left;
+        if (left + w > vw - padding) left = vw - w - padding;
+        if (left < padding) left = padding;
+
+        var belowSpace = vh - (triggerRect.bottom + gap);
+        var aboveSpace = triggerRect.top - gap;
+        var top;
+        if (belowSpace >= h || belowSpace >= aboveSpace) {
+            top = triggerRect.bottom + gap;
+        } else {
+            top = triggerRect.top - gap - h;
+        }
+        if (top < padding) top = padding;
+        if (top + h > vh - padding) top = vh - h - padding;
+
+        $tooltip.css({ position: 'fixed', left: left + 'px', top: top + 'px' });
+    }
+
     function onAskAIClick(e) {
         e.preventDefault();
         var $icon = $(this);
+        var $trigger = $icon.closest('.contextualwp-acf-askai-wrap');
         var $field = $icon.closest('.acf-field');
         var meta = collectFieldMetadata($field);
         var label = meta.label || 'this field';
 
-        $field.find('.contextualwp-acf-askai-tooltip').remove();
+        $('.contextualwp-acf-askai-tooltip').remove();
         var $tooltip = $('<div class="contextualwp-acf-askai-tooltip" role="dialog" tabindex="0">' +
             '<button type="button" class="contextualwp-acf-askai-close" aria-label="Close">×</button>' +
             '<p class="contextualwp-acf-askai-prompt-label">Ask a question about <strong>' + $('<span>').text(label).html() + '</strong></p>' +
             '<textarea class="contextualwp-acf-askai-input" rows="3" placeholder="Ask a question about this field..."></textarea>' +
             '<button type="button" class="button button-primary contextualwp-acf-askai-send">Ask AI</button>' +
             '</div>');
-        $icon.closest('.contextualwp-acf-askai-wrap').append($tooltip);
+        positionAskAITooltipToViewport($tooltip, $trigger);
         $tooltip.find('.contextualwp-acf-askai-input').focus();
 
         $tooltip.on('click', '.contextualwp-acf-askai-close', function() { $tooltip.remove(); });

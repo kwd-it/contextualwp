@@ -50,11 +50,9 @@
     background: #f0f0f1;
 }
 .contextualwp-acf-askai-tooltip {
-    position: absolute;
-    padding: 12px 40px 10px 14px;
+    /* Position set by JS (viewport-based, clamped) */
+    position: fixed;
     z-index: 100010;
-    left: 0;
-    top: 100%;
     background: #fff;
     color: #222;
     border: 1px solid #2271b1;
@@ -67,7 +65,6 @@
     overflow-y: auto;
     font-size: 13px;
     line-height: 1.5;
-    margin-top: 4px;
     white-space: pre-wrap;
     word-wrap: break-word;
     pointer-events: auto;
