@@ -552,6 +552,7 @@
             lines.push('- Do not restate basic field mechanics. Do not mention field keys, field group names, IDs, or JSON.');
         }
         lines.push('- Keep responses concise and practical for content editors.');
+        lines.push('- Use **bold** for key terms when it helps clarity.');
 
         return lines.join('\n');
     }
@@ -597,8 +598,9 @@
      *
      * @param {jQuery} $tooltip The tooltip element.
      * @param {jQuery} $trigger The trigger element (icon wrap) to position relative to.
+     * @param {boolean} [anchorBottom] If true, align tooltip so its bottom is just above the trigger (for result view).
      */
-    function positionAskAITooltipToViewport($tooltip, $trigger) {
+    function positionAskAITooltipToViewport($tooltip, $trigger, anchorBottom) {
         $tooltip.appendTo(document.body);
         var w = $tooltip.outerWidth();
         var h = $tooltip.outerHeight();
@@ -612,13 +614,20 @@
         if (left + w > vw - padding) left = vw - w - padding;
         if (left < padding) left = padding;
 
-        var belowSpace = vh - (triggerRect.bottom + gap);
-        var aboveSpace = triggerRect.top - gap;
         var top;
-        if (belowSpace >= h || belowSpace >= aboveSpace) {
-            top = triggerRect.bottom + gap;
-        } else {
+        if (anchorBottom) {
             top = triggerRect.top - gap - h;
+        } else {
+            var belowSpace = vh - (triggerRect.bottom + gap);
+            var aboveSpace = triggerRect.top - gap;
+            if (belowSpace >= h || belowSpace >= aboveSpace) {
+                top = triggerRect.bottom + gap;
+                if (top + h > vh - padding && aboveSpace >= h) {
+                    top = triggerRect.top - gap - h;
+                }
+            } else {
+                top = triggerRect.top - gap - h;
+            }
         }
         if (top < padding) top = padding;
         if (top + h > vh - padding) top = vh - h - padding;
@@ -655,9 +664,11 @@
 
     function sendAskAIRequest($icon, $field, $tooltip, userQuestion, fieldContext) {
         var prompt = buildFieldHelperPrompt(userQuestion, fieldContext);
+        var $trigger = $icon.closest('.contextualwp-acf-askai-wrap');
 
         $icon.addClass('loading');
         $tooltip.html('<div class="contextualwp-acf-askai-loading">Asking AI…</div>').find('.contextualwp-acf-askai-loading').focus();
+        positionAskAITooltipToViewport($tooltip, $trigger, true);
 
         var contextId = config.contextId || (config.postType + '-' + config.postId);
         if (!contextId || contextId === '-0') contextId = 'multi';
@@ -678,12 +689,15 @@
         }).done(function(res) {
             var output = (res.ai && res.ai.output) ? String(res.ai.output).trim() : '';
             if (output) {
+                var safe = $('<div>').text(res.ai.output).html();
+                var withBold = safe.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
                 $tooltip.html(
                     '<button type="button" class="contextualwp-acf-askai-close" aria-label="Close">×</button>' +
                     '<div class="contextualwp-acf-askai-response">' +
-                    $('<div>').text(res.ai.output).html() +
+                    withBold +
                     '</div>'
                 );
+                positionAskAITooltipToViewport($tooltip, $trigger, true);
             } else if (res.ai && !output) {
                 $tooltip.html(
                     '<button type="button" class="contextualwp-acf-askai-close" aria-label="Close">×</button>' +
@@ -691,6 +705,7 @@
                     '<p>The AI did not produce a visible answer (likely used all tokens on reasoning). Try a shorter question or a different model in Settings.</p>' +
                     '</div>'
                 );
+                positionAskAITooltipToViewport($tooltip, $trigger, true);
             } else {
                 var errMsg = (res && res.message) ? res.message : 'No response';
                 if (res && res.code) errMsg = (res.code + ': ') + errMsg;
