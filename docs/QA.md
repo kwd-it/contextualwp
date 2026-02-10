@@ -57,10 +57,12 @@ No need for more unless something looks unstable.
 
 ### 1. Text (text)
 
-| Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
-|--------|---------|--------|---------------|-------------|-------|
-| Text A (required / has instructions) | A1, A2 |  |  |  |  |
-| Text B (optional / no instructions) | A1, A2 |  |  |  |  |
+| Instance | Required | Instructions | Prompts | Rating | Issue logged? | Last tested | Notes |
+|---------|----------|--------------|---------|--------|---------------|-------------|-------|
+| Text 1 | Yes | Yes | A1, A2 |  |  |  |  |
+| Text 2 | Yes | No  | A1, A2 |  |  |  |  |
+| Text 3 | No | Yes | A1, A2 | ✅ Good | No | 2026-02-10 | Clear, concise explanation. Guidance correctly follows instructions (comma-separated list). No invented requirements. |
+| Text 4 | No  | No  | A1, A2 |  |  |  |  |
 
 ---
 
