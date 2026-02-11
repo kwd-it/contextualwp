@@ -19,6 +19,7 @@ Date format: YYYY-MM-DD
 - Does not invent field behaviour or settings.
 - Does not leak unsafe/internal metadata (keys, IDs, file paths).
 - Output stays editor-focused and concise.
+- Advise responses are practical and actionable (ideally a small number of clear bullets or short points).
 
 ---
 
@@ -27,10 +28,10 @@ Date format: YYYY-MM-DD
 ## Standard prompts
 
 **A1 – Explain**  
-> What is this field for? Keep it concise.
+> What is this field for? 
 
 **A2 – Advise**  
-> How should I fill this in well? Give 2–4 practical bullets.
+> How should I fill this in well? 
 
 **A3 – Behaviour (only when relevant)**  
 Use only for: true_false, select, radio, checkbox, button_group, conditional logic, or nested fields.
