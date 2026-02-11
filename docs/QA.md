@@ -60,10 +60,10 @@ No need for more unless something looks unstable.
 
 | Instance | Required | Instructions | Prompts | Rating | Issue logged? | Last tested | Notes |
 |---------|----------|--------------|---------|--------|---------------|-------------|-------|
-| Text 1 | Yes | Yes | A1, A2 |  |  |  |  |
-| Text 2 | Yes | No  | A1, A2 |  |  |  |  |
+| Text 1 | Yes | Yes | A1, A2 | ✅ Good | No | 2026-02-11 | Correctly identified 50 character limit from instructions. Clear, concise guidance with no invented requirements. |
+| Text 2 | Yes | No  | A1, A2 | ⚠️ Average | Yes | 2026-02-11 | A1 accurate and concise. A2 assumed display context (header/footer/contact page) and added formatting guidance not derived from schema or instructions. |
 | Text 3 | No | Yes | A1, A2 | ✅ Good | No | 2026-02-10 | Clear, concise explanation. Guidance correctly follows instructions (comma-separated list). No invented requirements. |
-| Text 4 | No  | No  | A1, A2 |  |  |  |  |
+| Text 4 | No  | No  | A1, A2 | ✅ Good | No | 2026-02-11 | Accurate explanation and correct formatting guidance. No invented behaviour or display assumptions. |
 
 ---
 
