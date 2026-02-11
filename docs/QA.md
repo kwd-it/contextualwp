@@ -71,8 +71,8 @@ No need for more unless something looks unstable.
 
 | Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
 |--------|---------|--------|---------------|-------------|-------|
-| Textarea A | A1, A2 |  |  |  |  |
-| Textarea B (optional) | A1, A2 |  |  |  |  |
+| Textarea A | A1, A2 | ❌ Bad | Yes | 2026-02-11 | A1 assumed page-level body content and layout structure. A2 invented content structure (headline, benefits, CTA), tone guidance, word count, and specific services not derived from schema or instructions. |
+| Textarea B (optional) | A1, A2 | ⚠️ Average | Yes | 2026-02-11 | A1 and A2 assumed layout position (beneath main heading). A2 added tone and CTA guidance not derived from schema or instructions. |
 
 ---
 
