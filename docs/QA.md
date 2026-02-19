@@ -101,40 +101,40 @@ Use for: true_false, select, radio, checkbox, taxonomy, post_object, relationshi
 ### 7. Checkbox (checkbox)
 
 | Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
-|----------|---------|--------|---------------|-------------|-------|
-| Checkbox A | A1, A3 |  |  |  |  |
+|----------|---------|--------|---------------|------------|-------|
+| Checkbox A | A1, A3 | ❌ Bad | Yes | 2026-02-19 | AskAI icon does not appear for checkbox fields, so field helper cannot be used/tested. Coverage gap for checkbox type. |
 
 ---
 
 ### 8. URL (url)
 
-| Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
-|----------|---------|--------|---------------|-------------|-------|
-| URL A | A1, A2, A4 |  |  |  |  |
+| Instance | Prompts | Rating     | Issue logged? | Last tested  | Notes |
+|----------|---------|------------|---------------|-------------|-------|
+| URL A    | A1, A2, A4 | ⚠️ Average | No            | 2026-02-19  | Correct purpose and formatting guidance. Minor frontend/display assumptions (e.g., “visitors can open the tour”), and inferred best practices (public link, avoid shortened URLs). No invented validation rules or conditional logic. |
 
 ---
 
 ### 9. Email (email)
 
-| Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
-|----------|---------|--------|---------------|-------------|-------|
-| Email A | A1, A2, A4 |  |  |  |  |
+| Instance | Prompts     | Rating     | Issue logged? | Last tested  | Notes |
+|----------|------------|------------|---------------|-------------|-------|
+| Email A  | A1, A2, A4 | ⚠️ Average | Yes           | 2026-02-19  | A1 and A2 appropriate and practical. A4 incorrectly states “This field is required” (not defined in schema). Also lacks explicit email format constraint guidance (e.g., standard email structure). Minor usage inference (“site communications”). |
 
 ---
 
 ### 10. Number (number)
 
-| Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
-|----------|---------|--------|---------------|-------------|-------|
-| Number A | A1, A2, A4 |  |  |  |  |
+| Instance | Prompts     | Rating | Issue logged? | Last tested  | Notes |
+|----------|------------|--------|---------------|-------------|-------|
+| Number A | A1, A2, A4 | ✅ Good | No            | 2026-02-19  | Correctly identifies bedroom count purpose and accurately reflects configured validation (Range: 1–9). No invented constraints or behaviour. Clear whole-number guidance. |
 
 ---
 
 ### 11. Image (image)
 
-| Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
-|----------|---------|--------|---------------|-------------|-------|
-| Image A | A1, A2, A4 |  |  |  |  |
+| Instance | Prompts     | Rating     | Issue logged? | Last tested  | Notes |
+|----------|------------|------------|---------------|-------------|-------|
+| Image A  | A1, A2, A4 | ⚠️ Average | Yes           | 2026-02-19  | Correctly reflects field constraints from ACF (required; PNG-only). Transparency/branding guidance is reasonable. Minor overreach: assumes site-wide placement/usage (e.g., header/branded outputs) not defined in schema/instructions. |
 
 ---
 
