@@ -78,34 +78,34 @@ No need for more unless something looks unstable.
 
 ### 3. WYSIWYG (wysiwyg)
 
-| Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
-|--------|---------|--------|---------------|-------------|-------|
-| WYSIWYG A | A1, A2 |  |  |  |  |
+| Instance     | Prompts | Rating     | Issue logged? | Last tested  | Notes |
+|-------------|---------|------------|---------------|-------------|-------|
+| WYSIWYG A   | A1, A2  | ⚠️ Average | Yes           | 2026-02-19  | A1 assumed placement under page heading. A2 introduced invented structure (2–3 paragraphs, word counts, CTA guidance). Practical and editor-friendly but adds layout/context assumptions not derived from schema. UI issue: response scrollbar overlaps close (X) button on longer outputs. |
 
 ---
 
 ### 4. True / False (true_false)
 
-| Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
-|--------|---------|--------|---------------|-------------|-------|
-| Toggle A (no conditional logic) | A1, A2, A3 |  |  |  |  |
-| Toggle B (with conditional logic) | A1, A2, A3 |  |  |  |  |
+| Instance                              | Prompts     | Rating  | Issue logged? | Last tested  | Notes |
+|--------------------------------------|------------|---------|---------------|-------------|-------|
+| Toggle A (no conditional logic)     | A1, A2, A3 | ✅ Good | No            | 2026-02-19  | Correct explanation of toggle behaviour. Clear ON/OFF logic. No layout or frontend assumptions. Behaviour tied to field instructions regarding required fields. |
+| Toggle B (with conditional logic)   | A1, A2, A3 | ✅ Good | No            | 2026-02-19  | Correctly identifies conditional relationship: Monday toggle shows/hides the “Monday Schedule” fields. Minor noise (“current value is empty”) and repeated “displayed” wording, but no invented behaviour. |
 
 ---
 
 ### 5. Select (select)
 
-| Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
-|--------|---------|--------|---------------|-------------|-------|
-| Select A | A1, A2, A3 |  |  |  |  |
+| Instance | Prompts     | Rating  | Issue logged? | Last tested  | Notes |
+|----------|------------|---------|---------------|-------------|-------|
+| Select A | A1, A2, A3 | ✅ Good | No            | 2026-02-19  | Correctly identifies status as selectable availability state. Appropriately notes no defined conditional logic. Does not invent frontend behaviour. Sensible preview guidance. Minor unnecessary mention of current value. |
 
 ---
 
 ### 6. Radio (radio)
 
-| Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
-|--------|---------|--------|---------------|-------------|-------|
-| Radio A | A1, A2, A3 |  |  |  |  |
+| Instance | Prompts     | Rating  | Issue logged? | Last tested  | Notes |
+|----------|------------|---------|---------------|-------------|-------|
+| Radio A  | A1, A2, A3 | ✅ Good | No            | 2026-02-19  | Correctly identifies ordering behaviour from selected value. No invented query logic or layout assumptions. Minor inference about listing/archive context but acceptable. |
 
 ---
 
