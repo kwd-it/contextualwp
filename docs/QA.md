@@ -142,7 +142,7 @@ Use for: true_false, select, radio, checkbox, taxonomy, post_object, relationshi
 
 | Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
 |----------|---------|--------|---------------|-------------|-------|
-| File A | A1, A2, A4 |  |  |  |  |
+| File A (Developments → Brochure) | A1, A2, A4 | ✅ Good | No | 2026-02-20 | Correctly reflects schema: PDF-only (mime_types: pdf). No invented required rules or behaviour. Practical guidance (filename, compression, accessibility) clearly framed as best practice, not constraints. Minor frontend usage inference acceptable and consistent with field purpose. |
 
 ---
 
@@ -150,7 +150,7 @@ Use for: true_false, select, radio, checkbox, taxonomy, post_object, relationshi
 
 | Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
 |----------|---------|--------|---------------|-------------|-------|
-| Date A | A1, A2, A4 |  |  |  |  |
+| Date A (CPT: Careers Job Role → Closing Date) | A1, A2, A4 | ❌ Bad | Yes | 2026-02-20 | AskAI icon does not appear for date_picker fields, so field helper cannot be used/tested. Coverage gap for date_picker type. |
 
 ---
 
@@ -158,7 +158,7 @@ Use for: true_false, select, radio, checkbox, taxonomy, post_object, relationshi
 
 | Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
 |----------|---------|--------|---------------|-------------|-------|
-| Taxonomy A | A1, A3 |  |  |  |  |
+| Taxonomy A (Block: Helping You Move → Select Scheme Type) | A1, A3 | ⚠️ Average | Yes | 2026-02-20 | Correctly explains taxonomy assignment and categorisation behaviour. However, A3 introduces frontend/template assumptions (“showing related scheme copy, benefits and listings”) not supported by schema or conditional logic. Mild overreach into implementation behaviour. |
 
 ---
 
@@ -166,7 +166,7 @@ Use for: true_false, select, radio, checkbox, taxonomy, post_object, relationshi
 
 | Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
 |----------|---------|--------|---------------|-------------|-------|
-| Post Object A | A1, A3 |  |  |  |  |
+| Post Object A (CPT: Plots → Development) | A1, A3 | ⚠️ Average | Yes | 2026-02-20 | Correctly explains linking to a Development post. However, response assumes frontend population of title, permalink, featured image, and development fields — behaviour not guaranteed by schema or conditional logic. Mild implementation overreach. |
 
 ---
 
@@ -174,7 +174,7 @@ Use for: true_false, select, radio, checkbox, taxonomy, post_object, relationshi
 
 | Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
 |----------|---------|--------|---------------|-------------|-------|
-| Relationship A | A1, A3 |  |  |  |  |
+| Relationship A (Block: Development Helping You Move → Moving Schemes) | A1, A3 | ⚠️ Average | Yes | 2026-02-20 | Correctly identifies that the field stores links to one or more `helping_you_move` posts. However, it asserts template/front-end usage (“used by the template/front-end”, “for lists/front-end displays/modules”) which is not guaranteed by schema/instructions/conditional logic. Implementation overreach. |
 
 ---
 
