@@ -182,7 +182,7 @@ Use for: true_false, select, radio, checkbox, taxonomy, post_object, relationshi
 
 | Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
 |----------|---------|--------|---------------|-------------|-------|
-| Group A | A1, A3 |  |  |  |  |
+| Group A (Developments → Address) | A1, A3 | ❌ Bad | Yes | 2026-02-22 | AskAI icon does not appear on group container fields. Only subfields inside the group display AskAI. Group type cannot currently be tested. Coverage gap for group field type. |
 
 ---
 
@@ -190,7 +190,7 @@ Use for: true_false, select, radio, checkbox, taxonomy, post_object, relationshi
 
 | Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
 |----------|---------|--------|---------------|-------------|-------|
-| Repeater A | A1, A3 |  |  |  |  |
+| Repeater A (Developments → Additional Featured Images) | A1, A3 | ❌ Bad | Yes | 2026-02-22 | AskAI icon does not appear on repeater container fields. Only subfields inside rows display AskAI. Repeater type cannot currently be tested directly. JSON confirms limit (2) and subfield constraint (Image, required, JPG only), but container-level behaviour cannot be evaluated. Coverage gap for repeater field type. |
 
 ---
 
@@ -198,7 +198,7 @@ Use for: true_false, select, radio, checkbox, taxonomy, post_object, relationshi
 
 | Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
 |----------|---------|--------|---------------|-------------|-------|
-| Map A | A1, A2, A4 |  |  |  |  |
+| Map A (Careers Job Role → Job Role Location Address) | A1, A2, A4 | ✅ Good | No | 2026-02-22 | No invented constraints. Correctly explains map/address purpose. Instructions are empty in JSON and response reflects that. Minor frontend inference (“shown for the role”) but acceptable and not misleading. |
 
 ---
 
