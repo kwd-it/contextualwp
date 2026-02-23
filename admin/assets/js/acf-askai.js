@@ -671,7 +671,6 @@
         positionAskAITooltipToViewport($tooltip, $trigger, true);
 
         var contextId = config.contextId || (config.postType + '-' + config.postId);
-        if (!contextId || contextId === '-0') contextId = 'multi';
 
         $.ajax({
             url: config.endpoint,

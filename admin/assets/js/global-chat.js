@@ -43,6 +43,70 @@ jQuery(function($){
 
     var $messages = $('#contextualwp-floating-chat-messages');
 
+    // Use current post/page on edit screens; only use multi when explicitly selected
+    var serverContextId = (typeof contextualwpGlobalChat !== 'undefined' && contextualwpGlobalChat.contextId && String(contextualwpGlobalChat.contextId).trim() !== '') ? String(contextualwpGlobalChat.contextId).trim() : 'multi';
+    var useMultiContext = (serverContextId === 'multi');
+
+    // Fallback: if PHP sent multi but we're on a post/page edit screen, derive context from URL and body
+    if (serverContextId === 'multi') {
+        var postMatch = typeof window.location !== 'undefined' && window.location.search && window.location.search.match(/[?&]post=(\d+)/);
+        var postIdFromUrl = postMatch ? postMatch[1] : '';
+        var postTypeFromUrl = '';
+        if (typeof window.location !== 'undefined' && window.location.search) {
+            var ptMatch = window.location.search.match(/[?&]post_type=([a-z0-9_-]+)/i);
+            if (ptMatch) postTypeFromUrl = ptMatch[1];
+        }
+        var postTypeFromBody = '';
+        if (document.body && document.body.className) {
+            var classes = document.body.className.split(/\s+/);
+            for (var c = 0; c < classes.length; c++) {
+                if (classes[c].indexOf('post-type-') === 0) {
+                    postTypeFromBody = classes[c].replace('post-type-', '');
+                    break;
+                }
+            }
+        }
+        var postType = postTypeFromBody || postTypeFromUrl;
+        if (postType && (postIdFromUrl !== '' || (typeof contextualwpGlobalChat !== 'undefined' && contextualwpGlobalChat.postId !== undefined))) {
+            var pid = postIdFromUrl || (contextualwpGlobalChat && String(contextualwpGlobalChat.postId));
+            if (pid !== undefined && pid !== '') {
+                serverContextId = postType + '-' + pid;
+                useMultiContext = false;
+            }
+        }
+        if (serverContextId === 'multi' && postType && (typeof contextualwpGlobalChat !== 'undefined' && (contextualwpGlobalChat.postId === 0 || contextualwpGlobalChat.postId === '0'))) {
+            serverContextId = postType + '-0';
+            useMultiContext = false;
+        }
+    }
+
+    function getEffectiveContextId() {
+        return useMultiContext ? 'multi' : serverContextId;
+    }
+
+    // Context switcher: only show on edit screens so user can explicitly choose site-wide
+    var $contextRow = $('<div class="contextualwp-chat-context-row" style="margin-bottom:8px;font-size:12px;color:#666;"></div>');
+    $('#contextualwp-floating-chat-prompt').before($contextRow);
+    function updateContextSwitcher() {
+        if (serverContextId === 'multi') {
+            $contextRow.html('Context: Site-wide').hide();
+            return;
+        }
+        $contextRow.show();
+        if (useMultiContext) {
+            $contextRow.html('Context: Site-wide. <a href="#" class="contextualwp-chat-context-link">Use current post</a>');
+        } else {
+            $contextRow.html('Context: Current post. <a href="#" class="contextualwp-chat-context-link">Use site-wide</a>');
+        }
+    }
+    $(document).on('click', '.contextualwp-chat-context-link', function(e){
+        e.preventDefault();
+        if (serverContextId === 'multi') return;
+        useMultiContext = !useMultiContext;
+        updateContextSwitcher();
+    });
+    updateContextSwitcher();
+
     function renderMarkdown(text) {
         if (typeof marked !== 'undefined' && marked.parse) {
             try {
@@ -81,7 +145,7 @@ jQuery(function($){
             contentType: 'application/json',
             dataType: 'json',
             data: JSON.stringify({
-                context_id: 'multi',
+                context_id: getEffectiveContextId(),
                 prompt: prompt,
                 format: 'markdown'
             })

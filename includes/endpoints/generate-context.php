@@ -195,58 +195,81 @@ class Generate_Context {
             return $response;
         }
 
-        // Parse context_id (e.g., post-123)
+        // Parse context_id (e.g., post-123 or post-0 for new post)
         $parsed = Utilities::parse_post_id( $context_id );
         if ( ! $parsed ) {
             return new \WP_Error( 'invalid_context_id', 'Invalid context_id format', [ 'status' => 400 ] );
         }
 
-        $post = get_post( $parsed['id'] );
-        if ( ! $post ) {
-            return new \WP_Error( 'not_found', 'Context not found', [ 'status' => 404 ] );
-        }
-        // Ensure the requested type matches the actual post type (case-insensitive).
-        if ( strtolower( $post->post_type ) !== strtolower( $parsed['type'] ) ) {
-            $valid_types = [ $post->post_type ];
-            // Optionally, allow for registered post types with similar names
-            $registered_types = get_post_types( [], 'names' );
-            if ( in_array( strtolower( $parsed['type'] ), array_map( 'strtolower', $registered_types ), true ) ) {
-                // Accept as valid if the type exists, even if not matching this post
-                return new \WP_Error( 'invalid_post_type', sprintf( 'Post type mismatch: requested type "%s" does not match actual post type "%s" for ID %d.', $parsed['type'], $post->post_type, $post->ID ), [ 'status' => 400 ] );
+        $post = null;
+        if ( $parsed['id'] > 0 ) {
+            $post = get_post( $parsed['id'] );
+            if ( ! $post ) {
+                return new \WP_Error( 'not_found', 'Context not found', [ 'status' => 404 ] );
             }
-            return new \WP_Error( 'invalid_post_type', sprintf( 'Post type "%s" is not valid for post ID %d. Actual type: "%s".', $parsed['type'], $post->ID, $post->post_type ), [ 'status' => 400 ] );
-        }
-        if ( ! Utilities::can_access_post( $post ) ) {
-            return new \WP_Error( 'rest_forbidden', 'Access denied', [ 'status' => 403 ] );
-        }
-
-        // Format content (markdown/plain/html)
-        $content = Utilities::format_content( $post, $format );
-
-        // Fetch ACF fields if available
-        $acf_fields = [];
-        if ( function_exists( 'get_fields' ) ) {
-            try {
-                $acf_fields = get_fields( $post->ID ) ?: [];
-            } catch ( \Exception $e ) {
-                error_log( 'ContextualWP: ACF fields error for post ' . $post->ID . ': ' . $e->getMessage() );
+            // Ensure the requested type matches the actual post type (case-insensitive).
+            if ( strtolower( $post->post_type ) !== strtolower( $parsed['type'] ) ) {
+                $valid_types = [ $post->post_type ];
+                $registered_types = get_post_types( [], 'names' );
+                if ( in_array( strtolower( $parsed['type'] ), array_map( 'strtolower', $registered_types ), true ) ) {
+                    return new \WP_Error( 'invalid_post_type', sprintf( 'Post type mismatch: requested type "%s" does not match actual post type "%s" for ID %d.', $parsed['type'], $post->post_type, $post->ID ), [ 'status' => 400 ] );
+                }
+                return new \WP_Error( 'invalid_post_type', sprintf( 'Post type "%s" is not valid for post ID %d. Actual type: "%s".', $parsed['type'], $post->ID, $post->post_type ), [ 'status' => 400 ] );
+            }
+            if ( ! Utilities::can_access_post( $post ) ) {
+                return new \WP_Error( 'rest_forbidden', 'Access denied', [ 'status' => 403 ] );
+            }
+        } else {
+            // context_id is e.g. post-0 (new post screen): ensure post type exists and user can create it
+            $post_type_obj = get_post_type_object( $parsed['type'] );
+            if ( ! $post_type_obj ) {
+                return new \WP_Error( 'invalid_context_id', 'Invalid post type for new post context.', [ 'status' => 400 ] );
+            }
+            if ( ! current_user_can( $post_type_obj->cap->create_posts ) ) {
+                return new \WP_Error( 'rest_forbidden', 'Access denied', [ 'status' => 403 ] );
             }
         }
 
-        // Allow other plugins to filter/modify the context before sending to AI
-        $context_data = apply_filters( 'contextualwp_context_data', [
-            'id'      => $context_id,
-            'content' => $content,
-            'meta'    => [
-                'title'     => get_the_title( $post ),
-                'type'      => $post->post_type,
-                'status'    => $post->post_status,
-                'modified'  => $post->post_modified,
-                'modified_gmt' => $post->post_modified_gmt,
-                'format'    => $format,
-                'acf'       => $acf_fields ?: new \stdClass(),
-            ],
-        ], $post, $request );
+        // Format content and build context_data (for id 0 use minimal placeholder)
+        if ( $post ) {
+            $content = Utilities::format_content( $post, $format );
+            $acf_fields = [];
+            if ( function_exists( 'get_fields' ) ) {
+                try {
+                    $acf_fields = get_fields( $post->ID ) ?: [];
+                } catch ( \Exception $e ) {
+                    error_log( 'ContextualWP: ACF fields error for post ' . $post->ID . ': ' . $e->getMessage() );
+                }
+            }
+            $context_data = apply_filters( 'contextualwp_context_data', [
+                'id'      => $context_id,
+                'content' => $content,
+                'meta'    => [
+                    'title'     => get_the_title( $post ),
+                    'type'      => $post->post_type,
+                    'status'    => $post->post_status,
+                    'modified'  => $post->post_modified,
+                    'modified_gmt' => $post->post_modified_gmt,
+                    'format'    => $format,
+                    'acf'       => $acf_fields ?: new \stdClass(),
+                ],
+            ], $post, $request );
+        } else {
+            $content = sprintf( __( '(New %s – no content yet.)', 'contextualwp' ), $parsed['type'] );
+            $context_data = apply_filters( 'contextualwp_context_data', [
+                'id'      => $context_id,
+                'content' => $content,
+                'meta'    => [
+                    'title'     => '',
+                    'type'      => $parsed['type'],
+                    'status'    => 'draft',
+                    'modified'  => '',
+                    'modified_gmt' => '',
+                    'format'    => $format,
+                    'acf'       => new \stdClass(),
+                ],
+            ], null, $request );
+        }
 
         // Apply smart model selection for single post context
         $model = Smart_Model_Selector::select_model( $prompt, $content, $provider_slug, $model, $settings );
@@ -267,7 +290,7 @@ class Generate_Context {
                 'context_id' => $context_id,
                 'prompt'     => $prompt,
                 'format'     => $format,
-                'modified'   => $post->post_modified_gmt,
+                'modified'   => $post ? $post->post_modified_gmt : $context_id,
             ]
         ), $request, $context_data, $settings );
         $cached = wp_cache_get( $cache_key, 'contextualwp' );

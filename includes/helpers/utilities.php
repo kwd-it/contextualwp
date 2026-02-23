@@ -165,16 +165,39 @@ class Utilities {
     }
 
     /**
-     * Format content based on the specified format
-     * 
+     * Format content based on the specified format.
+     *
+     * Uses the_content so Gutenberg and ACF blocks are rendered to HTML before
+     * conversion. Ensures block-based pages produce real copy in context, not just titles.
+     *
      * @since 0.1.0
-     * @param \WP_Post $post The post object
-     * @param string $format The output format
+     * @param \WP_Post $post   The post object
+     * @param string   $format The output format (markdown, plain, html)
      * @return string
      */
     public static function format_content( $post, $format = 'markdown' ) {
-        $title   = get_the_title( $post );
-        $content = apply_filters( 'contextualwp_content_before_format', $post->post_content, $post, $format );
+        $title = get_the_title( $post );
+
+        // Run through WordPress content pipeline so blocks (Gutenberg + ACF) are rendered.
+        $post_backup = null;
+        if ( isset( $GLOBALS['post'] ) ) {
+            $post_backup = $GLOBALS['post'];
+        }
+        $GLOBALS['post'] = $post; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+        $rendered = apply_filters( 'the_content', $post->post_content );
+        if ( $post_backup !== null ) {
+            $GLOBALS['post'] = $post_backup; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+        } else {
+            unset( $GLOBALS['post'] );
+        }
+
+        $content = apply_filters( 'contextualwp_content_before_format', $rendered, $post, $format );
+
+        // If nothing usable after render, keep single-context response with a note (no fallback to multi).
+        $content_stripped = trim( wp_strip_all_tags( $content ) );
+        if ( $content_stripped === '' ) {
+            $content = __( 'No content found.', 'contextualwp' );
+        }
 
         switch ( $format ) {
             case 'html':

@@ -35,15 +35,52 @@ class ContextualWP_Global_Chat {
             CONTEXTUALWP_VERSION,
             true
         );
+        $screen = get_current_screen();
+        $post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
+        $post_type = $post_id ? get_post_type( $post_id ) : '';
+        // When editing a single post, ensure we have a type (e.g. get_post_type can be empty for some CPTs or revisions)
+        if ( $post_id && empty( $post_type ) ) {
+            $post_obj = get_post( $post_id );
+            if ( $post_obj && ! empty( $post_obj->post_type ) ) {
+                $post_type = $post_obj->post_type;
+            }
+        }
+        if ( empty( $post_type ) && $screen && ! empty( $screen->post_type ) ) {
+            $post_type = $screen->post_type;
+        }
+        if ( empty( $post_type ) && isset( $_GET['post_type'] ) ) {
+            $post_type = sanitize_key( $_GET['post_type'] );
+        }
+        // Fallback: global $typenow (set by WordPress on edit.php/post-new.php for CPT)
+        if ( empty( $post_type ) && ! empty( $GLOBALS['typenow'] ) ) {
+            $post_type = sanitize_key( $GLOBALS['typenow'] );
+        }
+        // Fallback: infer from screen id (e.g. "edit-land_planning" or "land_planning")
+        if ( empty( $post_type ) && $screen && ! empty( $screen->id ) ) {
+            $sid = $screen->id;
+            if ( strpos( $sid, 'edit-' ) === 0 ) {
+                $candidate = substr( $sid, 5 );
+                if ( get_post_type_object( $candidate ) ) {
+                    $post_type = $candidate;
+                }
+            } elseif ( get_post_type_object( $sid ) ) {
+                $post_type = $sid;
+            }
+        }
+        $post_type = $post_type ? sanitize_key( $post_type ) : '';
+        // On edit screens use current post/page as context_id; elsewhere use multi
+        $context_id = $post_type !== '' ? $post_type . '-' . $post_id : 'multi';
+
         wp_localize_script(
             'contextualwp-global-chat',
             'contextualwpGlobalChat',
             [
                 'endpoint' => rest_url( 'contextualwp/v1/generate_context' ),
                 'nonce'    => wp_create_nonce( 'wp_rest' ),
-                'screen'   => get_current_screen() ? get_current_screen()->id : '',
-                'postId'   => isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0,
-                'postType' => isset( $_GET['post'] ) ? get_post_type( absint( $_GET['post'] ) ) : '',
+                'screen'   => $screen ? $screen->id : '',
+                'postId'   => $post_id,
+                'postType' => $post_type,
+                'contextId' => $context_id,
                 'promptTemplates' => $prompt_templates,
             ]
         );
@@ -100,8 +137,8 @@ class ContextualWP_ACF_AskAI {
             $post_type = ( $screen && isset( $screen->post_type ) ) ? $screen->post_type : ( isset( $_GET['post_type'] ) ? sanitize_text_field( $_GET['post_type'] ) : 'post' );
         }
 
-        // Use 'multi' context for new posts (post ID 0)
-        $context_id = $post_id > 0 ? $post_type . '-' . $post_id : 'multi';
+        // Use current post/page as context on edit screens (including new post as post-0)
+        $context_id = $post_type . '-' . $post_id;
 
         $debug = defined( 'CONTEXTUALWP_ACF_ASKAI_DEBUG' ) && CONTEXTUALWP_ACF_ASKAI_DEBUG;
 
