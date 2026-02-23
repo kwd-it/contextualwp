@@ -5,6 +5,15 @@ All notable changes to ContextualWP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] – 2026-02-23
+
+### Fixed
+- **Admin Chat context on edit screens**: Floating chat and ACF AskAI now use the current post/page as `context_id` on wp-admin edit screens (including new posts as `post-0`). Multi is only used when explicitly selected or on non-edit screens.
+- **Block-based page content in context**: Single-context `context.content` now includes rendered Gutenberg and ACF block output (via `the_content`), not just the title, so summaries use real page copy instead of generic filler.
+
+### Changed
+- **format_content**: Runs `post_content` through `the_content` before formatting; empty rendered content returns a concise “No content found.” note without falling back to multi.
+
 ## [0.10.2] – 2026-02-10
 
 ### Fixed
