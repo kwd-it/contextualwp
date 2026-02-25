@@ -244,11 +244,11 @@ Goal: ensure the floating chat is predictable, useful, and stable.
 
 | Prompt | Rating | Issue logged? | Last tested | Notes |
 |--------|--------|---------------|-------------|-------|
-| B1 |  |  |  |  |
-| B2 |  |  |  |  |
-| B3 |  |  |  |  |
-| B4 |  |  |  |  |
-| B5 (optional) |  |  |  |  |
+| B1 | ✅ Good | No | 2026-02-25 | Accurate 5-bullet summary of Land & Planning page. Correctly references planning lifecycle, place-led design, collaboration with LPAs, community engagement (Lancaster Gate), sustainability, craftsmanship and community infrastructure. No invented behaviour or schema/media leakage. |
+| B2 | ❌ Bad | Yes | 2026-02-25 | Chat returned reasoning-token exhaustion message instead of answer. Indicates model/runtime configuration issue under normal prompt. |
+| B3 | ✅ Good | No | 2026-02-25 | SEO title and meta description are concise, within requested length, and grounded in actual page themes (land promotion, consent, place-led design, community engagement). No invented claims or drift. |
+| B4 | ⚠️ Average | No | 2026-02-25 | Accurate and grounded in page content with no invented facts. However, output is verbose and more analytical than a “simple table”; structure is heavy rather than concise/editor-friendly. |
+| B5 (optional) | ✅ Good | No | 2026-02-25 | Clear, concise rewrite of the intro. Maintains original meaning and positioning without adding new claims or changing tone. |
 
 ---
 
@@ -256,7 +256,7 @@ Goal: ensure the floating chat is predictable, useful, and stable.
 
 | Prompt | Rating | Issue logged? | Last tested | Notes |
 |--------|--------|---------------|-------------|-------|
-| B1 |  |  |  |  |
+| B1 | ❌ Bad | Yes | 2026-02-25 | Returned site/page inventory and ACF/media metadata instead of thematic summary. Multi-context appears to inject schema-style data rather than rendered content. |
 | B2 |  |  |  |  |
 | B3 |  |  |  |  |
 | B4 |  |  |  |  |
