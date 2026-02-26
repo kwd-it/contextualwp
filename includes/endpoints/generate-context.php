@@ -18,6 +18,26 @@ class Generate_Context {
      */
     const MULTI_CONTEXT_ITEM_MAX_CHARS = 6000;
 
+    /**
+     * OpenAI models that use the Responses API (not /v1/chat/completions).
+     * Filterable via contextualwp_openai_responses_api_models.
+     *
+     * @var string[]
+     */
+    const OPENAI_RESPONSES_API_MODELS = [ 'gpt-5.2', 'gpt-5-mini', 'gpt-5-nano', 'gpt-5' ];
+
+    /** Min/max clamp for max_output_tokens (Responses API) and safe bounds for legacy. */
+    const OPENAI_MAX_OUTPUT_TOKENS_MIN = 256;
+    const OPENAI_MAX_OUTPUT_TOKENS_MAX = 4096;
+
+    /**
+     * Fallback OpenAI models when primary returns no visible output (reasoning exhausted etc).
+     * Order: prefer gpt-5-mini then gpt-5-nano. Filterable via contextualwp_openai_fallback_models.
+     *
+     * @var string[]
+     */
+    const OPENAI_FALLBACK_MODELS = [ 'gpt-5-mini', 'gpt-5-nano' ];
+
     public function register_route() {
         register_rest_route( 'contextualwp/v1', '/generate_context', [
             'methods'  => 'POST',
@@ -95,21 +115,8 @@ class Generate_Context {
             $ai_error = null;
             switch ( $provider ) {
                 case 'openai':
-                    $ai_payload = [
-                        'model' => $model,
-                        'messages' => [
-                            [ 'role' => 'system', 'content' => $system_message ],
-                            [ 'role' => 'user', 'content' => $prompt . "\n\nContext:\n" . $content ]
-                        ],
-                        'max_completion_tokens' => $max_tokens,
-                        'temperature' => $temperature,
-                    ];
-                    if ( $is_field_helper ) {
-                        $ai_payload['reasoning_effort'] = 'low';
-                    }
-                    $ai_payload = apply_filters( 'contextualwp_ai_payload', $ai_payload, $settings, $context_data, $request );
-                    \ContextualWP\Helpers\Utilities::log_debug( $ai_payload, 'generate_payload_openai_multi' );
-                    $ai_response = $this->call_openai_api( $ai_payload, $api_key );
+                    \ContextualWP\Helpers\Utilities::log_debug( [ 'model' => $model, 'prompt_length' => strlen( $prompt ), 'content_length' => strlen( $content ) ], 'generate_payload_openai_multi' );
+                    $ai_response = $this->execute_openai_request( $model, $system_message, $prompt, $content, $max_tokens, $temperature, $api_key, $is_field_helper, $settings, $context_data, $request );
                     \ContextualWP\Helpers\Utilities::log_debug( $ai_response, 'generate_response_openai_multi' );
                     if ( is_wp_error( $ai_response ) ) {
                         $ai_error = $ai_response->get_error_message();
@@ -283,21 +290,8 @@ class Generate_Context {
         $provider = apply_filters( 'contextualwp_ai_provider', Providers::normalize( $ai_provider ), $settings, $context_data, $request );
         switch ( $provider ) {
             case 'openai':
-                $ai_payload = [
-                    'model' => $model,
-                    'messages' => [
-                        [ 'role' => 'system', 'content' => $system_message ],
-                        [ 'role' => 'user', 'content' => $prompt . "\n\nContext:\n" . $content ]
-                    ],
-                    'max_completion_tokens' => $max_tokens,
-                    'temperature' => $temperature,
-                ];
-                if ( $is_field_helper ) {
-                    $ai_payload['reasoning_effort'] = 'low';
-                }
-                $ai_payload = apply_filters( 'contextualwp_ai_payload', $ai_payload, $settings, $context_data, $request );
-                \ContextualWP\Helpers\Utilities::log_debug( $ai_payload, 'generate_payload_openai' );
-                $ai_response = $this->call_openai_api( $ai_payload, $api_key );
+                \ContextualWP\Helpers\Utilities::log_debug( [ 'model' => $model, 'prompt_length' => strlen( $prompt ), 'content_length' => strlen( $content ) ], 'generate_payload_openai' );
+                $ai_response = $this->execute_openai_request( $model, $system_message, $prompt, $content, $max_tokens, $temperature, $api_key, $is_field_helper, $settings, $context_data, $request );
                 \ContextualWP\Helpers\Utilities::log_debug( $ai_response, 'generate_response_openai' );
                 if ( is_wp_error( $ai_response ) ) {
                     $ai_error = $ai_response->get_error_message();
@@ -1158,6 +1152,227 @@ class Generate_Context {
         return implode( "\n", $lines );
     }
 
+    /**
+     * Whether the given OpenAI model uses the Responses API (/v1/responses) instead of Chat Completions.
+     *
+     * @param string $model Model identifier (e.g. gpt-5.2, gpt-5-mini).
+     * @return bool
+     */
+    private function openai_uses_responses_api( $model ) {
+        $models = apply_filters( 'contextualwp_openai_responses_api_models', self::OPENAI_RESPONSES_API_MODELS );
+        return is_array( $models ) && in_array( $model, $models, true );
+    }
+
+    /**
+     * Clamp max output tokens to a safe range for Responses API and legacy calls.
+     *
+     * @param int $max_tokens Value from settings.
+     * @return int Clamped value between OPENAI_MAX_OUTPUT_TOKENS_MIN and OPENAI_MAX_OUTPUT_TOKENS_MAX.
+     */
+    private function openai_clamp_max_output_tokens( $max_tokens ) {
+        $n = max( 1, (int) $max_tokens );
+        return min( self::OPENAI_MAX_OUTPUT_TOKENS_MAX, max( self::OPENAI_MAX_OUTPUT_TOKENS_MIN, $n ) );
+    }
+
+    /**
+     * Build request payload for OpenAI Responses API (POST /v1/responses).
+     * Uses instructions + input and max_output_tokens (not max_tokens).
+     *
+     * @param string   $model              Model ID.
+     * @param string   $system_message    System/instructions text.
+     * @param string   $user_content      User message (prompt + context).
+     * @param int      $max_output_tokens Clamped token limit.
+     * @param float    $temperature       Sampling temperature.
+     * @param string|null $reasoning_effort Optional reasoning effort (e.g. 'low').
+     * @return array Request body for Responses API.
+     */
+    private function build_openai_responses_payload( $model, $system_message, $user_content, $max_output_tokens, $temperature, $reasoning_effort = null ) {
+        $payload = [
+            'model'               => $model,
+            'instructions'        => $system_message,
+            'input'               => $user_content,
+            'max_output_tokens'   => $max_output_tokens,
+            'temperature'         => $temperature,
+        ];
+        if ( $reasoning_effort !== null && $reasoning_effort !== '' ) {
+            $payload['reasoning'] = [ 'effort' => $reasoning_effort ];
+        }
+        return $payload;
+    }
+
+    /**
+     * Parse OpenAI Responses API JSON into visible text and completeness.
+     * Response has output[] of items; message items have content[] with text parts.
+     *
+     * @param array $data Decoded JSON response from /v1/responses.
+     * @return array { 'output_text' => string, 'raw' => array, 'is_incomplete' => bool }
+     */
+    private function parse_openai_responses_output( $data ) {
+        $output_text = '';
+        $status = isset( $data['status'] ) ? $data['status'] : '';
+        $is_incomplete = ( $status === 'incomplete' );
+
+        $output_items = isset( $data['output'] ) && is_array( $data['output'] ) ? $data['output'] : [];
+        foreach ( $output_items as $item ) {
+            if ( ! is_array( $item ) ) {
+                continue;
+            }
+            $type = isset( $item['type'] ) ? $item['type'] : '';
+            if ( $type !== 'message' ) {
+                continue;
+            }
+            $content = isset( $item['content'] ) && is_array( $item['content'] ) ? $item['content'] : [];
+            foreach ( $content as $part ) {
+                if ( ! is_array( $part ) ) {
+                    continue;
+                }
+                if ( isset( $part['text'] ) && is_string( $part['text'] ) ) {
+                    $output_text .= $part['text'];
+                }
+            }
+        }
+        $output_text = trim( $output_text );
+        if ( $output_text === '' && $status !== 'completed' ) {
+            $is_incomplete = true;
+        }
+
+        return [
+            'output_text'   => $output_text,
+            'raw'           => $data,
+            'is_incomplete' => $is_incomplete,
+        ];
+    }
+
+    /**
+     * Call OpenAI Responses API (POST /v1/responses). Returns same shape as call_openai_api.
+     *
+     * @param array  $payload Request body (model, instructions, input, max_output_tokens, etc).
+     * @param string $api_key API key.
+     * @return array|\WP_Error { output, raw } or WP_Error.
+     */
+    private function call_openai_responses_api( $payload, $api_key ) {
+        $response = wp_remote_post( 'https://api.openai.com/v1/responses', [
+            'headers' => [
+                'Content-Type'  => 'application/json',
+                'Authorization' => 'Bearer ' . $api_key,
+            ],
+            'body'    => wp_json_encode( $payload ),
+            'timeout' => 60,
+        ] );
+        if ( is_wp_error( $response ) ) {
+            return $response;
+        }
+        $code = wp_remote_retrieve_response_code( $response );
+        $body = wp_remote_retrieve_body( $response );
+        $data = json_decode( $body, true );
+        if ( $code !== 200 ) {
+            $message = isset( $data['error']['message'] ) ? $data['error']['message'] : 'Unknown error from OpenAI.';
+            return new \WP_Error( 'openai_error', $message );
+        }
+        $parsed = $this->parse_openai_responses_output( $data );
+        return [
+            'output' => $parsed['output_text'],
+            'raw'    => $parsed['raw'],
+        ];
+    }
+
+    /**
+     * Execute a single OpenAI request (Responses or Chat Completions), with one retry and optional
+     * fallback to non-reasoning models if the response has no visible output. Never surfaces
+     * "reasoning tokens" to the user; uses a generic message on total failure.
+     *
+     * @param string $model           Model ID.
+     * @param string $system_message  System/instructions.
+     * @param string $prompt          User prompt.
+     * @param string $content         Context content (appended as "Context:\n" + content).
+     * @param int    $max_tokens      Max tokens from settings (clamped for Responses API).
+     * @param float  $temperature     Temperature.
+     * @param string $api_key         OpenAI API key.
+     * @param bool   $is_field_helper Whether this is an AskAI field helper request.
+     * @param array  $settings        Plugin settings (for filters).
+     * @param array  $context_data    Context data (for filters).
+     * @param \WP_REST_Request $request Request (for filters).
+     * @return array|\WP_Error { output, raw } or WP_Error. output is always a string.
+     */
+    private function execute_openai_request( $model, $system_message, $prompt, $content, $max_tokens, $temperature, $api_key, $is_field_helper, $settings, $context_data, $request ) {
+        $user_content = $prompt . "\n\nContext:\n" . $content;
+        $use_responses = $this->openai_uses_responses_api( $model );
+        $clamped = $this->openai_clamp_max_output_tokens( $max_tokens );
+
+        $do_one_call = function( $use_model, $user_text, $temp, $is_retry = false ) use ( $use_responses, $system_message, $api_key, $is_field_helper, $settings, $context_data, $request, $clamped ) {
+            $use_responses_for_model = $this->openai_uses_responses_api( $use_model );
+            if ( $use_responses_for_model ) {
+                $payload = $this->build_openai_responses_payload(
+                    $use_model,
+                    $system_message,
+                    $user_text,
+                    $clamped,
+                    $temp,
+                    $is_field_helper ? 'low' : null
+                );
+            } else {
+                $payload = [
+                    'model'       => $use_model,
+                    'messages'    => [
+                        [ 'role' => 'system', 'content' => $system_message ],
+                        [ 'role' => 'user', 'content' => $user_text ],
+                    ],
+                    'max_tokens'  => $clamped,
+                    'temperature' => $temp,
+                ];
+            }
+            $payload = apply_filters( 'contextualwp_ai_payload', $payload, $settings, $context_data, $request );
+            if ( $use_responses_for_model ) {
+                return $this->call_openai_responses_api( $payload, $api_key );
+            }
+            return $this->call_openai_api( $payload, $api_key );
+        };
+
+        $result = $do_one_call( $model, $user_content, $temperature );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        $output = isset( $result['output'] ) ? trim( (string) $result['output'] ) : '';
+        if ( $output !== '' ) {
+            return $result;
+        }
+
+        // Retry once with smaller context or lower temperature.
+        $content_truncated = strlen( $content ) > 2000 ? substr( $content, 0, 2000 ) . '…(truncated)' : $content;
+        $user_content_retry = $prompt . "\n\nContext:\n" . $content_truncated;
+        $result_retry = $do_one_call( $model, $user_content_retry, 0.3 );
+        if ( ! is_wp_error( $result_retry ) ) {
+            $output_retry = isset( $result_retry['output'] ) ? trim( (string) $result_retry['output'] ) : '';
+            if ( $output_retry !== '' ) {
+                return $result_retry;
+            }
+        }
+
+        // Fallback to non-reasoning models (only if current model uses Responses API).
+        $fallback_models = apply_filters( 'contextualwp_openai_fallback_models', self::OPENAI_FALLBACK_MODELS );
+        if ( $use_responses && is_array( $fallback_models ) ) {
+            foreach ( $fallback_models as $fallback_model ) {
+                if ( $fallback_model === $model ) {
+                    continue;
+                }
+                Utilities::log_debug( [ 'openai_fallback' => $fallback_model, 'original_model' => $model ], 'openai_fallback_model_used' );
+                $fallback_result = $do_one_call( $fallback_model, $user_content, 0.5 );
+                if ( ! is_wp_error( $fallback_result ) ) {
+                    $fallback_output = isset( $fallback_result['output'] ) ? trim( (string) $fallback_result['output'] ) : '';
+                    if ( $fallback_output !== '' ) {
+                        return $fallback_result;
+                    }
+                }
+            }
+        }
+
+        $generic_message = __( "Couldn't generate a response with the current model. Please try again or switch model.", 'contextualwp' );
+        return [
+            'output' => $generic_message,
+            'raw'    => $result['raw'] ?? null,
+        ];
+    }
+
     private function call_openai_api( $payload, $api_key ) {
         $response = wp_remote_post( 'https://api.openai.com/v1/chat/completions', [
             'headers' => [
@@ -1189,8 +1404,9 @@ class Generate_Context {
             trim( $content ) === '' &&
             ( $finish_reason === 'length' || ( $completion_tokens > 0 && $reasoning_tokens >= (int) ( $completion_tokens * 0.9 ) ) )
         );
+        // Return empty output so caller (execute_openai_request) can retry/fallback; never surface reasoning message to user.
         if ( $is_reasoning_exhausted ) {
-            $content = __( 'The AI used its reasoning tokens before producing a visible answer. Try a shorter question, or switch to a non-reasoning model in Settings.', 'contextualwp' );
+            $content = '';
         }
         return [
             'output' => $content,
