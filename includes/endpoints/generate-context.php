@@ -11,6 +11,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Generate_Context {
+
+    /**
+     * Default max characters per item in multi-context aggregated content.
+     * Filterable via contextualwp_multi_context_item_max_chars.
+     */
+    const MULTI_CONTEXT_ITEM_MAX_CHARS = 6000;
+
     public function register_route() {
         register_rest_route( 'contextualwp/v1', '/generate_context', [
             'methods'  => 'POST',
@@ -57,45 +64,17 @@ class Generate_Context {
         $provider_slug = Providers::normalize( $ai_provider );
         $model = Smart_Model_Selector::select_model( $prompt, '', $provider_slug, $model, $settings );
 
-        // Robust multi-post context aggregation check
+        // Robust multi-post context aggregation: rendered content only (no schema/ACF/media).
         if ( strtolower( trim( $context_id ) ) === 'multi' ) {
-            // Fetch recent posts and pages (limit 5 for brevity)
-            $query = new \WP_Query([
-                'post_type'      => [ 'post', 'page' ],
-                'posts_per_page' => 5,
-                'post_status'    => 'publish',
-                'orderby'        => 'modified',
-                'order'          => 'DESC',
-            ]);
-            $posts = $query->posts;
-            $multi_context = [];
-            foreach ( $posts as $post ) {
-                $acf_fields = [];
-                if ( function_exists( 'get_fields' ) ) {
-                    try {
-                        $acf_fields = get_fields( $post->ID ) ?: [];
-                    } catch ( \Exception $e ) {
-                        error_log( 'ContextualWP: ACF fields error for post ' . $post->ID . ': ' . $e->getMessage() );
-                    }
-                }
-                $acf_summary = Utilities::acf_summary_markdown($acf_fields);
-                $multi_context[] = sprintf(
-                    "### %s (%s)\n%s\n%s\n",
-                    get_the_title($post),
-                    $post->post_type,
-                    $acf_summary ? "ACF:\n$acf_summary" : '',
-                    wp_trim_words( wp_strip_all_tags($post->post_content), 100, '...' )
-                );
-            }
-            $aggregated_context = implode("\n---\n", $multi_context);
-            $content = $aggregated_context;
+            $content = $this->build_multi_context_aggregated_content( $format, $request );
+            $count   = $content === '' ? 0 : substr_count( $content, "\n---\n" ) + 1;
             $context_data = [
                 'id'      => 'multi',
                 'content' => $content,
                 'meta'    => [
                     'type'    => 'multi',
                     'format'  => $format,
-                    'count'   => count($multi_context),
+                    'count'   => $count,
                 ],
             ];
             
@@ -393,6 +372,71 @@ class Generate_Context {
         }
 
         return $response;
+    }
+
+    /**
+     * Build aggregated context content for context_id=multi from rendered post/page body copy.
+     * Uses the same the_content rendering path as single-context (Utilities::format_content).
+     * No schema, ACF field lists, or attachment metadata; minimal meta (title, stable id, type).
+     *
+     * @param string             $format  Output format: markdown, plain, html.
+     * @param \WP_REST_Request   $request Request (for filter).
+     * @return string Aggregated content with "## {Label}: {Title} ({id})\n\n{body}" per item, separated by "\n---\n".
+     */
+    protected function build_multi_context_aggregated_content( $format, $request ) {
+        $query = new \WP_Query( [
+            'post_type'      => [ 'post', 'page' ],
+            'posts_per_page' => 5,
+            'post_status'    => 'publish',
+            'orderby'        => [ 'post_modified' => 'DESC', 'ID' => 'DESC' ],
+            'order'          => 'DESC',
+        ] );
+        $posts = $query->posts;
+        if ( empty( $posts ) ) {
+            return '';
+        }
+
+        $max_chars = (int) apply_filters( 'contextualwp_multi_context_item_max_chars', self::MULTI_CONTEXT_ITEM_MAX_CHARS, $request );
+        $max_chars = $max_chars > 0 ? $max_chars : self::MULTI_CONTEXT_ITEM_MAX_CHARS;
+        $blocks    = [];
+
+        foreach ( $posts as $post ) {
+            $pt_obj   = get_post_type_object( $post->post_type );
+            $label    = $pt_obj && isset( $pt_obj->labels->singular_name ) ? $pt_obj->labels->singular_name : $post->post_type;
+            $stable_id = $post->post_type . '-' . $post->ID;
+            $title_safe = get_the_title( $post );
+
+            $full = Utilities::format_content( $post, $format );
+            $body = $this->extract_body_from_formatted_content( $full, $format );
+            if ( strlen( $body ) > $max_chars ) {
+                $body = substr( $body, 0, $max_chars ) . '…(truncated)';
+            }
+
+            if ( $format === 'html' ) {
+                $header = '<h2>' . esc_html( $label . ': ' . $title_safe . ' (' . $stable_id . ')' ) . '</h2>';
+                $blocks[] = $header . ( $body !== '' ? wp_kses_post( $body ) : '<p>' . esc_html__( 'No content found.', 'contextualwp' ) . '</p>' );
+            } else {
+                $blocks[] = '## ' . esc_html( $label ) . ': ' . esc_html( $title_safe ) . ' (' . $stable_id . ")\n\n" . $body;
+            }
+        }
+
+        return implode( "\n---\n", $blocks );
+    }
+
+    /**
+     * Extract body (content after title) from Utilities::format_content output.
+     *
+     * @param string $full   Full formatted output (markdown/plain: "Title\n\nbody", html: "<h2>Title</h2><div>body</div>").
+     * @param string $format One of markdown, plain, html.
+     * @return string Body only.
+     */
+    private function extract_body_from_formatted_content( $full, $format ) {
+        if ( $format === 'html' ) {
+            $body = preg_replace( '/^<h2>.*?<\/h2>/s', '', $full );
+            return trim( $body );
+        }
+        $pos = strpos( $full, "\n\n" );
+        return $pos !== false ? trim( substr( $full, $pos + 2 ) ) : $full;
     }
 
     /**
