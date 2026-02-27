@@ -268,11 +268,11 @@ Goal: ensure the floating chat is predictable, useful, and stable.
 
 | Prompt | Rating | Issue logged? | Last tested | Notes |
 |--------|--------|---------------|-------------|-------|
-| B1 |  |  |  |  |
-| B2 |  |  |  |  |
-| B3 |  |  |  |  |
-| B4 |  |  |  |  |
-| B5 (optional) |  |  |  |  |
+| B1 | ❌ Bad | Yes | 2026-02-27 | Summary includes additional incentives, location details and design claims not present in the Mountbatten Park CPT content. Indicates context bleed or inference beyond provided data. |
+| B2 | ❌ Bad | Yes | 2026-02-27 | Improvement suggestions include distances, amenities and design details not present in the Mountbatten Park CPT content (e.g., Romsey/Southampton distances, biodiversity, expanded scheme references). Indicates scope bleed beyond provided data rather than strictly grounding in current post. |
+| B3 | ✅ Good | No | 2026-02-27 | SEO output correctly scoped to Mountbatten Park CPT content. No cross-site bleed or invented facts. Within character limits. |
+| B4 | ❌ Bad | Yes | 2026-02-27 | Table includes distances, amenities and additional moving schemes not present in the Mountbatten Park CPT content. Indicates scope bleed beyond provided context. |
+| B5 (optional) | ✅ Good | No | 2026-02-27 | Clear, engaging rewrite grounded strictly in Mountbatten Park CPT content. No invented details or scope bleed. |
 
 ---
 
