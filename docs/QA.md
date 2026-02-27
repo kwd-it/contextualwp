@@ -260,7 +260,7 @@ Goal: ensure the floating chat is predictable, useful, and stable.
 | B2 | ✅ Good | No | 2026-02-26 | Practical, structured suggestions across multiple recent pages/posts. No schema/meta dump. Clear, actionable tone improvements. Confirmed stable after OpenAI provider fix. |
 | B3 | ✅ Good | No | 2026-02-26 | SEO title and meta description within requested limits. Grounded in site themes and geography. No invented claims or runtime issues. |
 | B4 | ⚠️ Average | No | 2026-02-26 | Structured output returned correctly in table format. However, table is overly dense and not “simple”; rows contain excessive detail (names, phone numbers, URLs, internal page IDs). Needs prompt tuning for brevity and simplicity. |
-| B5 (optional) |  |  |  |  |
+| B5 (optional) | ✅ Good | No | 2026-02-26 | Clearer, more engaging rewrite while preserving all original meaning, figures, and named developments. No invented claims or tone drift. |
 
 ---
 
