@@ -5,6 +5,12 @@ All notable changes to ContextualWP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.1] – 2026-02-27
+
+### Fixed
+- **Multi-context content**: Multi-context is now built via the same rendered content path as single-context (`the_content`/format_content), so the AI receives real body copy. Items are formatted as `## {Label}: {Title} ({id})\n\n{body}` with `\n---\n` separators; per-item truncation defaults to 6000 chars (filter: `contextualwp_multi_context_item_max_chars`). Empty rendered content returns "No content found." Ordering is post_modified DESC, ID DESC.
+- **OpenAI GPT-5.x**: GPT-5.2, gpt-5-mini, and gpt-5-nano now use the Responses API (`POST /v1/responses`) instead of chat/completions. `max_tokens` is mapped to `max_output_tokens` and clamped 256–4096. On empty or incomplete output the provider retries once with truncated context, then falls back to smaller model(s); reasoning tokens are never shown to the user; on total failure a generic user-safe message is returned (details in debug logs only).
+
 ## [0.11.0] – 2026-02-23
 
 ### Fixed
