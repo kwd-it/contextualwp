@@ -257,7 +257,7 @@ Goal: ensure the floating chat is predictable, useful, and stable.
 | Prompt | Rating | Issue logged? | Last tested | Notes |
 |--------|--------|---------------|-------------|-------|
 | B1 | ⚠️ Average | No | 2026-02-26 | Now returns a thematic summary grounded in real rendered site content (no schema/ACF/media inventory dump). Specific figures and pricing included; confirm they exist explicitly in source content to rule out inference. |
-| B2 | ❌ Bad | Yes | 2026-02-26 | Runtime failure: reasoning-token exhaustion message returned instead of response. Indicates OpenAI GPT-5.2 provider handling issue (Responses API / token limits). Not a context issue. |
+| B2 | ✅ Good | No | 2026-02-26 | Practical, structured suggestions across multiple recent pages/posts. No schema/meta dump. Clear, actionable tone improvements. Confirmed stable after OpenAI provider fix. |
 | B3 |  |  |  |  |
 | B4 |  |  |  |  |
 | B5 (optional) |  |  |  |  |
