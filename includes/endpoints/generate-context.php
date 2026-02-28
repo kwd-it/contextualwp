@@ -264,9 +264,7 @@ class Generate_Context {
         if ( $is_field_helper ) {
             ACF_Schema_Helper::get_schema();
         }
-        $system_message = $is_field_helper
-            ? $this->get_askai_system_message( $this->detect_askai_intent( $prompt, $request ), $request )
-            : 'You are a helpful assistant. Use the following context to answer.';
+        $system_message = $this->get_system_message_for_single_context( $context_data, $prompt, $request );
 
         // Cache key uses provider, model and context parameters
         $cache_key = apply_filters( 'contextualwp_ai_cache_key', \ContextualWP\Helpers\Utilities::get_cache_key(
@@ -536,6 +534,52 @@ class Generate_Context {
         $before = substr( $prompt, 0, $idx );
         $before = preg_replace( '/^---\s*\n.*?---\s*\n\s*/s', '', $before );
         return trim( $before );
+    }
+
+    /**
+     * Get system message for single-context requests. Applies strict grounding only for CPTs.
+     * Post, page and multi use the default or AskAI message.
+     *
+     * @param array             $context_data Context data with meta.type.
+     * @param string            $prompt       User prompt.
+     * @param \WP_REST_Request  $request      Request.
+     * @return string
+     */
+    private function get_system_message_for_single_context( array $context_data, $prompt, $request ) {
+        if ( $this->is_single_cpt_context( $context_data ) ) {
+            return $this->get_strict_grounding_system_message();
+        }
+        $is_field_helper = ( $request->get_param( 'source' ) === 'acf_field_helper' );
+        return $is_field_helper
+            ? $this->get_askai_system_message( $this->detect_askai_intent( $prompt, $request ), $request )
+            : 'You are a helpful assistant. Use the following context to answer.';
+    }
+
+    /**
+     * Whether this is a single-CPT context (not post, page, or multi).
+     * Used to apply strict grounding so AI responses do not infer or embellish.
+     *
+     * @param array $context_data Context data with meta.type.
+     * @return bool
+     */
+    private function is_single_cpt_context( array $context_data ) {
+        $type = isset( $context_data['meta']['type'] ) ? strtolower( trim( (string) $context_data['meta']['type'] ) ) : '';
+        if ( $type === '' ) {
+            return false;
+        }
+        return $type !== 'post' && $type !== 'page';
+    }
+
+    /**
+     * System message for strict grounding: single CPT only. Responses must use only
+     * facts explicitly in context; say "Not stated in the content." when missing.
+     *
+     * @return string
+     */
+    private function get_strict_grounding_system_message() {
+        return 'You are a helpful assistant. You must answer ONLY using facts explicitly stated in the provided context. '
+            . 'Do not infer, assume, or add details that are not in the context. '
+            . 'If the context does not contain the answer or the information is not stated, respond with exactly: Not stated in the content.';
     }
 
     /**
