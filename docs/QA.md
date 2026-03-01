@@ -268,11 +268,11 @@ Goal: ensure the floating chat is predictable, useful, and stable.
 
 | Prompt | Rating | Issue logged? | Last tested | Notes |
 |--------|--------|---------------|-------------|-------|
-| B1 | ✅ Good | No | 2026-02-28 | 5 bullet summary stays strictly within provided CPT content (price from £645k, 4–5 bed, incentives up to £35k, 93 homes / wider 300-home Ashfield Estate, Design & Community Code, Romsey/Southampton distances and moving schemes as stated). No extra incentives, amenities, or invented claims. |
-| B2 | ❌ Bad | Yes | 2026-02-28 | On CPT edit screen, response returned “Not stated in the content.” despite visible development copy. Indicates CPT context not being passed/rendered correctly under strict grounding. |
-| B3 | ✅ Good | No | 2026-02-27 | SEO output correctly scoped to Mountbatten Park CPT content. No cross-site bleed or invented facts. Within character limits. |
-| B4 | ❌ Bad | Yes | 2026-02-27 | Table includes distances, amenities and additional moving schemes not present in the Mountbatten Park CPT content. Indicates scope bleed beyond provided context. |
-| B5 (optional) | ✅ Good | No | 2026-02-27 | Clear, engaging rewrite grounded strictly in Mountbatten Park CPT content. No invented details or scope bleed. |
+| B1 | ✅ Good | No | 2027-03-01 | 5 bullet summary strictly grounded in CPT content (3–5 bedroom homes; prices from £500,000; 5% deposit paid up to £33,750 available until November on selected homes; “FINAL HOMES REMAINING” / over 80% sold; 93 homes forming part of the wider 300-home Ashfield Estate consortium; located three miles from Romsey and ten miles from Southampton; country park and open pasture grassland nearby). |
+| B2 | ❌ Bad | Yes | 2027-03-01 | Response returned “Not stated in the content.” despite the CPT clearly containing development name, location, pricing, incentive details, sales status, connectivity distances and setting. Indicates CPT content not being passed/rendered correctly under strict grounding conditions. |
+| B3 | ✅ Good | No | 2027-03-01 | SEO output scoped only to information present in CPT (Mountbatten Park, North Baddesley, 3–5 beds, from £500,000, final homes remaining, 5% deposit incentive). No invented claims or cross-development bleed. |
+| B4 | ✅ Good | No | 2027-03-01 | Table output reflects information explicitly present in CPT content, including Romsey/Southampton distances and Ashfield Estate context. No evidence of invented amenities, incentives, or cross-site contamination. |
+| B5 (optional) | ✅ Good | No | 2027-03-01 | Intro rewrite remained grounded in CPT content (location, home range, final homes remaining, countryside/park setting). No invented claims or scope bleed. |
 
 ---
 
