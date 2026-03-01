@@ -269,7 +269,7 @@ Goal: ensure the floating chat is predictable, useful, and stable.
 | Prompt | Rating | Issue logged? | Last tested | Notes |
 |--------|--------|---------------|-------------|-------|
 | B1 | ✅ Good | No | 2026-02-28 | 5 bullet summary stays strictly within provided CPT content (price from £645k, 4–5 bed, incentives up to £35k, 93 homes / wider 300-home Ashfield Estate, Design & Community Code, Romsey/Southampton distances and moving schemes as stated). No extra incentives, amenities, or invented claims. |
-| B2 | ❌ Bad | Yes | 2026-02-27 | Improvement suggestions include distances, amenities and design details not present in the Mountbatten Park CPT content (e.g., Romsey/Southampton distances, biodiversity, expanded scheme references). Indicates scope bleed beyond provided data rather than strictly grounding in current post. |
+| B2 | ❌ Bad | Yes | 2026-02-28 | On CPT edit screen, response returned “Not stated in the content.” despite visible development copy. Indicates CPT context not being passed/rendered correctly under strict grounding. |
 | B3 | ✅ Good | No | 2026-02-27 | SEO output correctly scoped to Mountbatten Park CPT content. No cross-site bleed or invented facts. Within character limits. |
 | B4 | ❌ Bad | Yes | 2026-02-27 | Table includes distances, amenities and additional moving schemes not present in the Mountbatten Park CPT content. Indicates scope bleed beyond provided context. |
 | B5 (optional) | ✅ Good | No | 2026-02-27 | Clear, engaging rewrite grounded strictly in Mountbatten Park CPT content. No invented details or scope bleed. |
