@@ -5,6 +5,12 @@ All notable changes to ContextualWP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.3] – 2026-03-14
+
+### Fixed
+- **AskAI taxonomy (A1)**: "What is this field for?" responses for taxonomy fields are now limited to stored value, taxonomy, and categorisation only; frontend/template/display assumptions (sections, archives, filters, navigation) are no longer included.
+- **AskAI behaviour (A3)**: "What changes when…" responses are now grounded in schema only: stored value changes, conditional logic, controlled fields, and explicit relationship/target types. When no conditional logic exists, the response returns stored value change only; frontend/template/display behaviour is no longer invented.
+
 ## [0.11.2] – 2026-03-01
 
 ### Fixed
