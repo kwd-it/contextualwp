@@ -479,7 +479,7 @@ class Generate_Context {
      *
      * @param string         $prompt  Full prompt (may include field metadata).
      * @param \WP_REST_Request $request Request.
-     * @return string|null 'explain'|'advise'|null
+     * @return string|null 'explain'|'advise'|'behaviour'|null
      */
     private function detect_askai_intent( $prompt, $request ) {
         if ( $request->get_param( 'source' ) !== 'acf_field_helper' || ! is_string( $prompt ) ) {
@@ -499,6 +499,15 @@ class Generate_Context {
         foreach ( $advise_phrases as $p ) {
             if ( strpos( $lower, $p ) !== false ) {
                 return 'advise';
+            }
+        }
+
+        $behaviour_phrases = [
+            'what changes', 'when i change', 'when this change', 'when this changes', 'what happens when',
+        ];
+        foreach ( $behaviour_phrases as $p ) {
+            if ( strpos( $lower, $p ) !== false ) {
+                return 'behaviour';
             }
         }
 
@@ -585,7 +594,7 @@ class Generate_Context {
     /**
      * Get system message for AskAI based on detected intent and field type.
      *
-     * @param string|null $intent 'explain'|'advise'|null
+     * @param string|null $intent 'explain'|'advise'|'behaviour'|null
      * @param \WP_REST_Request $request Request (for field_type).
      * @return string
      */
@@ -600,6 +609,13 @@ class Generate_Context {
                 return 'You are a helpful assistant for content editors. Use the following context to answer. For text/textarea fields: return 2–4 concise bullets with practical guidance (format, what to include/exclude, example pattern). Avoid repeating the field definition. Do not invent site-specific content (place names, etc).';
             }
             return 'You are a helpful assistant for content editors. Use the following context to answer. Give concise, opinionated guidance. Do not explain field mechanics, toggle labels, or metadata—focus on actionable recommendations.';
+        }
+        if ( $intent === 'behaviour' ) {
+            return 'You are a helpful assistant for content editors. Answer only from the ACF field context provided. '
+                . 'Describe only: (1) what stored value changes when this field is changed, (2) any explicit conditional logic or controlled fields shown in the context, (3) any explicit relationship/target types already stated (e.g. post type or taxonomy name). '
+                . 'Do NOT invent or assume: frontend behaviour, template behaviour, page sections, listings/modules/cards, what visitors see, or content appearing/disappearing on the site unless the context explicitly states conditional logic that does so. '
+                . 'If the context has no conditional logic or controlled fields, say that changing this field changes the stored value for this item and no other field changes are defined here. '
+                . 'For taxonomy, post_object, or relationship fields you may explain what kind of thing is linked or selected (from context); do not describe how the front end uses it. Keep the response concise and editor-friendly.';
         }
         return 'You are a helpful assistant. Use the following context to answer.';
     }
