@@ -600,6 +600,13 @@ class Generate_Context {
      */
     private function get_askai_system_message( $intent, $request ) {
         if ( $intent === 'explain' ) {
+            $field_type = strtolower( trim( (string) ( $request->get_param( 'field_type' ) ?? '' ) ) );
+            if ( $field_type === 'taxonomy' ) {
+                return 'You are a helpful assistant. Use the following context to answer. Be factual and descriptive only. Do not give recommendations or advice. '
+                    . 'For this taxonomy field, describe only: (1) what the field stores, (2) which taxonomy it belongs to, (3) what type of categorisation or association it represents. '
+                    . 'Do NOT mention: frontend display, page sections, archives, filters, navigation, what appears on the site, or visitor-facing behaviour. '
+                    . 'Keep the response concise and editor-friendly. Example: "This field assigns a term from the [taxonomy name] taxonomy to this item." or "This field is used to categorise this item using the [taxonomy name] taxonomy."';
+            }
             return 'You are a helpful assistant. Use the following context to answer. Be factual and descriptive only. Do not give recommendations or advice.';
         }
         if ( $intent === 'advise' ) {
