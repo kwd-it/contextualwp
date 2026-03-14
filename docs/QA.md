@@ -158,7 +158,7 @@ Use for: true_false, select, radio, checkbox, taxonomy, post_object, relationshi
 
 | Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
 |----------|---------|--------|---------------|-------------|-------|
-| Taxonomy A (Block: Helping You Move → Select Scheme Type) | A1, A3 | ⚠️ Average | Yes | 2026-02-20 | Correctly explains taxonomy assignment and categorisation behaviour. However, A3 introduces frontend/template assumptions (“showing related scheme copy, benefits and listings”) not supported by schema or conditional logic. Mild overreach into implementation behaviour. |
+| Taxonomy A (Block: Helping You Move → Select Scheme Type) | A1, A3 | ✅ Pass | Yes | 2026-03-14 | A1 and A3 now fully grounded in schema. Responses correctly describe taxonomy assignment and stored value changes without frontend, template, or visitor-facing assumptions. No overreach observed. |
 
 ---
 
