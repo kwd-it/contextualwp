@@ -22,6 +22,7 @@
         'url': 'acf-field-url',
         'select': 'acf-field-select',
         'radio': 'acf-field-radio',
+        'checkbox': 'acf-field-checkbox',
         'true_false': 'acf-field-true_false',
         'relationship': 'acf-field-relationship',
         'post_object': 'acf-field-post_object',
@@ -268,6 +269,13 @@
         if (type === 'true_false') {
             var $cb = $field.find('.acf-input input[type="checkbox"]').first();
             return $cb.length ? ($cb.prop('checked') ? '1' : '0') : '';
+        }
+        if (type === 'checkbox') {
+            var $checkboxes = $field.find('.acf-input input[type="checkbox"]:checked');
+            if ($checkboxes.length) {
+                return $checkboxes.map(function() { return $(this).val(); }).get().join(', ') || '';
+            }
+            return '';
         }
         var $input = $field.find('.acf-input input[type="text"], .acf-input input[type="number"], .acf-input input[type="email"], .acf-input input[type="url"], .acf-input textarea').first();
         return $input.length ? ($input.val() || '') : '';
@@ -586,6 +594,15 @@
         if (type === 'true_false') {
             var $cb = $field.find('.acf-input input[type="checkbox"]').first();
             if ($cb.length) $cb.prop('checked', value === '1' || value === 1).trigger('change');
+            return;
+        }
+        if (type === 'checkbox') {
+            var vals = (typeof value === 'string' && value) ? value.split(',').map(function(v) { return String(v).trim(); }).filter(Boolean) : (Array.isArray(value) ? value.map(String) : []);
+            var $allCbs = $field.find('.acf-input input[type="checkbox"]');
+            $allCbs.each(function() {
+                var v = $(this).val();
+                $(this).prop('checked', vals.indexOf(v) !== -1).trigger('change');
+            });
             return;
         }
         var $input = $field.find('.acf-input input[type="text"], .acf-input input[type="number"], .acf-input input[type="email"], .acf-input input[type="url"], .acf-input textarea').first();
