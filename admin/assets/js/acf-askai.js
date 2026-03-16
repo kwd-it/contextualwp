@@ -29,6 +29,7 @@
         'taxonomy': 'acf-field-taxonomy',
         'image': 'acf-field-image',
         'file': 'acf-field-file',
+        'date_picker': 'acf-field-date_picker',
         'google_map': 'acf-field-google_map'
     };
 
@@ -276,6 +277,10 @@
                 return $checkboxes.map(function() { return $(this).val(); }).get().join(', ') || '';
             }
             return '';
+        }
+        if (type === 'date_picker') {
+            var $dateInput = $field.find('.acf-input input[type="text"]').first();
+            return $dateInput.length ? ($dateInput.val() || '') : '';
         }
         var $input = $field.find('.acf-input input[type="text"], .acf-input input[type="number"], .acf-input input[type="email"], .acf-input input[type="url"], .acf-input textarea').first();
         return $input.length ? ($input.val() || '') : '';
