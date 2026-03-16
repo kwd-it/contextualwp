@@ -102,7 +102,7 @@ Use for: true_false, select, radio, checkbox, taxonomy, post_object, relationshi
 
 | Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
 |----------|---------|--------|---------------|------------|-------|
-| Checkbox A | A1, A3 | ❌ Bad | Yes | 2026-02-19 | AskAI icon does not appear for checkbox fields, so field helper cannot be used/tested. Coverage gap for checkbox type. |
+| Checkbox A | A1, A3 | ✅ Good | No | 2026-03-16 | AskAI icon now appears for checkbox fields. A1 and A3 responses are schema-grounded, correctly limited to stored values and explicit logic, and contain no frontend/template assumptions. Coverage gap resolved. |
 
 ---
 
@@ -150,7 +150,7 @@ Use for: true_false, select, radio, checkbox, taxonomy, post_object, relationshi
 
 | Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
 |----------|---------|--------|---------------|-------------|-------|
-| Date A (CPT: Careers Job Role → Closing Date) | A1, A2, A4 | ❌ Bad | Yes | 2026-02-20 | AskAI icon does not appear for date_picker fields, so field helper cannot be used/tested. Coverage gap for date_picker type. |
+| Date A (CPT: Careers Job Role → Closing Date) | A1, A2, A4 | ✅ Good | No | 2026-03-16 | AskAI icon now appears for date_picker fields. Responses are grounded and compliant, with no invented formatting or behavioural assumptions. Coverage gap resolved. |
 
 ---
 
