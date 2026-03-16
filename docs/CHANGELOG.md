@@ -5,6 +5,13 @@ All notable changes to ContextualWP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.4] – 2026-03-16
+
+### Fixed
+- **AskAI checkbox fields**: Added AskAI icon coverage for ACF checkbox fields in the editor. QA now passes for A1 and A3.
+- **AskAI date picker fields**: Added AskAI icon coverage for ACF date_picker fields in the editor. QA now passes for A1, A2, and A4.
+- **QA checklist**: Updated field helper QA results for checkbox and date_picker after coverage fixes.
+
 ## [0.11.3] – 2026-03-14
 
 ### Fixed
