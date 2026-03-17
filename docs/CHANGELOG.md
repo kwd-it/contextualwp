@@ -5,6 +5,14 @@ All notable changes to ContextualWP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.5] – 2026-03-17
+
+### Fixed
+- **AskAI group container fields**: AskAI icon coverage now includes ACF group container fields; icon appears on the group container header and prompts send structural subfield definitions (label, name, type) only, with nested values excluded from context.
+- **AskAI repeater container fields**: AskAI icon coverage now includes ACF repeater container fields; icon appears on the repeater container header (not per row) and prompts send subfield definitions only, with no row values or row count in context.
+- **Container grounding**: Group and repeater AskAI responses are grounded to structure and purpose only, with no frontend or template assumptions.
+- **QA checklist**: Updated field helper QA results for group and repeater; coverage gaps marked resolved, with remaining A3 wording polish noted.
+
 ## [0.11.4] – 2026-03-16
 
 ### Fixed
