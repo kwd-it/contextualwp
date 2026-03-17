@@ -30,7 +30,9 @@
         'image': 'acf-field-image',
         'file': 'acf-field-file',
         'date_picker': 'acf-field-date_picker',
-        'google_map': 'acf-field-google_map'
+        'google_map': 'acf-field-google_map',
+        'group': 'acf-field-group',
+        'repeater': 'acf-field-repeater'
     };
 
     function log() {
@@ -169,7 +171,9 @@
     }
 
     function getFieldTypeFromEl($field) {
-        if ($field.data('field-type')) return $field.data('field-type');
+        if ($field.data('field-type')) return String($field.data('field-type')).toLowerCase();
+        var dataType = $field.attr('data-type') || $field.data('type');
+        if (dataType) return String(dataType).toLowerCase();
         var k;
         for (k in TYPE_CLASS_MAP) {
             if (TYPE_CLASS_MAP.hasOwnProperty(k) && $field.hasClass(TYPE_CLASS_MAP[k])) return k;
@@ -179,6 +183,9 @@
 
     function getFieldValue($field) {
         var type = getFieldTypeFromEl($field);
+        if (type === 'group' || type === 'repeater') {
+            return '';
+        }
         if (type === 'wysiwyg') {
             var $textarea = $field.find('.acf-input textarea.wp-editor-area');
             if ($textarea.length) {
@@ -384,6 +391,21 @@
                     meta.type_specific.ui_off_text = fieldObj.get('ui_off_text') || 'No';
                 }
             }
+            if (type === 'group' || type === 'repeater') {
+                meta.value = '';
+                var subFields = fieldObj.get('sub_fields');
+                if (subFields && Array.isArray(subFields)) {
+                    meta.subfield_definitions = subFields.map(function(sf) {
+                        return {
+                            label: (sf.label || sf.name || '').trim(),
+                            name: (sf.name || '').trim(),
+                            type: String(sf.type || '').toLowerCase()
+                        };
+                    });
+                } else {
+                    meta.subfield_definitions = [];
+                }
+            }
         } else {
             meta.name = $field.data('name') || $field.attr('data-name') || '';
             meta.key = fieldKey;
@@ -541,13 +563,29 @@
             if (ts.message) lines.push('Message: ' + ts.message);
             if (ts.ui_on_text || ts.ui_off_text) lines.push('Toggle labels: ON = "' + (ts.ui_on_text || 'Yes') + '", OFF = "' + (ts.ui_off_text || 'No') + '"');
         }
-        lines.push('Current value: ' + (meta.value || '[empty]'));
+        var isContainer = (meta.type || '').toLowerCase() === 'group' || (meta.type || '').toLowerCase() === 'repeater';
+        if (meta.subfield_definitions && Array.isArray(meta.subfield_definitions) && meta.subfield_definitions.length) {
+            lines.push('Subfields (structure only, no values):');
+            meta.subfield_definitions.forEach(function(sf) {
+                lines.push('  - ' + (sf.label || '[unnamed]') + ' (name: ' + (sf.name || '') + ', type: ' + (sf.type || '') + ')');
+            });
+        }
+        if (isContainer) {
+            lines.push('Value: [container – subfield values are not included]');
+        } else {
+            lines.push('Current value: ' + (meta.value || '[empty]'));
+        }
         lines.push('');
         lines.push('Instructions for the AI (editor-focused):');
         var ft = (meta.type || '').toLowerCase();
+        if (isContainer) {
+            lines.push('- This is a container field (group or repeater). Explain its purpose and structure only.');
+            lines.push('- For "what changes when…" questions: describe only structural effect (e.g. which subfields exist, layout). Do not invent frontend, template, or display behaviour.');
+            lines.push('- Do not include values from nested subfields. Do not flatten or summarise row/content data.');
+        }
         var choiceToggleTypes = ['true_false', 'checkbox', 'radio', 'select', 'button_group'];
         var hasCondOrControl = !!(meta.conditional_logic_summary || meta.controlled_fields_summary);
-        var showWhatChanges = choiceToggleTypes.indexOf(ft) >= 0 || hasCondOrControl;
+        var showWhatChanges = !isContainer && (choiceToggleTypes.indexOf(ft) >= 0 || hasCondOrControl);
 
         if (showWhatChanges) {
             lines.push('- Reply in two short parts: (1) what this field controls, (2) what changes when its value is toggled (if known from metadata above).');
