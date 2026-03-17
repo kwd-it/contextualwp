@@ -182,7 +182,7 @@ Use for: true_false, select, radio, checkbox, taxonomy, post_object, relationshi
 
 | Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
 |----------|---------|--------|---------------|-------------|-------|
-| Group A (Developments → Address) | A1, A3 | ❌ Bad | Yes | 2026-02-22 | AskAI icon does not appear on group container fields. Only subfields inside the group display AskAI. Group type cannot currently be tested. Coverage gap for group field type. |
+| Group A (Developments → Address) | A1, A3 | ⚠️ Average | No | 2026-03-17 | AskAI icon now appears on group container fields. A1 response is correct and schema-grounded. A3 remains structural and safe but is slightly descriptive rather than clearly explaining what changes when values are edited. No frontend/template assumptions. Coverage gap resolved. |
 
 ---
 
@@ -190,7 +190,7 @@ Use for: true_false, select, radio, checkbox, taxonomy, post_object, relationshi
 
 | Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
 |----------|---------|--------|---------------|-------------|-------|
-| Repeater A (Developments → Additional Featured Images) | A1, A3 | ❌ Bad | Yes | 2026-02-22 | AskAI icon does not appear on repeater container fields. Only subfields inside rows display AskAI. Repeater type cannot currently be tested directly. JSON confirms limit (2) and subfield constraint (Image, required, JPG only), but container-level behaviour cannot be evaluated. Coverage gap for repeater field type. |
+| Repeater A (Developments → Additional Featured Images) | A1, A3 | ⚠️ Average | No | 2026-03-17 | AskAI icon now appears on repeater container fields. A1 response correctly explains repeating structure and respects schema constraints (max 2). A3 response is safe and structural but could more clearly describe add/remove/edit row behaviour. No frontend/template assumptions. Coverage gap resolved. |
 
 ---
 
