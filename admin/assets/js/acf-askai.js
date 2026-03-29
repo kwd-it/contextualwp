@@ -391,6 +391,13 @@
                     meta.type_specific.ui_off_text = fieldObj.get('ui_off_text') || 'No';
                 }
             }
+            if (type === 'textarea') {
+                var maxLen = fieldObj.get('maxlength');
+                var n = maxLen !== undefined && maxLen !== null && maxLen !== '' ? parseInt(maxLen, 10) : 0;
+                if (!isNaN(n) && n > 0) {
+                    meta.type_specific.maxlength = n;
+                }
+            }
             if (type === 'group' || type === 'repeater') {
                 meta.value = '';
                 var subFields = fieldObj.get('sub_fields');
@@ -526,6 +533,42 @@
     }
 
     /**
+     * AskAI prompt for textarea fields: minimal schema context and strict grounding hints
+     * (no current value, default, or placeholder—reduces layout/content-structure hallucinations).
+     *
+     * @param {string} userQuestion
+     * @param {Object} meta Field metadata from collectFieldMetadata.
+     * @return {string}
+     */
+    function buildTextareaFieldHelperPrompt(userQuestion, meta) {
+        var lines = [userQuestion, '', '---', 'ACF Field context:'];
+        lines.push('Type: ' + (meta.type || 'textarea'));
+        lines.push('Label: ' + (meta.label || '[unnamed]'));
+        if (meta.name) lines.push('Name: ' + meta.name);
+        if (meta.instructions) lines.push('Instructions: ' + meta.instructions);
+        if (meta.required) lines.push('Required: yes');
+        if (meta.conditional_logic_summary) {
+            lines.push('This field is shown when: ' + meta.conditional_logic_summary);
+        }
+        if (meta.controlled_fields_summary) {
+            lines.push('When this field\'s value changes, these fields are shown/hidden: ' + meta.controlled_fields_summary);
+        }
+        var ts = meta.type_specific || {};
+        if (ts.maxlength) {
+            lines.push('Max length: ' + ts.maxlength + ' characters');
+        }
+        lines.push('');
+        lines.push('Instructions for the AI (textarea, schema-grounded):');
+        lines.push('- Use only the metadata above: label, name, type, instructions, required, conditional logic (if any), controlled fields (if any), and max length (if any). Do not infer other constraints.');
+        lines.push('- Do not assume or describe: where this text appears on the site, page layout, templates, section roles, CTAs, headings/subheadings, ideal paragraph or word counts, or tone/brand rules unless "Instructions" above explicitly states them.');
+        lines.push('- For questions about what the field is for: give a short, neutral explanation of editorial purpose (multiline plain text for this item). No marketing frameworks.');
+        lines.push('- For questions about how to fill it in well: give editor-safe guidance; prefer "Use this field for…", "Keep it clear…", "Follow any instructions shown for this field"; label general tips as best practice, not as rules; if no explicit rules exist in the metadata, say so—do not invent any.');
+        lines.push('- Do not mention field keys, field group keys, IDs, raw JSON, or file paths.');
+        lines.push('- Keep the reply concise for wp-admin editors.');
+        return lines.join('\n');
+    }
+
+    /**
      * Build the AskAI prompt from user question and field metadata.
      *
      * @param {string} userQuestion
@@ -533,6 +576,10 @@
      * @return {string}
      */
     function buildFieldHelperPrompt(userQuestion, meta) {
+        var ft = (meta.type || '').toLowerCase();
+        if (ft === 'textarea') {
+            return buildTextareaFieldHelperPrompt(userQuestion, meta);
+        }
         var lines = [userQuestion, '', '---', 'ACF Field context:'];
         lines.push('Type: ' + (meta.type || 'unknown'));
         lines.push('Label: ' + (meta.label || '[unnamed]'));

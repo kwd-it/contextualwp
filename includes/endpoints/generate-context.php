@@ -492,9 +492,10 @@ class Generate_Context {
         $lower = strtolower( $user_text );
 
         $advise_phrases = [
-            'what should', 'what\'s best', 'whats best', 'what is the best', 'best way', 'what to put',
+            'what should', 'how should', 'what\'s best', 'whats best', 'what is the best', 'best way', 'what to put',
             'what size', 'what image', 'what dimension', 'what format', 'what value',
             'recommend', 'suggest', 'what content', 'how long should', 'how many',
+            'fill this in', 'fill it in',
         ];
         foreach ( $advise_phrases as $p ) {
             if ( strpos( $lower, $p ) !== false ) {
@@ -599,30 +600,47 @@ class Generate_Context {
      * @return string
      */
     private function get_askai_system_message( $intent, $request ) {
+        $field_type = strtolower( trim( (string) ( $request->get_param( 'field_type' ) ?? '' ) ) );
+
         if ( $intent === 'explain' ) {
-            $field_type = strtolower( trim( (string) ( $request->get_param( 'field_type' ) ?? '' ) ) );
             if ( $field_type === 'taxonomy' ) {
                 return 'You are a helpful assistant. Use the following context to answer. Be factual and descriptive only. Do not give recommendations or advice. '
                     . 'For this taxonomy field, describe only: (1) what the field stores, (2) which taxonomy it belongs to, (3) what type of categorisation or association it represents. '
                     . 'Do NOT mention: frontend display, page sections, archives, filters, navigation, what appears on the site, or visitor-facing behaviour. '
                     . 'Keep the response concise and editor-friendly. Example: "This field assigns a term from the [taxonomy name] taxonomy to this item." or "This field is used to categorise this item using the [taxonomy name] taxonomy."';
             }
+            if ( $field_type === 'textarea' ) {
+                return 'You are a helpful assistant for WordPress editors. Answer using only: the field label, name, type, instructions (if any), required status, and explicit constraints in the context. '
+                    . 'Describe the likely editorial purpose in neutral, practical terms (this field stores multiline plain text for this item). Keep it short. '
+                    . 'Do NOT mention: where the text appears on the page, layout, templates, section roles, CTAs, headings or subheadings, word counts, paragraph counts, or brand/tone unless the instructions in the context explicitly state them. '
+                    . 'Do not give recommendations or marketing-style advice not grounded in the context. Do not mention field keys, IDs, raw JSON, or file paths.';
+            }
             return 'You are a helpful assistant. Use the following context to answer. Be factual and descriptive only. Do not give recommendations or advice.';
         }
         if ( $intent === 'advise' ) {
-            $field_type = strtolower( trim( (string) ( $request->get_param( 'field_type' ) ?? '' ) ) );
-            $text_field_types = [ 'text', 'textarea', 'wysiwyg' ];
+            if ( $field_type === 'textarea' ) {
+                return 'You are a helpful assistant for content editors. Use only information from the context (label, name, type, instructions, required, and any explicit constraints shown). '
+                    . 'Give concise, practical guidance. Prefer phrasing like "Use this field for…", "Keep the text clear and accurate…", and "Follow any instructions shown for this field." '
+                    . 'Clearly separate general editorial best practice from rules that are explicitly stated in the field instructions or constraints. If there are no explicit formatting or content rules in the context, say so and do not invent any. '
+                    . 'Do NOT assume or suggest: frontend placement, templates, section roles, CTAs, headline/benefits structure, word counts, paragraph counts, or tone/brand rules unless the context explicitly includes them. '
+                    . 'Do not mention field keys, IDs, raw JSON, or file paths. Keep the answer brief and suitable for wp-admin.';
+            }
+            $text_field_types = [ 'text', 'wysiwyg' ];
             if ( in_array( $field_type, $text_field_types, true ) ) {
-                return 'You are a helpful assistant for content editors. Use the following context to answer. For text/textarea fields: return 2–4 concise bullets with practical guidance (format, what to include/exclude, example pattern). Avoid repeating the field definition. Do not invent site-specific content (place names, etc).';
+                return 'You are a helpful assistant for content editors. Use the following context to answer. For text or WYSIWYG fields: return 2–4 concise bullets with practical guidance (format, what to include/exclude, example pattern). Avoid repeating the field definition. Do not invent site-specific content (place names, etc).';
             }
             return 'You are a helpful assistant for content editors. Use the following context to answer. Give concise, opinionated guidance. Do not explain field mechanics, toggle labels, or metadata—focus on actionable recommendations.';
         }
         if ( $intent === 'behaviour' ) {
-            return 'You are a helpful assistant for content editors. Answer only from the ACF field context provided. '
+            $msg = 'You are a helpful assistant for content editors. Answer only from the ACF field context provided. '
                 . 'Describe only: (1) what stored value changes when this field is changed, (2) any explicit conditional logic or controlled fields shown in the context, (3) any explicit relationship/target types already stated (e.g. post type or taxonomy name). '
                 . 'Do NOT invent or assume: frontend behaviour, template behaviour, page sections, listings/modules/cards, what visitors see, or content appearing/disappearing on the site unless the context explicitly states conditional logic that does so. '
                 . 'If the context has no conditional logic or controlled fields, say that changing this field changes the stored value for this item and no other field changes are defined here. '
                 . 'For taxonomy, post_object, or relationship fields you may explain what kind of thing is linked or selected (from context); do not describe how the front end uses it. Keep the response concise and editor-friendly.';
+            if ( $field_type === 'textarea' ) {
+                $msg .= ' For a textarea, describe only the stored text value and any conditional effects in the context—do not infer page layout or template usage.';
+            }
+            return $msg;
         }
         return 'You are a helpful assistant. Use the following context to answer.';
     }

@@ -60,8 +60,8 @@ Use for: true_false, select, radio, checkbox, taxonomy, post_object, relationshi
 
 | Instance | Prompts | Rating | Issue logged? | Last tested | Notes |
 |----------|---------|--------|---------------|-------------|-------|
-| Textarea A | A1, A2 | ❌ Bad | Yes | 2026-02-11 | A1 assumed page-level body content and layout structure. A2 invented content structure (headline, benefits, CTA), tone guidance, word count, and specific services not derived from schema or instructions. |
-| Textarea B (optional) | A1, A2 | ⚠️ Average | Yes | 2026-02-11 | A1 and A2 assumed layout position (beneath main heading). A2 added tone and CTA guidance not derived from schema or instructions. |
+| Textarea A | A1, A2 | ✅ Good | No | 2026-03-29 | Responses are now schema-grounded. No layout, template, or content-structure assumptions. A1 is concise and accurate. A2 provides safe, editor-focused guidance without inventing rules or tone. |
+| Textarea B (optional) | A1, A2 | ⚠️ Average | No | 2026-03-29 | Behaviour is now grounded and safe. Minor verbosity and slightly generic guidance remain, but no incorrect assumptions or invented structure. Previous overreach issue resolved. |
 
 ---
 
@@ -268,11 +268,11 @@ Goal: ensure the floating chat is predictable, useful, and stable.
 
 | Prompt | Rating | Issue logged? | Last tested | Notes |
 |--------|--------|---------------|-------------|-------|
-| B1 | ✅ Good | No | 2027-03-01 | 5 bullet summary strictly grounded in CPT content (3–5 bedroom homes; prices from £500,000; 5% deposit paid up to £33,750 available until November on selected homes; “FINAL HOMES REMAINING” / over 80% sold; 93 homes forming part of the wider 300-home Ashfield Estate consortium; located three miles from Romsey and ten miles from Southampton; country park and open pasture grassland nearby). |
-| B2 | ❌ Bad | Yes | 2027-03-01 | Response returned “Not stated in the content.” despite the CPT clearly containing development name, location, pricing, incentive details, sales status, connectivity distances and setting. Indicates CPT content not being passed/rendered correctly under strict grounding conditions. |
-| B3 | ✅ Good | No | 2027-03-01 | SEO output scoped only to information present in CPT (Mountbatten Park, North Baddesley, 3–5 beds, from £500,000, final homes remaining, 5% deposit incentive). No invented claims or cross-development bleed. |
-| B4 | ✅ Good | No | 2027-03-01 | Table output reflects information explicitly present in CPT content, including Romsey/Southampton distances and Ashfield Estate context. No evidence of invented amenities, incentives, or cross-site contamination. |
-| B5 (optional) | ✅ Good | No | 2027-03-01 | Intro rewrite remained grounded in CPT content (location, home range, final homes remaining, countryside/park setting). No invented claims or scope bleed. |
+| B1 | ✅ Good | No | 2026-03-01 | 5 bullet summary strictly grounded in CPT content (3–5 bedroom homes; prices from £500,000; 5% deposit paid up to £33,750 available until November on selected homes; “FINAL HOMES REMAINING” / over 80% sold; 93 homes forming part of the wider 300-home Ashfield Estate consortium; located three miles from Romsey and ten miles from Southampton; country park and open pasture grassland nearby). |
+| B2 | ❌ Bad | Yes | 2026-03-01 | Response returned “Not stated in the content.” despite the CPT clearly containing development name, location, pricing, incentive details, sales status, connectivity distances and setting. Indicates CPT content not being passed/rendered correctly under strict grounding conditions. |
+| B3 | ✅ Good | No | 2026-03-01 | SEO output scoped only to information present in CPT (Mountbatten Park, North Baddesley, 3–5 beds, from £500,000, final homes remaining, 5% deposit incentive). No invented claims or cross-development bleed. |
+| B4 | ✅ Good | No | 2026-03-01 | Table output reflects information explicitly present in CPT content, including Romsey/Southampton distances and Ashfield Estate context. No evidence of invented amenities, incentives, or cross-site contamination. |
+| B5 (optional) | ✅ Good | No | 2026-03-01 | Intro rewrite remained grounded in CPT content (location, home range, final homes remaining, countryside/park setting). No invented claims or scope bleed. |
 
 ---
 

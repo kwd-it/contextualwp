@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         bootstrap="vendor/autoload.php"
+         bootstrap="tests/bootstrap.php"
          xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.0/phpunit.xsd"
          executionOrder="depends,defects"
          cacheDirectory=".phpunit.cache">
@@ -9,12 +9,4 @@
             <directory>tests</directory>
         </testsuite>
     </testsuites>
-    <source>
-        <include>
-            <directory>includes</directory>
-        </include>
-        <exclude>
-            <directory>vendor</directory>
-        </exclude>
-    </source>
 </phpunit>
