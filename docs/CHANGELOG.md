@@ -5,6 +5,18 @@ All notable changes to ContextualWP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] – 2026-03-29
+
+First stable release. ContextualWP ships MCP-oriented REST context for AI agents and integrated admin AI (global chat and ACF AskAI), with the following areas hardened for production use:
+
+- Stable **MCP-style** read endpoints (`/mcp/v1/list_contexts`, `/get_context`, `/manifest`) with manifest **schema** metadata, **usage_contract**, and optional **relationships** via filters.
+- **Site diagnostics** (`/mcp/v1/site_diagnostics`) for authenticated administrators.
+- **Schema export** (`/contextualwp/v1/schema`) and editor-safe **ACF schema** (`/contextualwp/v1/acf_schema`).
+- **`/contextualwp/v1/generate_context`** for authenticated AI generation with OpenAI, Claude, and Mistral.
+- **Global admin chat** and **ACF AskAI**: broader field-helper coverage (including group and repeater containers), improved **textarea** grounding, and editorial reliability for admin chat prompts (including C1/C3 B2).
+- **OpenAI GPT-5** models via the **Responses API** with token mapping, retries, and model fallback; Chat Completions remain for other OpenAI model IDs when configured via filters.
+- **QA** and documentation aligned for v1 release readiness.
+
 ## [0.11.5] – 2026-03-17
 
 ### Fixed

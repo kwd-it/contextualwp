@@ -5,17 +5,9 @@ It focuses on **process**, not domain-specific behaviour.
 
 ---
 
-### Note on current phase (pre–v1.0)
+### Note on v1.0
 
-The workflow below normally begins at Step 1 (identifying the single biggest improvement opportunity).
-
-In the lead-up to the v1.0 release, Step 1 is temporarily deprioritised in favour of
-quality assurance and consistency across existing features.
-
-The focus during this phase is to validate and polish current behaviour rather than
-identify new feature opportunities.
-
-Once v1.0 is released, the workflow resumes from Step 1 as originally intended.
+**v1.0.0** is the first stable release. Routine development follows the workflow below from Step 1.
 
 ---
 
@@ -110,7 +102,7 @@ Use Cursor to update (if applicable):
 
 Commit this separately with a release-style commit, for example:
 
-`chore(release): v0.6.3`
+`chore(release): v1.0.0`
 
 ---
 

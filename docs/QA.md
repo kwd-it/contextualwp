@@ -1,4 +1,4 @@
-# QA Checklist (v1.0 target)
+# QA Checklist (v1.0)
 
 Purpose: lightweight, repeatable QA.  
 No need to paste model outputs. Run the prompt, judge the response, rate it, and move on.

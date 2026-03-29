@@ -1,6 +1,6 @@
 # ContextualWP
 
-ContextualWP is a WordPress plugin that exposes structured post and ACF field data via a REST API, following the Model Context Protocol (MCP). It enables AI models to retrieve contextual content and generate new content using AI providers like OpenAI and Claude.
+ContextualWP is a WordPress plugin that exposes structured post and ACF field data via a REST API in an MCP-oriented pattern. It enables AI agents to retrieve contextual content and, where permitted, generate new content using providers such as OpenAI, Claude, and Mistral. **v1.0** is the first stable release line for production use.
 
 ## Endpoints
 
@@ -33,7 +33,7 @@ curl -X POST "https://your-site.test/wp-json/contextualwp/v1/generate_context" \
 {
   "message": "AI response generated.",
   "provider": "OpenAI",
-  "model": "gpt-4",
+  "model": "gpt-5-mini",
   "context_id": "post-123",
   "prompt": "Summarize this post.",
   "format": "markdown",
@@ -157,14 +157,14 @@ add_filter('contextualwp_ai_response', function($response, $provider, $settings,
 ```php
 add_filter( 'contextualwp_manifest_schema_relationships', function ( $relationships ) {
     $relationships[] = [
-        'source_type' => 'plots',
-        'target_type' => 'developments',
-        'description' => 'Plots belong to a development.',
+        'source_type' => 'book',
+        'target_type' => 'author',
+        'description' => 'Books reference their author.',
     ];
     $relationships[] = [
-        'source_type' => 'plots',
-        'target_type' => 'house_types',
-        'description' => 'Plots reference one or more house types.',
+        'source_type' => 'event',
+        'target_type' => 'venue',
+        'description' => 'Events are held at a venue.',
     ];
     return $relationships;
 } );
@@ -186,7 +186,7 @@ add_filter( 'contextualwp_manifest_schema_relationships', function ( $relationsh
 {
   "plugin": {
     "name": "ContextualWP",
-    "version": "0.11.5"
+    "version": "1.0.0"
   },
   "site": {
     "home_url": "https://example.com",
@@ -291,6 +291,7 @@ add_filter( 'contextualwp_manifest_schema_relationships', function ( $relationsh
 
 ### Global Floating Chat
 - A floating chat icon appears in the WordPress admin area, allowing you to ask questions or generate content about the current screen or post.
+- On post and page edit screens, the chat uses the current item as context when appropriate; `multi` is available for broader site context.
 - Click the icon to open a chat modal, enter your prompt, and receive AI-powered responses.
 - Prompt templates are available for common tasks (e.g., summarization, SEO suggestions).
 - Supports multi-context queries using the `multi` context ID.
@@ -303,8 +304,8 @@ add_filter( 'contextualwp_manifest_schema_relationships', function ( $relationsh
 ## Supported AI Providers
 
 ### OpenAI
-- Models: gpt-5-nano, gpt-5-mini, gpt-5.2
-- Endpoint: https://api.openai.com/v1/chat/completions
+- Models (defaults): gpt-5-nano, gpt-5-mini, gpt-5.2
+- API: default OpenAI models use the Responses API (`POST https://api.openai.com/v1/responses`). Other model IDs use Chat Completions (`POST https://api.openai.com/v1/chat/completions`) when not listed for Responses (see `contextualwp_openai_responses_api_models`).
 
 ### Claude (Anthropic)
 - Models: claude-haiku-4-5, claude-sonnet-4-5, claude-opus-4-5
