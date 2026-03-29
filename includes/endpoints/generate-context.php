@@ -798,7 +798,7 @@ class Generate_Context {
     }
 
     /**
-     * Extract a candidate post type phrase from prompt (e.g. "ACF for plotz" → "plotz").
+     * Extract a candidate post type phrase from prompt (e.g. "ACF for eventz" → "eventz").
      * Used to detect unknown post type when resolved slug is null.
      *
      * @param string $prompt User prompt.
@@ -811,7 +811,7 @@ class Generate_Context {
         $lower = strtolower( trim( $prompt ) );
         $stop_re = $this->get_stopwords_regex();
         $stopwords = array_fill_keys( $this->get_post_type_stopwords(), true );
-        // Allow optional stopwords between preposition and slug: "assigned to the plot CPT"
+        // Allow optional stopwords between preposition and slug: "assigned to the book CPT"
         if ( preg_match( '/\b(?:for|assigned\s+to)\s+' . $stop_re . '(?:post\s+type\s+)?([a-z0-9_-]+)\b/i', $lower, $m ) ) {
             $candidate = $m[1];
             if ( ! isset( $stopwords[ $candidate ] ) ) {
@@ -908,7 +908,7 @@ class Generate_Context {
     }
 
     /**
-     * Common stopwords to ignore when extracting post type from prompt (e.g. "ACF assigned to the plot CPT").
+     * Common stopwords to ignore when extracting post type from prompt (e.g. "ACF assigned to the book CPT").
      *
      * @return array
      */
@@ -930,8 +930,8 @@ class Generate_Context {
     }
 
     /**
-     * Extract post type slug from prompt when asking for ACF (e.g. "ACF for plots", "field groups for post type developments").
-     * Ignores stopwords (the, a, an, etc.). Prefers exact slug match. Handles singular/plural (plot -> plots).
+     * Extract post type slug from prompt when asking for ACF (e.g. "ACF for events", "field groups for post type products").
+     * Ignores stopwords (the, a, an, etc.). Prefers exact slug match. Handles singular/plural (event -> events).
      *
      * @param string $prompt User prompt.
      * @param array  $custom_pt_slugs Known custom post type slugs.
@@ -952,9 +952,9 @@ class Generate_Context {
             }
             $variants = [ $slug ]; // Prefer exact match
             if ( substr( $slug, -1 ) === 's' ) {
-                $variants[] = substr( $slug, 0, -1 ); // "plots" -> "plot"
+                $variants[] = substr( $slug, 0, -1 ); // "events" -> "event"
             } else {
-                $variants[] = $slug . 's'; // "plot" -> "plots"
+                $variants[] = $slug . 's'; // "event" -> "events"
             }
             $variants[] = $slug . ' cpt';
             $variants[] = $slug . ' post type';
@@ -965,7 +965,7 @@ class Generate_Context {
         foreach ( $slug_variants as $slug => $variants ) {
             foreach ( $variants as $variant ) {
                 $escaped = preg_quote( $variant, '/' );
-                // Optional stopwords between preposition and slug: "assigned to the plot CPT"
+                // Optional stopwords between preposition and slug: "assigned to the book CPT"
                 $re = $stop_re . '(?:post\s+type\s+)?' . $escaped . '\b';
                 if ( preg_match( '/\b(?:acf|field\s+group|field\s+groups|fields)\s+(?:assigned\s+to|for)\s+' . $re . '/i', $lower ) ) {
                     return $slug;
@@ -1110,7 +1110,7 @@ class Generate_Context {
                 $g['field_count'] = $count;
                 $filtered[] = $g;
             } elseif ( $is_block && $include_blocks ) {
-                // Check if block group matches the post type (e.g., "plot-*" blocks or "Block: Plot")
+                // Check if block group matches the post type (e.g., "product-*" blocks or "Block: Product")
                 if ( $this->is_block_group( $g, $post_type ) ) {
                     $count = isset( $g['fields'] ) && is_array( $g['fields'] ) ? count( $g['fields'] ) : 0;
                     $g['field_count'] = $count;
@@ -1215,7 +1215,7 @@ class Generate_Context {
      * Format body for unknown post type intent: helpful message + list of available post types from schema.
      *
      * @param array       $schema Schema data.
-     * @param string|null $requested_slug Unresolved slug from prompt (e.g. "plotz").
+     * @param string|null $requested_slug Unresolved slug from prompt (e.g. "eventz").
      * @return string Body only (no footer).
      */
     private function format_intent_unknown_post_type( array $schema, $requested_slug ) {
@@ -1296,7 +1296,7 @@ class Generate_Context {
                 $lines[] = '- ' . ( $g['title'] ?: '(unnamed)' ) . ' — ' . $g['field_count'] . ' field(s)';
             }
             $lines[] = '';
-            $lines[] = 'Specify a post type to see groups, e.g. "ACF for plots" or "Show ACF field groups for plots".';
+            $lines[] = 'Specify a post type to see groups, e.g. "ACF for book" or "Show ACF field groups for team_member".';
         }
         return implode( "\n", $lines );
     }
