@@ -557,6 +557,10 @@ class Generate_Context {
      */
     private function get_system_message_for_single_context( array $context_data, $prompt, $request ) {
         if ( $this->is_single_cpt_context( $context_data ) ) {
+            $is_field_helper = ( $request->get_param( 'source' ) === 'acf_field_helper' );
+            if ( ! $is_field_helper && $this->is_editorial_improvement_prompt( $prompt ) ) {
+                return $this->get_cpt_editorial_grounding_system_message();
+            }
             return $this->get_strict_grounding_system_message();
         }
         $is_field_helper = ( $request->get_param( 'source' ) === 'acf_field_helper' );
@@ -590,6 +594,66 @@ class Generate_Context {
         return 'You are a helpful assistant. You must answer ONLY using facts explicitly stated in the provided context. '
             . 'Do not infer, assume, or add details that are not in the context. '
             . 'If the context does not contain the answer or the information is not stated, respond with exactly: Not stated in the content.';
+    }
+
+    /**
+     * System message for single CPT when the user asks for editorial improvements (clarity, tone, rewrite).
+     * Keeps grounding (no invented facts) but allows critique and phrasing/structure suggestions on text that is present.
+     *
+     * @return string
+     */
+    private function get_cpt_editorial_grounding_system_message() {
+        return 'You are a helpful assistant for content editors. The user message includes Context with the item\'s text. '
+            . 'Give practical editorial suggestions (clarity, tone, structure, readability, redundancy, scannability) based only on that text. '
+            . 'Anchor suggestions in specific wording or patterns from the context; do not invent new facts, numbers, locations, offers, or claims not present in the context. '
+            . 'Do not assume frontend layout, templates, or site behaviour unless the context explicitly states them. '
+            . 'If the context is empty or has no substantive body text to work with, respond with exactly: Not stated in the content.';
+    }
+
+    /**
+     * Whether the floating-chat prompt is an editorial improvement task (QA matrix B2/B5-style), not summary, SEO, or extraction.
+     * Used for CPT system-message routing and lower OpenAI reasoning effort on Responses API models.
+     *
+     * @param string $prompt User prompt.
+     * @return bool
+     */
+    private function is_editorial_improvement_prompt( $prompt ) {
+        if ( ! is_string( $prompt ) || trim( $prompt ) === '' ) {
+            return false;
+        }
+
+        if ( preg_match( '/\bseo\b.*\b(title|description)\b|\bmeta description\b/i', $prompt ) ) {
+            return false;
+        }
+        if ( preg_match( '/\bextract\b.*\b(facts|table)\b/i', $prompt ) ) {
+            return false;
+        }
+        if ( preg_match( '/\bsummari[sz]e\b.*\bbullet/i', $prompt ) ) {
+            return false;
+        }
+
+        $lower = strtolower( $prompt );
+
+        if ( strpos( $lower, 'suggest improvements' ) !== false ) {
+            return true;
+        }
+        if ( strpos( $lower, 'improvements for clarity' ) !== false || strpos( $lower, 'improvements for tone' ) !== false ) {
+            return true;
+        }
+        if ( preg_match( '/\bclarity\s+and\s+tone\b/i', $prompt ) ) {
+            return true;
+        }
+        if ( preg_match( '/\bimprove\b.*\b(clarity|tone|style|readability|writing|scannability)\b/i', $prompt ) ) {
+            return true;
+        }
+        if ( preg_match( '/\brewrite\b.*\b(clearer|engaging|intro|concise|meaning)\b/i', $prompt ) ) {
+            return true;
+        }
+        if ( preg_match( '/\brewrite\b.*\bimprove\b.*\b(clarity|style)\b/i', $prompt ) ) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -1383,8 +1447,9 @@ class Generate_Context {
         $user_content = $prompt . "\n\nContext:\n" . $content;
         $use_responses = $this->openai_uses_responses_api( $model );
         $clamped = $this->openai_clamp_max_output_tokens( $max_tokens );
+        $reasoning_effort = ( $is_field_helper || $this->is_editorial_improvement_prompt( $prompt ) ) ? 'low' : null;
 
-        $do_one_call = function( $use_model, $user_text, $temp, $is_retry = false ) use ( $use_responses, $system_message, $api_key, $is_field_helper, $settings, $context_data, $request, $clamped ) {
+        $do_one_call = function( $use_model, $user_text, $temp, $is_retry = false ) use ( $system_message, $api_key, $settings, $context_data, $request, $clamped, $reasoning_effort ) {
             $use_responses_for_model = $this->openai_uses_responses_api( $use_model );
             if ( $use_responses_for_model ) {
                 $payload = $this->build_openai_responses_payload(
@@ -1393,7 +1458,7 @@ class Generate_Context {
                     $user_text,
                     $clamped,
                     $temp,
-                    $is_field_helper ? 'low' : null
+                    $reasoning_effort
                 );
             } else {
                 $payload = [

@@ -245,7 +245,7 @@ Goal: ensure the floating chat is predictable, useful, and stable.
 | Prompt | Rating | Issue logged? | Last tested | Notes |
 |--------|--------|---------------|-------------|-------|
 | B1 | ✅ Good | No | 2026-02-25 | Accurate 5-bullet summary of Land & Planning page. Correctly references planning lifecycle, place-led design, collaboration with LPAs, community engagement (Lancaster Gate), sustainability, craftsmanship and community infrastructure. No invented behaviour or schema/media leakage. |
-| B2 | ❌ Bad | Yes | 2026-02-25 | Chat returned reasoning-token exhaustion message instead of answer. Indicates model/runtime configuration issue under normal prompt. |
+| B2 | ✅ Good | No | 2026-03-29 | Now returns practical clarity and tone improvements for page content without runtime failure. Suggestions are grounded in the actual page copy, including repetition, wording, grammar, heading clarity, formatting, and tone consistency. No invented claims or schema/meta leakage. |
 | B3 | ✅ Good | No | 2026-02-25 | SEO title and meta description are concise, within requested length, and grounded in actual page themes (land promotion, consent, place-led design, community engagement). No invented claims or drift. |
 | B4 | ⚠️ Average | No | 2026-02-25 | Accurate and grounded in page content with no invented facts. However, output is verbose and more analytical than a “simple table”; structure is heavy rather than concise/editor-friendly. |
 | B5 (optional) | ✅ Good | No | 2026-02-25 | Clear, concise rewrite of the intro. Maintains original meaning and positioning without adding new claims or changing tone. |
@@ -269,7 +269,7 @@ Goal: ensure the floating chat is predictable, useful, and stable.
 | Prompt | Rating | Issue logged? | Last tested | Notes |
 |--------|--------|---------------|-------------|-------|
 | B1 | ✅ Good | No | 2026-03-01 | 5 bullet summary strictly grounded in CPT content (3–5 bedroom homes; prices from £500,000; 5% deposit paid up to £33,750 available until November on selected homes; “FINAL HOMES REMAINING” / over 80% sold; 93 homes forming part of the wider 300-home Ashfield Estate consortium; located three miles from Romsey and ten miles from Southampton; country park and open pasture grassland nearby). |
-| B2 | ❌ Bad | Yes | 2026-03-01 | Response returned “Not stated in the content.” despite the CPT clearly containing development name, location, pricing, incentive details, sales status, connectivity distances and setting. Indicates CPT content not being passed/rendered correctly under strict grounding conditions. |
+| B2 | ✅ Good | No | 2026-03-29 | Now returns practical, grounded clarity and tone improvements based on real CPT content. Suggestions correctly focus on tightening wording, reducing repetition, improving consistency, readability, and tone without inventing facts or claiming content is missing. |
 | B3 | ✅ Good | No | 2026-03-01 | SEO output scoped only to information present in CPT (Mountbatten Park, North Baddesley, 3–5 beds, from £500,000, final homes remaining, 5% deposit incentive). No invented claims or cross-development bleed. |
 | B4 | ✅ Good | No | 2026-03-01 | Table output reflects information explicitly present in CPT content, including Romsey/Southampton distances and Ashfield Estate context. No evidence of invented amenities, incentives, or cross-site contamination. |
 | B5 (optional) | ✅ Good | No | 2026-03-01 | Intro rewrite remained grounded in CPT content (location, home range, final homes remaining, countryside/park setting). No invented claims or scope bleed. |
