@@ -122,14 +122,6 @@ class ContextualWP_Admin_Settings {
             'contextualwp-settings',
             'contextualwp_advanced_section'
         );
-
-        // Copy Context Pack section
-        add_settings_section(
-            'contextualwp_copy_section',
-            __( 'Copy Context Pack', 'contextualwp' ),
-            [ $this, 'copy_section_description' ],
-            'contextualwp-settings'
-        );
     }
 
     public function section_description() {
@@ -234,7 +226,7 @@ class ContextualWP_Admin_Settings {
         submit_button();
         echo '</form>';
         
-        // Render Copy Context Pack section outside form
+        // Schema export UI (outside form; avoids duplicate Settings API section heading)
         $this->render_copy_pack_section();
         
         echo '</div>';
@@ -335,17 +327,13 @@ class ContextualWP_Admin_Settings {
         echo '</div>';
     }
 
-    public function copy_section_description() {
-        // Empty - section is rendered separately in render_settings_page()
-    }
-
     /**
-     * Render the Copy Context Pack section
+     * Render site schema export (copy-to-clipboard) outside the options form.
      */
     private function render_copy_pack_section() {
         echo '<div class="contextualwp-copy-pack">';
-        echo '<h2>' . esc_html__( 'Copy Context Pack', 'contextualwp' ) . '</h2>';
-        echo '<p>' . esc_html__( 'Export a snapshot of your site\'s contextual schema. This can be shared with AI tools, used for debugging or audits, or pasted into external workflows to provide accurate structural context.', 'contextualwp' ) . '</p>';
+        echo '<h2>' . esc_html__( 'Export Site Schema', 'contextualwp' ) . '</h2>';
+        echo '<p>' . esc_html__( 'Copy the current site schema as JSON to your clipboard. Paste it into AI assistants, IDE tools, or other workflows that need an accurate picture of your WordPress structure—also useful for debugging and audits.', 'contextualwp' ) . '</p>';
         echo '<div class="contextualwp-copy-section">';
         echo '<button type="button" id="contextualwp-copy-schema" class="button button-primary">' . esc_html__( 'Copy Site Schema JSON', 'contextualwp' ) . '</button>';
         echo '<span id="contextualwp-copy-notice" class="contextualwp-copy-notice" style="display: none;"></span>';
