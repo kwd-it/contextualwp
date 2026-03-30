@@ -15,7 +15,7 @@ It focuses on **process**, not domain-specific behaviour.
 
 - **ContextualWP** is the core engine: sector-agnostic behaviour, REST and admin surfaces, and extension points.
 - **Sector packs** are optional companion plugins that register with ContextualWP and extend it for specific industries or workflows.
-- Packs **must not** change core plugin files or rely on undocumented internals. They integrate through filters, hooks, and registration APIs exposed by core.
+- Core exposes `contextualwp_register_sector_pack()`, the in-memory registry, compatibility checks against `requires_contextualwp`, and documented hooks (see README). Packs **must not** change core plugin files or rely on undocumented internals. They integrate through filters, hooks, and those registration APIs only.
 - Core stays usable and coherent when no packs are active.
 
 For pack responsibilities and expectations in more detail, see [PACK-SPEC.md](PACK-SPEC.md). Versioning expectations for core releases are in [COMPATIBILITY.md](COMPATIBILITY.md).

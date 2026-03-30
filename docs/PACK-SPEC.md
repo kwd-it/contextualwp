@@ -34,10 +34,11 @@ This is a **high-level** specification for **sector packs**: optional plugins th
 
 Packs extend core through **high-level** patterns only:
 
-- **Filters and actions** published by ContextualWP for context, prompts, manifest schema, AI payload or response, and related hooks (see core README).  
+- **Registration**: Call `contextualwp_register_sector_pack( array $meta )` from the pack plugin, typically on the `contextualwp_sector_packs_init` action (see README). Alternatively implement `ContextualWP\SectorPacks\Sector_Pack_Interface` and pass `get_sector_pack_metadata()` into the same function. Required metadata includes at least `slug`, `name`, and `version`. Optional fields include `description`, `author` or `vendor`, `requires_contextualwp` (minimum core version for compatibility checks), and `settings_url` (admin URL for the pack’s own settings screen).  
+- **Filters and actions** published by ContextualWP for context, prompts, manifest schema, AI payload or response, schema interpretation, and related hooks (see core README).  
 - **Registration-style** integration where core defines an API for registering templates or metadata, rather than packs replacing core classes.  
 
-Exact hook names and signatures live in core code and README; this spec does not duplicate them.
+Exact hook names and signatures live in core code and README; this spec only summarises the pack registration contract.
 
 ---
 

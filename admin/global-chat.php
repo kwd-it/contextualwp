@@ -10,6 +10,10 @@ class ContextualWP_Global_Chat {
     }
 
     public function enqueue_global_chat_assets() {
+        /**
+         * Prompt presets for the global chat UI. Sector pack plugins may merge or append entries on this filter
+         * (typically from contextualwp_sector_packs_init). Each item: [ 'label' => string, 'prompt' => string ].
+         */
         $prompt_templates = apply_filters('contextualwp_prompt_templates', [
             [ 'label' => 'Summarize this content', 'prompt' => 'Summarize the content in a few sentences.' ],
             [ 'label' => 'Improve writing', 'prompt' => 'Rewrite this content to improve clarity and style.' ],

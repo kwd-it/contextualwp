@@ -136,7 +136,22 @@ class Schema {
             $schema['acf_field_groups'] = $this->get_acf_field_groups();
         }
 
-        return apply_filters( 'contextualwp_schema', $schema );
+        $schema = apply_filters( 'contextualwp_schema', $schema );
+
+        /**
+         * Allow sector packs (or other extensions) to attach generic interpretation hints to the schema payload.
+         * Return an associative array; if non-empty it is exposed under the `interpretation` key. Empty by default
+         * so the REST shape is unchanged unless something uses this filter.
+         *
+         * @param array<string, mixed> $interpretation Initial empty or prior value.
+         * @param array<string, mixed> $schema         Full schema after contextualwp_schema.
+         */
+        $interpretation = apply_filters( 'contextualwp_schema_interpretation', [], $schema );
+        if ( is_array( $interpretation ) && $interpretation !== [] ) {
+            $schema['interpretation'] = $interpretation;
+        }
+
+        return $schema;
     }
 
     /**

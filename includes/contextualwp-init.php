@@ -3,6 +3,11 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+// Sector packs (optional extensions; registry is inert until packs register)
+require_once CONTEXTUALWP_DIR . 'includes/SectorPacks/Sector_Pack_Interface.php';
+require_once CONTEXTUALWP_DIR . 'includes/SectorPacks/Registry.php';
+require_once CONTEXTUALWP_DIR . 'includes/SectorPacks/functions.php';
+
 // Load helper classes
 require_once CONTEXTUALWP_DIR . 'includes/helpers/utilities.php';
 require_once CONTEXTUALWP_DIR . 'includes/helpers/providers.php';
@@ -21,8 +26,18 @@ require_once CONTEXTUALWP_DIR . 'includes/endpoints/site-diagnostics.php';
 // Load admin settings only in admin
 if ( is_admin() ) {
     require_once CONTEXTUALWP_DIR . 'admin/settings.php';
+    require_once CONTEXTUALWP_DIR . 'admin/sector-packs.php';
     require_once CONTEXTUALWP_DIR . 'admin/global-chat.php';
 }
+
+/**
+ * Fires after ContextualWP has loaded sector pack APIs. Sector pack plugins should register here.
+ *
+ * Runs on plugins_loaded at priority 20 so core is available before pack callbacks.
+ */
+add_action( 'plugins_loaded', static function () {
+    do_action( 'contextualwp_sector_packs_init' );
+}, 20 );
 
 // Register REST API routes
 add_action( 'rest_api_init', function () {
