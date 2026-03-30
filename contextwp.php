@@ -23,7 +23,7 @@ require_once CONTEXTUALWP_DIR . 'includes/contextualwp-init.php';
 
 // Add settings link to plugin row
 add_filter( 'plugin_action_links_' . plugin_basename(__FILE__), function( $links ) {
-    $settings_link = '<a href="' . admin_url( 'options-general.php?page=contextualwp-settings' ) . '">' . __( 'Settings', 'contextualwp' ) . '</a>';
+    $settings_link = '<a href="' . admin_url( 'admin.php?page=contextualwp-settings' ) . '">' . __( 'Settings', 'contextualwp' ) . '</a>';
     array_unshift( $links, $settings_link );
     return $links;
 } );

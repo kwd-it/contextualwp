@@ -11,18 +11,20 @@ class ContextualWP_Admin_Settings {
     }
 
     public function add_menu_pages() {
-        add_options_page(
+        add_menu_page(
             __( 'ContextualWP Settings', 'contextualwp' ),
             'ContextualWP',
             'manage_options',
             'contextualwp-settings',
-            [ $this, 'render_settings_page' ]
+            [ $this, 'render_settings_page' ],
+            'dashicons-admin-generic',
+            58
         );
     }
 
     public function enqueue_assets( $hook ) {
         // Only load assets on our settings page
-        if ( $hook !== 'settings_page_contextualwp-settings' ) {
+        if ( $hook !== 'toplevel_page_contextualwp-settings' ) {
             return;
         }
 

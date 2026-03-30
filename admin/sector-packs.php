@@ -13,7 +13,8 @@ class ContextualWP_Admin_Sector_Packs {
 	}
 
 	public function add_menu_page() {
-		add_options_page(
+		add_submenu_page(
+			'contextualwp-settings',
 			__( 'ContextualWP Sector Packs', 'contextualwp' ),
 			__( 'ContextualWP Packs', 'contextualwp' ),
 			'manage_options',
