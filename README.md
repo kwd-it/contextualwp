@@ -62,6 +62,10 @@ curl -X POST "https://your-site.test/wp-json/contextualwp/v1/generate_context" \
 
 ## Extensibility
 
+### Sector Packs (Experimental)
+
+ContextualWP supports **optional sector packs**: separate plugins that extend the core for specific industries or workflows. The **core plugin stays generic**; sector-specific prompts and interpretation belong in packs. See [docs/PACK-SPEC.md](docs/PACK-SPEC.md) for responsibilities and boundaries. Versioning rules for core releases are in [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
+
 ### Filters/Hooks
 - `contextualwp_context_data`: Filter the context data before sending to AI
 - `contextualwp_ai_provider`: Override or add new AI providers

@@ -1,5 +1,9 @@
 # QA Checklist (v1.0)
 
+**This document now serves as a Core Regression Baseline for v1.0.**
+
+It is **not** the only QA process for the project post-v1. Use it when you need a **repeatable regression check** against behaviour that shipped in the v1.0 line: field helper flows, admin chat contexts, and the global pass criteria below. Feature work and sector packs may need **additional** checks (see **QA strategy post-v1**).
+
 Purpose: lightweight, repeatable QA.  
 No need to paste model outputs. Run the prompt, judge the response, rate it, and move on.
 
@@ -9,6 +13,29 @@ Ratings:
 - ❌ Bad – incorrect, confusing, invents behaviour, or ignores intent
 
 Date format: YYYY-MM-DD
+
+---
+
+## QA strategy post-v1
+
+After v1.0, quality work splits by **surface**:
+
+**Core QA** (use this document’s baseline, plus targeted checks for each change):
+
+- **Endpoint stability:** documented routes, methods, and error behaviour stay consistent unless versioned as breaking (see [COMPATIBILITY.md](COMPATIBILITY.md)).  
+- **Auth and permissions:** only the intended roles and capabilities reach protected routes and admin features.  
+- **Caching behaviour:** TTL and invalidation assumptions still match README and real responses.  
+- **Chat and AskAI reliability:** no new systematic failures; responses remain grounded and editor-focused where applicable.  
+- **No schema leakage:** internal keys, paths, and unsafe metadata do not appear in user-facing or integrator-facing output.
+
+**Sector pack QA** (per pack; not fully covered by the tables below):
+
+- **Prompt quality** and tone for the intended sector.  
+- **Sector-specific grounding** (correct use of pack-supplied context, no invented site structure).  
+- **Safe fallback** when the pack is inactive or partial data is present.  
+- **No interference with core:** with the pack off, core behaves as documented; with the pack on, core contracts remain intact.
+
+Pack boundaries and expectations: [PACK-SPEC.md](PACK-SPEC.md).
 
 ---
 
