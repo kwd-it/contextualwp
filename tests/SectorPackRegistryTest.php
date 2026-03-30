@@ -14,9 +14,6 @@ class SectorPackRegistryTest extends TestCase {
 
 	protected function setUp(): void {
 		parent::setUp();
-		if ( ! defined( 'CONTEXTUALWP_VERSION' ) ) {
-			define( 'CONTEXTUALWP_VERSION', '1.0.0' );
-		}
 		Registry::reset_for_testing();
 	}
 

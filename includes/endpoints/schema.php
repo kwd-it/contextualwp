@@ -120,7 +120,7 @@ class Schema {
         $schema = [
             'plugin' => [
                 'name'    => 'ContextualWP',
-                'version' => defined( 'CONTEXTUALWP_VERSION' ) ? CONTEXTUALWP_VERSION : '1.0.0',
+                'version' => CONTEXTUALWP_VERSION,
             ],
             'site' => [
                 'home_url'  => home_url(),

@@ -27,6 +27,7 @@ After v1.0, quality work splits by **surface**:
 - **Caching behaviour:** TTL and invalidation assumptions still match README and real responses.  
 - **Chat and AskAI reliability:** no new systematic failures; responses remain grounded and editor-focused where applicable.  
 - **No schema leakage:** internal keys, paths, and unsafe metadata do not appear in user-facing or integrator-facing output.
+- **Sector pack registry (core):** the ContextualWP Packs submenu lists only packs that registered in the current request; with none registered, the empty state matches documentation and core behaviour elsewhere is unchanged.
 
 **Sector pack QA** (per pack; not fully covered by the tables below):
 

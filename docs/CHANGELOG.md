@@ -7,8 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] – 2026-03-30
+
 ### Added
-- **Sector pack infrastructure (core only)**: optional registration API (`contextualwp_register_sector_pack()`), `ContextualWP\SectorPacks\Sector_Pack_Interface`, in-memory registry with compatibility assessment, generic hooks (`contextualwp_sector_packs_init`, `contextualwp_registered_sector_packs`, `contextualwp_schema_interpretation`, admin extension hooks), and a read-only **Settings > ContextualWP Packs** screen. No pack products are bundled; behaviour when no packs are installed is unchanged.
+- Sector pack registration foundation in core (`contextualwp_register_sector_pack()`, optional `Sector_Pack_Interface`, in-memory registry).
+- Pack metadata and compatibility handling using `requires_contextualwp`.
+- Initial **ContextualWP Packs** admin screen (read-only list of registered packs under the ContextualWP menu).
+
+### Changed
+- Sector packs admin screen moved from a top-level menu into a submenu under ContextualWP.
+- Settings page schema export wording clarified (export is site schema JSON, not a separate "context pack" product).
+- Documentation and process updates for post-v1 workflow, QA strategy, compatibility rules, and pack architecture.
 
 ## [1.0.0] – 2026-03-29
 

@@ -118,7 +118,7 @@ Use Cursor to update (if applicable):
 
 Commit this separately with a release-style commit, for example:
 
-`chore(release): v1.0.0`
+`chore(release): v1.1.0`
 
 ### 9. Merge, tag, clean up
 

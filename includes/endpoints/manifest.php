@@ -124,7 +124,7 @@ class Manifest {
         $manifest = apply_filters( 'contextualwp_manifest', [
             'name'           => $site_name . ' – ContextualWP',
             'description'    => $site_description,
-            'version'        => defined( 'CONTEXTUALWP_VERSION' ) ? CONTEXTUALWP_VERSION : '1.0.0',
+            'version'        => CONTEXTUALWP_VERSION,
             'endpoints'      => $this->get_endpoints(),
             'formats'        => [ 'markdown', 'plain', 'html' ],
             'context_types'  => apply_filters( 'contextualwp_supported_post_types', [ 'post', 'page' ] ),

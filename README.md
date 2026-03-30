@@ -1,6 +1,6 @@
 # ContextualWP
 
-ContextualWP is a WordPress plugin that exposes structured post and ACF field data via a REST API in an MCP-oriented pattern. It enables AI agents to retrieve contextual content and, where permitted, generate new content using providers such as OpenAI, Claude, and Mistral. **v1.0** is the first stable release line for production use.
+ContextualWP is a WordPress plugin that exposes structured post and ACF field data via a REST API in an MCP-oriented pattern. It enables AI agents to retrieve contextual content and, where permitted, generate new content using providers such as OpenAI, Claude, and Mistral. **v1.0** established the first stable release line for production use. **v1.1** adds core support for optional sector pack plugins (runtime registration, compatibility checks, and a read-only admin list) without changing behaviour when no packs are active.
 
 ## Endpoints
 
@@ -50,7 +50,7 @@ curl -X POST "https://your-site.test/wp-json/contextualwp/v1/generate_context" \
 ```
 
 ## Settings
-- Go to **Settings > ContextualWP** in wp-admin.
+- Go to the **ContextualWP** menu in wp-admin.
 - Configure:
   - **AI Provider**: OpenAI, Claude, or Mistral
   - **API Key**: Your provider's API key (never exposed in API)
@@ -62,17 +62,17 @@ curl -X POST "https://your-site.test/wp-json/contextualwp/v1/generate_context" \
 
 ## Extensibility
 
-### Sector Packs (Experimental)
+### Sector packs
 
-ContextualWP supports **optional sector packs**: separate WordPress plugins that register with core at runtime via `contextualwp_register_sector_pack()` (or by implementing `ContextualWP\SectorPacks\Sector_Pack_Interface` and passing metadata into that function). Core behaviour is unchanged when no packs are installed. **Settings > ContextualWP Packs** lists registered packs, compatibility with the running ContextualWP version, and any pack settings URL they provide. Packs are not installed from that screen. See [docs/PACK-SPEC.md](docs/PACK-SPEC.md) for responsibilities and boundaries. Versioning rules for core releases are in [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
+ContextualWP supports **optional sector packs**: separate WordPress plugins that register with core at runtime via `contextualwp_register_sector_pack()` (or by implementing `ContextualWP\SectorPacks\Sector_Pack_Interface` and passing metadata into that function). Core behaviour is unchanged when no packs are installed. **ContextualWP > ContextualWP Packs** lists registered packs, compatibility with the running ContextualWP version, and any pack settings URL they provide. Packs are not installed or uploaded from that screen. See [docs/PACK-SPEC.md](docs/PACK-SPEC.md) for responsibilities and boundaries. Versioning rules for core releases are in [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
 
 ### Filters/Hooks
 - `contextualwp_sector_packs_init`: Action. Register sector packs here (call `contextualwp_register_sector_pack()`). Runs on `plugins_loaded` at priority 20. You may also call `contextualwp_register_sector_pack()` later in the same request once ContextualWP is loaded.
 - `contextualwp_sector_pack_registered`: Action. Fires with `( string $slug, array $record )` after a successful registration.
 - `contextualwp_registered_sector_packs`: Filter. Adjust the array of registered pack records (slug to metadata including `compatibility`) after compatibility is computed.
 - `contextualwp_schema_interpretation`: Filter. Supply optional associative data to expose under the `interpretation` key on the `/contextualwp/v1/schema` response when non-empty (default unchanged when empty).
-- `contextualwp_sector_pack_admin_links`: Filter. Append extra `{ label, url }` items on the Sector Packs settings screen (optional; pack `settings_url` is shown in the table without this).
-- `contextualwp_sector_packs_admin_page_after_table`: Action. Fires on the Sector Packs admin screen after the table (and optional additional links).
+- `contextualwp_sector_pack_admin_links`: Filter. Append extra `{ label, url }` items on the ContextualWP Packs admin screen (optional; pack `settings_url` is shown in the table without this).
+- `contextualwp_sector_packs_admin_page_after_table`: Action. Fires on the ContextualWP Packs admin screen after the table (and optional additional links).
 - `contextualwp_context_data`: Filter the context data before sending to AI
 - `contextualwp_ai_provider`: Override or add new AI providers
 - `contextualwp_ai_payload`: Modify the AI API payload before sending
@@ -192,11 +192,13 @@ add_filter( 'contextualwp_manifest_schema_relationships', function ( $relationsh
 - **Caching:** Responses are cached for 5 minutes by default. Adjust TTL using the `contextualwp_schema_cache_ttl` filter.
 
 #### Example Response
+The `plugin.version` field matches the **Version** value in the main plugin file header.
+
 ```json
 {
   "plugin": {
     "name": "ContextualWP",
-    "version": "1.0.0"
+    "version": "1.x.y"
   },
   "site": {
     "home_url": "https://example.com",
