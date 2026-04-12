@@ -18,15 +18,26 @@ class Schema_Interpretation {
 
     /**
      * @param array<string, mixed> $schema Full schema after `contextualwp_schema`.
-     * @return array<string, mixed> Non-empty when ACF is active, manifest relationships are declared, or sector packs are registered.
+     * @return array<string, mixed> Non-empty when ACF is active, manifest relationships (or ACF-derived edges) exist, or sector packs are registered.
      */
     public static function build( array $schema ): array {
         $has_acf       = isset( $schema['acf_field_groups'] ) && is_array( $schema['acf_field_groups'] );
         $relationships = apply_filters( 'contextualwp_manifest_schema_relationships', [] );
-        $has_rels      = is_array( $relationships ) && $relationships !== [];
+        if ( ! is_array( $relationships ) ) {
+            $relationships = [];
+        }
+        $has_rels      = $relationships !== [];
 
         $packs = function_exists( 'contextualwp_get_registered_sector_packs' ) ? contextualwp_get_registered_sector_packs() : [];
         $has_packs     = is_array( $packs ) && $packs !== [];
+
+        if ( ! $has_rels && $has_acf ) {
+            $derived = self::acf_derived_relationship_edges( $schema['acf_field_groups'] );
+            if ( $derived !== [] ) {
+                $relationships = $derived;
+                $has_rels      = true;
+            }
+        }
 
         if ( ! $has_acf && ! $has_rels && ! $has_packs ) {
             return [];
@@ -134,6 +145,97 @@ class Schema_Interpretation {
             $parts[] = trim( $src . ' → ' . $tgt . ( $desc !== '' ? ': ' . $desc : '' ) );
         }
         return implode( "\n", $parts );
+    }
+
+    /**
+     * When manifest relationships are empty, infer graph edges from ACF post_object / relationship fields.
+     *
+     * @param array<int, array<string, mixed>> $groups Schema `acf_field_groups` (includes `location`, `fields`).
+     * @return array<int, array<string, string>>
+     */
+    private static function acf_derived_relationship_edges( array $groups ): array {
+        $edges = [];
+        foreach ( $groups as $group ) {
+            if ( ! is_array( $group ) ) {
+                continue;
+            }
+            $location = isset( $group['location'] ) && is_array( $group['location'] ) ? $group['location'] : [];
+            $source   = self::acf_infer_source_post_type_from_location( $location );
+
+            $fields = isset( $group['fields'] ) && is_array( $group['fields'] ) ? $group['fields'] : [];
+            foreach ( $fields as $field ) {
+                if ( ! is_array( $field ) ) {
+                    continue;
+                }
+                $type = isset( $field['type'] ) ? (string) $field['type'] : '';
+                if ( ! in_array( $type, [ 'post_object', 'relationship' ], true ) ) {
+                    continue;
+                }
+                $label = isset( $field['label'] ) ? (string) $field['label'] : '';
+                $name  = isset( $field['name'] ) ? (string) $field['name'] : '';
+                $pt    = $field['post_type'] ?? null;
+                $targets = [];
+                if ( is_array( $pt ) ) {
+                    foreach ( $pt as $p ) {
+                        if ( is_string( $p ) && $p !== '' ) {
+                            $targets[] = $p;
+                        }
+                    }
+                } elseif ( is_string( $pt ) && $pt !== '' ) {
+                    $targets[] = $pt;
+                }
+                if ( $targets === [] ) {
+                    continue;
+                }
+                $field_label = $label !== '' ? $label : ( $name !== '' ? $name : __( '(unnamed)', 'contextualwp' ) );
+                foreach ( array_unique( $targets ) as $target_slug ) {
+                    $edges[] = [
+                        'source_type' => $source,
+                        'target_type' => $target_slug,
+                        'description' => sprintf(
+                            /* translators: %s: ACF field label or name */
+                            __( 'Derived from ACF field "%s"', 'contextualwp' ),
+                            $field_label
+                        ),
+                    ];
+                }
+            }
+        }
+        return $edges;
+    }
+
+    /**
+     * Infer a single post type slug from ACF location rules, or `unknown` when unclear or missing.
+     *
+     * @param array<int, mixed> $location ACF `location` array (OR of AND-rule groups).
+     */
+    private static function acf_infer_source_post_type_from_location( array $location ): string {
+        $slugs = [];
+        foreach ( $location as $or_group ) {
+            if ( ! is_array( $or_group ) ) {
+                continue;
+            }
+            foreach ( $or_group as $rule ) {
+                if ( ! is_array( $rule ) ) {
+                    continue;
+                }
+                if ( ( $rule['param'] ?? '' ) !== 'post_type' ) {
+                    continue;
+                }
+                if ( ( $rule['operator'] ?? '' ) !== '==' ) {
+                    continue;
+                }
+                $value = $rule['value'] ?? '';
+                if ( is_string( $value ) && $value !== '' ) {
+                    $slugs[] = $value;
+                }
+            }
+        }
+        $unique = array_values( array_unique( $slugs ) );
+        if ( count( $unique ) === 1 ) {
+            return $unique[0];
+        }
+        return 'unknown';
     }
 
     /**

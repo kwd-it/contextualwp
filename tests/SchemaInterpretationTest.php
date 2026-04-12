@@ -42,5 +42,51 @@ class SchemaInterpretationTest extends TestCase {
         $this->assertSame( 1, $out['contextualwp']['acf']['field_group_count'] );
         $this->assertNotEmpty( $out['contextualwp']['acf']['relationship_field_hints'] );
         $this->assertArrayHasKey( 'structured_data', $out['contextualwp']['acf'] );
+        $this->assertArrayHasKey( 'relationships', $out['contextualwp'] );
+        $this->assertSame(
+            'unknown',
+            $out['contextualwp']['relationships']['edges'][0]['source_type'] ?? null,
+            'Without location rules, source type falls back to unknown'
+        );
+        $this->assertSame( 'plot', $out['contextualwp']['relationships']['edges'][0]['target_type'] ?? null );
+        $this->assertNotSame( '', $out['contextualwp']['relationships']['narrative'] );
+    }
+
+    public function test_build_derives_relationship_edges_from_acf_when_filter_empty(): void {
+        $schema = [
+            'acf_field_groups' => [
+                [
+                    'title'    => 'Development links',
+                    'location' => [
+                        [
+                            [
+                                'param'    => 'post_type',
+                                'operator' => '==',
+                                'value'    => 'developments',
+                            ],
+                        ],
+                    ],
+                    'fields'   => [
+                        [
+                            'label'     => 'Plots',
+                            'name'      => 'plots',
+                            'type'      => 'relationship',
+                            'post_type' => [ 'plot' ],
+                        ],
+                    ],
+                ],
+            ],
+            'generated_at'     => '2026-01-01T00:00:00+00:00',
+        ];
+        $out = Schema_Interpretation::build( $schema );
+        $this->assertArrayHasKey( 'relationships', $out['contextualwp'] );
+        $edges = $out['contextualwp']['relationships']['edges'];
+        $this->assertCount( 1, $edges );
+        $this->assertSame( 'developments', $edges[0]['source_type'] );
+        $this->assertSame( 'plot', $edges[0]['target_type'] );
+        $this->assertStringContainsString( 'Derived from ACF field', $edges[0]['description'] );
+        $this->assertStringContainsString( 'Plots', $edges[0]['description'] );
+        $this->assertStringContainsString( 'developments', $out['contextualwp']['relationships']['narrative'] );
+        $this->assertArrayHasKey( 'guidance', $out['contextualwp']['relationships'] );
     }
 }
