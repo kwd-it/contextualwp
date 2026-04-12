@@ -12,8 +12,10 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Schema Endpoint
  *
  * Returns site structure (post types, taxonomies, optional ACF group metadata). The optional
- * `interpretation` object is an AI-facing layer (summaries, relationship hints, ACF JSON-LD capability
- * flags)—not a substitute for Schema.org JSON-LD, which ACF 6.8+ may emit on the front end when enabled.
+ * `interpretation` object is the **interpretation layer**: AI-friendly summaries and relationship hints
+ * under `interpretation.contextualwp`, including ACF-derived fallback relationship edges when the
+ * manifest relationships filter returns none. This endpoint never outputs Schema.org JSON-LD; ACF 6.8+
+ * may emit JSON-LD on the front end when enabled.
  *
  * @package ContextualWP
  * @since 0.4.0
@@ -135,7 +137,7 @@ class Schema {
          * Interpretation layer: AI-oriented summaries and relationship hints (never raw Schema.org JSON-LD).
          *
          * Core supplies a default `contextualwp` key via Schema_Interpretation::build() when ACF is active,
-         * manifest relationships are declared, or sector packs are registered. Extensions merge on top by
+         * manifest relationships (or ACF-derived fallbacks) exist, or sector packs are registered. Extensions merge on top by
          * returning their own top-level keys; avoid overwriting `contextualwp` unless intentionally replacing core hints.
          *
          * @param array<string, mixed> $extension_keys Empty array, or pack-specific keys to merge with the core layer.

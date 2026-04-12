@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] – 2026-04-12
+
+### Added
+- Schema interpretation core layer on `/contextualwp/v1/schema` (`interpretation.contextualwp`: AI-friendly summaries, relationship guidance, sector pack notes when applicable).
+- Fallback relationship edges derived from ACF `post_object` / `relationship` fields (and field group location rules) when `contextualwp_manifest_schema_relationships` returns none.
+- ACF 6.8+ structured data capability detection in interpretation (version and site setting awareness; no JSON-LD payloads).
+
+### Improved
+- Interpretation consistency and availability alongside existing schema payloads.
+
+### Notes
+- No breaking changes; REST routes and response contracts for existing endpoints are unchanged from v1.1.x.
+
 ## [1.1.0] – 2026-03-30
 
 ### Added

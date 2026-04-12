@@ -8,8 +8,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Builds the default `interpretation` payload for `/contextualwp/v1/schema`.
  *
- * Complements ACF 6.8+ automatic Schema.org JSON-LD: this layer stays AI- and editor-oriented
- * (summaries, relationship hints, capability flags) and never embeds raw JSON-LD graphs.
+ * Complements ACF 6.8+ automatic Schema.org JSON-LD: ContextualWP does not output JSON-LD; this interpretation layer
+ * stays AI- and editor-oriented (summaries, relationship hints, capability flags, optional ACF-derived relationship edges)
+ * and never embeds raw JSON-LD graphs.
  *
  * @package ContextualWP
  * @since 1.2.0
@@ -18,7 +19,7 @@ class Schema_Interpretation {
 
     /**
      * @param array<string, mixed> $schema Full schema after `contextualwp_schema`.
-     * @return array<string, mixed> Non-empty when ACF is active, manifest relationships (or ACF-derived edges) exist, or sector packs are registered.
+     * @return array<string, mixed> Non-empty when ACF is active, manifest relationships or ACF-derived fallback edges exist, or sector packs are registered.
      */
     public static function build( array $schema ): array {
         $has_acf       = isset( $schema['acf_field_groups'] ) && is_array( $schema['acf_field_groups'] );
