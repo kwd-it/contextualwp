@@ -2,6 +2,16 @@
 
 ContextualWP is a WordPress plugin that exposes structured post and ACF field data via a REST API in an MCP-oriented pattern. It enables AI agents to retrieve contextual content and, where permitted, generate new content using providers such as OpenAI, Claude, and Mistral. **v1.0** established the first stable release line for production use. **v1.1** adds core support for optional sector pack plugins (runtime registration, compatibility checks, and a read-only admin list) without changing behaviour when no packs are active.
 
+## Working alongside ACF 6.8
+
+**ACF 6.8+** can emit **automatic Schema.org JSON-LD** on singular front-end views when the site enables it (see ACF’s `acf/settings/enable_schema` and per–post type settings). ContextualWP **does not generate or mirror** that JSON-LD; it **complements** ACF by exposing **interpretation and structure** that agents can use without scraping HTML.
+
+- **`/wp-json/contextualwp/v1/schema`**: Raw-ish site structure (post types, taxonomies, ACF group metadata) plus an optional **`interpretation`** object. The default **`interpretation.contextualwp`** block (present when ACF is active, when `contextualwp_manifest_schema_relationships` returns edges, or when a sector pack is registered) gives **AI-friendly summaries**, explicit **relationship-field hints** (for example which fields link which post types), and **detection notes** for ACF’s JSON-LD feature. **Raw JSON-LD graphs are intentionally omitted** from `interpretation`.
+- **`/wp-json/contextualwp/v1/acf_schema`**: **Editor-safe** ACF field metadata (labels, types, conditional logic in plain language). This remains the right surface for “what does this field mean in the editor?”—orthogonal to Schema.org property mapping.
+- **`/wp-json/mcp/v1/manifest` (`schema`)**: Public **discovery** metadata (post types, taxonomies, optional `relationships`). Same relationship filter as above keeps manifest and `/schema` interpretation aligned.
+
+Extensions that use **`contextualwp_schema_interpretation`** should add **their own top-level keys** (for example a pack slug). Core merges those keys with the default `contextualwp` block; **avoid overwriting `contextualwp`** unless you intend to replace the built-in layer.
+
 ## Endpoints
 
 ### `/wp-json/contextualwp/v1/generate_context`
@@ -70,7 +80,7 @@ ContextualWP supports **optional sector packs**: separate WordPress plugins that
 - `contextualwp_sector_packs_init`: Action. Register sector packs here (call `contextualwp_register_sector_pack()`). Runs on `plugins_loaded` at priority 20. You may also call `contextualwp_register_sector_pack()` later in the same request once ContextualWP is loaded.
 - `contextualwp_sector_pack_registered`: Action. Fires with `( string $slug, array $record )` after a successful registration.
 - `contextualwp_registered_sector_packs`: Filter. Adjust the array of registered pack records (slug to metadata including `compatibility`) after compatibility is computed.
-- `contextualwp_schema_interpretation`: Filter. Supply optional associative data to expose under the `interpretation` key on the `/contextualwp/v1/schema` response when non-empty (default unchanged when empty).
+- `contextualwp_schema_interpretation`: Filter. Return optional **top-level** keys to **merge** into the `interpretation` object on `/contextualwp/v1/schema`. Core may add a default **`contextualwp`** key (AI summaries, relationship hints, ACF JSON-LD capability notes). The `interpretation` key is omitted only when both the core layer and this filter contribute nothing.
 - `contextualwp_sector_pack_admin_links`: Filter. Append extra `{ label, url }` items on the ContextualWP Packs admin screen (optional; pack `settings_url` is shown in the table without this).
 - `contextualwp_sector_packs_admin_page_after_table`: Action. Fires on the ContextualWP Packs admin screen after the table (and optional additional links).
 - `contextualwp_context_data`: Filter the context data before sending to AI
@@ -187,7 +197,7 @@ add_filter( 'contextualwp_manifest_schema_relationships', function ( $relationsh
 
 ### `/wp-json/contextualwp/v1/schema`
 - **Method:** GET
-- **Description:** Returns schema information about the site including plugin details, post types, taxonomies, and ACF field groups (if ACF is active).
+- **Description:** Returns schema information about the site including plugin details, post types, taxonomies, and ACF field groups (if ACF is active). When applicable, an **`interpretation`** object adds an **AI-oriented layer** (summaries, relationship hints, ACF 6.8 JSON-LD availability notes). This endpoint does **not** output Schema.org JSON-LD; for that, use the front end or ACF’s own tooling.
 - **Authentication:** Requires `manage_options` capability (admin-protected)
 - **Caching:** Responses are cached for 5 minutes by default. Adjust TTL using the `contextualwp_schema_cache_ttl` filter.
 
@@ -262,7 +272,7 @@ The `plugin.version` field matches the **Version** value in the main plugin file
 
 ### `/wp-json/contextualwp/v1/acf_schema`
 - **Method:** GET
-- **Description:** Returns editor-safe ACF field metadata derived from ACF's loaded field definitions (local JSON + DB). Structured for AI/editor use; excludes field keys, internal IDs, file paths, and raw JSON. Includes conditional logic and controlled-fields summaries in plain terms.
+- **Description:** Returns editor-safe ACF field metadata derived from ACF's loaded field definitions (local JSON + DB). Structured for AI/editor use; excludes field keys, internal IDs, file paths, and raw JSON. Includes conditional logic and controlled-fields summaries in plain terms. **Not** a copy of ACF 6.8’s automatic Schema.org JSON-LD (which is front-end markup when enabled).
 - **Authentication:** Requires `edit_posts` capability
 - **Caching:** Responses are cached for 5 minutes by default. Adjust TTL using the `contextualwp_acf_schema_cache_ttl` filter.
 

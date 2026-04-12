@@ -15,6 +15,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * Does NOT expose: field keys, internal IDs, file paths, or raw ACF JSON.
  *
+ * Complements ACF 6.8 automatic Schema.org JSON-LD: that output lives in front-end markup; this endpoint
+ * remains editor-safe field metadata for agents and the block editor, without duplicating JSON-LD graphs.
+ *
  * @package ContextualWP
  * @since 0.6.0
  */

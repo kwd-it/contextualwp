@@ -1,6 +1,7 @@
 <?php
 namespace ContextualWP\Endpoints;
 
+use ContextualWP\Helpers\Schema_Interpretation;
 use ContextualWP\Helpers\Utilities;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -9,9 +10,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Schema Endpoint
- * 
- * Returns schema information about the site including post types, taxonomies, and ACF fields.
- * 
+ *
+ * Returns site structure (post types, taxonomies, optional ACF group metadata). The optional
+ * `interpretation` object is an AI-facing layer (summaries, relationship hints, ACF JSON-LD capability
+ * flags)—not a substitute for Schema.org JSON-LD, which ACF 6.8+ may emit on the front end when enabled.
+ *
  * @package ContextualWP
  * @since 0.4.0
  */
@@ -41,16 +44,6 @@ class Schema {
      * @return bool
      */
     public function check_permissions() {
-        // Temporary debug logging
-        $user_id = get_current_user_id();
-        $can_manage = current_user_can( 'manage_options' );
-        error_log( sprintf( 
-            '[ContextualWP Schema Auth] user_id=%d, can_manage_options=%s, is_user_logged_in=%s', 
-            $user_id, 
-            $can_manage ? 'true' : 'false',
-            is_user_logged_in() ? 'true' : 'false'
-        ) );
-        
         return current_user_can( 'manage_options' );
     }
 
@@ -139,14 +132,24 @@ class Schema {
         $schema = apply_filters( 'contextualwp_schema', $schema );
 
         /**
-         * Allow sector packs (or other extensions) to attach generic interpretation hints to the schema payload.
-         * Return an associative array; if non-empty it is exposed under the `interpretation` key. Empty by default
-         * so the REST shape is unchanged unless something uses this filter.
+         * Interpretation layer: AI-oriented summaries and relationship hints (never raw Schema.org JSON-LD).
          *
-         * @param array<string, mixed> $interpretation Initial empty or prior value.
+         * Core supplies a default `contextualwp` key via Schema_Interpretation::build() when ACF is active,
+         * manifest relationships are declared, or sector packs are registered. Extensions merge on top by
+         * returning their own top-level keys; avoid overwriting `contextualwp` unless intentionally replacing core hints.
+         *
+         * @param array<string, mixed> $extension_keys Empty array, or pack-specific keys to merge with the core layer.
          * @param array<string, mixed> $schema         Full schema after contextualwp_schema.
          */
-        $interpretation = apply_filters( 'contextualwp_schema_interpretation', [], $schema );
+        $base_interpretation = Schema_Interpretation::build( $schema );
+        $extension_keys    = apply_filters( 'contextualwp_schema_interpretation', [], $schema );
+        if ( ! is_array( $extension_keys ) ) {
+            $extension_keys = [];
+        }
+        $interpretation = $extension_keys !== []
+            ? array_merge( $base_interpretation, $extension_keys )
+            : $base_interpretation;
+
         if ( is_array( $interpretation ) && $interpretation !== [] ) {
             $schema['interpretation'] = $interpretation;
         }

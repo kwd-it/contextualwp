@@ -13,6 +13,7 @@ require_once CONTEXTUALWP_DIR . 'includes/helpers/utilities.php';
 require_once CONTEXTUALWP_DIR . 'includes/helpers/providers.php';
 require_once CONTEXTUALWP_DIR . 'includes/helpers/smart-model-selector.php';
 require_once CONTEXTUALWP_DIR . 'includes/helpers/acf-schema-helper.php';
+require_once CONTEXTUALWP_DIR . 'includes/helpers/schema-interpretation.php';
 
 // Autoload endpoint classes
 require_once CONTEXTUALWP_DIR . 'includes/endpoints/list-contexts.php';
