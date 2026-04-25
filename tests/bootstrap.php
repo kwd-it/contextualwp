@@ -10,6 +10,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	define( 'ABSPATH', dirname( __DIR__ ) . '/' );
 }
 
+// Some core code paths (sector pack compatibility) depend on this constant.
+if ( ! defined( 'CONTEXTUALWP_VERSION' ) ) {
+	define( 'CONTEXTUALWP_VERSION', '1.2.0' );
+}
+
 if ( ! function_exists( 'esc_html' ) ) {
 	function esc_html( $text ) {
 		return htmlspecialchars( (string) $text, ENT_QUOTES, 'UTF-8' );
@@ -71,6 +76,29 @@ if ( ! function_exists( '__' ) ) {
 	function __( $text, $domain = 'default' ) {
 		unset( $domain );
 		return $text;
+	}
+}
+
+if ( ! function_exists( 'is_admin' ) ) {
+	function is_admin() {
+		return false;
+	}
+}
+
+if ( ! function_exists( 'absint' ) ) {
+	function absint( $maybeint ) {
+		return max( 0, (int) $maybeint );
+	}
+}
+
+if ( ! function_exists( 'wp_rand' ) ) {
+	function wp_rand( $min = 0, $max = 0 ) {
+		$min = (int) $min;
+		$max = (int) $max;
+		if ( $max <= $min ) {
+			$max = $min + 1;
+		}
+		return random_int( $min, $max );
 	}
 }
 

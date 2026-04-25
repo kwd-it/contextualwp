@@ -2,12 +2,18 @@
 namespace ContextualWP\Tests;
 
 use ContextualWP\Helpers\Schema_Interpretation;
+use ContextualWP\SectorPacks\Registry;
 use PHPUnit\Framework\TestCase;
 
 /**
  * @covers \ContextualWP\Helpers\Schema_Interpretation
  */
 class SchemaInterpretationTest extends TestCase {
+
+    protected function setUp(): void {
+        parent::setUp();
+        Registry::reset_for_testing();
+    }
 
     public function test_build_returns_empty_without_acf_relationships_or_packs(): void {
         $schema = [

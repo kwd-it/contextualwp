@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added support for the latest OpenAI and Anthropic (Claude) model IDs.
+- Preserved compatibility with existing configured model IDs.
+
 ## [1.2.0] – 2026-04-12
 
 ### Added

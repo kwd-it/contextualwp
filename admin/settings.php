@@ -47,7 +47,13 @@ class ContextualWP_Admin_Settings {
         wp_localize_script(
             'contextualwp-settings',
             'ContextualWPModels',
-            \ContextualWP\Helpers\Smart_Model_Selector::get_all_models()
+            \ContextualWP\Helpers\Smart_Model_Selector::get_visible_models()
+        );
+        // Supported models (includes legacy) so JS can preserve a saved legacy selection without listing all legacy IDs as normal choices.
+        wp_localize_script(
+            'contextualwp-settings',
+            'ContextualWPSupportedModels',
+            \ContextualWP\Helpers\Smart_Model_Selector::get_supported_models()
         );
 
         // Localize script with REST API URL and nonce
@@ -170,8 +176,8 @@ class ContextualWP_Admin_Settings {
             $output['temperature'] = 1.0;
         }
         
-        // Sanitize smart model selection setting
-        $output['smart_model_selection'] = isset( $input['smart_model_selection'] ) ? (bool) $input['smart_model_selection'] : true;
+        // Checkbox: absent from POST when unchecked; value "1" when checked (do not default missing to true).
+        $output['smart_model_selection'] = isset( $input['smart_model_selection'] ) && (string) $input['smart_model_selection'] === '1';
         
         return $output;
     }
@@ -197,12 +203,9 @@ class ContextualWP_Admin_Settings {
         // Normalize provider name to internal slug
         $provider_slug = \ContextualWP\Helpers\Providers::normalize( $provider );
         
-        // Get all models from single source of truth
-        $all_models = \ContextualWP\Helpers\Smart_Model_Selector::get_all_models();
-        $provider_models = $all_models[ $provider_slug ] ?? [];
-        
-        // Convert from associative array (nano/mini/large => model_name) to simple array of model names
-        return array_values( $provider_models );
+        // Supported models include legacy IDs for backwards compatibility.
+        $supported = \ContextualWP\Helpers\Smart_Model_Selector::get_supported_models();
+        return $supported[ $provider_slug ] ?? [];
     }
 
     /**
@@ -272,13 +275,26 @@ class ContextualWP_Admin_Settings {
         // Normalize provider name to internal slug
         $provider_slug = \ContextualWP\Helpers\Providers::normalize( $current_provider );
         
-        // Get all models from single source of truth
-        $all_models = \ContextualWP\Helpers\Smart_Model_Selector::get_all_models();
-        $provider_models = $all_models[ $provider_slug ] ?? [];
+        // Visible models for dropdown, supported models for legacy/back-compat selection.
+        $visible_all   = \ContextualWP\Helpers\Smart_Model_Selector::get_visible_models();
+        $supported_all = \ContextualWP\Helpers\Smart_Model_Selector::get_supported_models();
+        $provider_models = $visible_all[ $provider_slug ] ?? [];
+        $supported_models = $supported_all[ $provider_slug ] ?? [];
 
         echo '<div class="contextualwp-settings-field">';
         echo '<select name="contextualwp_settings[model]" id="contextualwp-model">';
         echo '<option value="">' . esc_html__( 'Select a model...', 'contextualwp' ) . '</option>';
+
+        // If a legacy model is saved, keep it selectable (but only when already configured).
+        $visible_values = is_array( $provider_models ) ? array_values( $provider_models ) : [];
+        if ( $value !== '' && ! in_array( $value, $visible_values, true ) && in_array( $value, $supported_models, true ) ) {
+            printf(
+                '<option value="%s" %s>%s</option>',
+                esc_attr( $value ),
+                selected( $value, $value, false ),
+                esc_html( $value . ' (legacy)' )
+            );
+        }
         
         foreach ( $provider_models as $size => $model_name ) {
             printf(
@@ -323,7 +339,7 @@ class ContextualWP_Admin_Settings {
         echo '<input type="checkbox" name="contextualwp_settings[smart_model_selection]" value="1" ' . checked( $value, true, false ) . ' />';
         echo ' ' . esc_html__( 'Automatically select the most efficient model based on prompt length and complexity', 'contextualwp' );
         echo '</label>';
-        echo '<p class="description">' . esc_html__( 'Automatically selects 5-nano, 5-mini, 5.2 (OpenAI) or Haiku/Sonnet/Opus 4.5 (Claude) or Mistral Small/Medium/Large 3 depending on prompt size and complexity. Only models from your selected provider will be used.', 'contextualwp' ) . '</p>';
+        echo '<p class="description">' . esc_html__( 'Automatically selects gpt-5-nano, gpt-5-mini, gpt-5.5 (OpenAI) or claude-haiku-4-5, claude-sonnet-4-6, claude-opus-4-7 (Claude) or Mistral Small/Medium/Large 3 depending on prompt size and complexity. Only models from your selected provider will be used.', 'contextualwp' ) . '</p>';
         echo '</div>';
     }
 

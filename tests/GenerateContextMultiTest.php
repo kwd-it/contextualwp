@@ -46,6 +46,9 @@ class GenerateContextMultiTest extends TestCase {
 	 * @return string
 	 */
 	private function build_multi_context_content( $format = 'markdown' ) {
+		if ( ! class_exists( WP_REST_Request::class ) ) {
+			$this->markTestSkipped( 'Requires WordPress (WP_REST_Request). Run within WP test suite or skip.' );
+		}
 		$request = new WP_REST_Request( 'POST', '/contextualwp/v1/generate_context' );
 		$request->set_param( 'format', $format );
 		$reflection = new ReflectionClass( Generate_Context::class );
@@ -111,7 +114,7 @@ class GenerateContextMultiTest extends TestCase {
 	 * Multi-context must NOT contain schema/inventory keys (acf_field_groups, post_types, taxonomies, generated_at).
 	 */
 	public function test_multi_context_does_not_contain_schema_or_inventory(): void {
-		if ( ! function_exists( 'apply_filters' ) ) {
+		if ( ! class_exists( WP_REST_Request::class ) ) {
 			$this->markTestSkipped( 'Requires WordPress. Run within WP test suite or skip.' );
 		}
 
@@ -134,7 +137,7 @@ class GenerateContextMultiTest extends TestCase {
 	 * Multi-context output has expected structure: ## Label: Title (type-id) and --- separators.
 	 */
 	public function test_multi_context_has_expected_structure(): void {
-		if ( ! function_exists( 'apply_filters' ) ) {
+		if ( ! class_exists( WP_REST_Request::class ) ) {
 			$this->markTestSkipped( 'Requires WordPress. Run within WP test suite or skip.' );
 		}
 

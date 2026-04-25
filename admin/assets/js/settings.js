@@ -8,6 +8,7 @@
 
     // Model configurations from backend (single source of truth)
     const providerModels = window.ContextualWPModels || {};
+    const supportedModelsByProvider = window.ContextualWPSupportedModels || {};
 
     /**
      * Initialize the settings page functionality
@@ -67,6 +68,20 @@
             value: name,
             label: name
         }));
+        const supportedList = Array.isArray(supportedModelsByProvider[providerKey])
+            ? supportedModelsByProvider[providerKey]
+            : [];
+        const visibleValues = models.map(function(m) { return m.value; });
+        const savedIsLegacyOnly = currentValue &&
+            currentValue !== '' &&
+            visibleValues.indexOf(currentValue) === -1 &&
+            supportedList.indexOf(currentValue) !== -1;
+        if (savedIsLegacyOnly) {
+            models.unshift({
+                value: currentValue,
+                label: currentValue + ' (legacy)'
+            });
+        }
 
         // Clear existing options
         modelSelect.innerHTML = '';

@@ -34,9 +34,12 @@ class OpenAIProviderTest extends TestCase {
 	}
 
 	/**
-	 * gpt-5.2 and other GPT-5.x models must use the Responses API path.
+	 * GPT-5.x models must use the Responses API path.
 	 */
 	public function test_gpt_5_2_uses_responses_api(): void {
+		$this->assertTrue( $this->invoke_private( 'openai_uses_responses_api', [ 'gpt-5.5' ] ) );
+		$this->assertTrue( $this->invoke_private( 'openai_uses_responses_api', [ 'gpt-5.4-mini' ] ) );
+		$this->assertTrue( $this->invoke_private( 'openai_uses_responses_api', [ 'gpt-5.4-nano' ] ) );
 		$this->assertTrue( $this->invoke_private( 'openai_uses_responses_api', [ 'gpt-5.2' ] ) );
 		$this->assertTrue( $this->invoke_private( 'openai_uses_responses_api', [ 'gpt-5-mini' ] ) );
 		$this->assertTrue( $this->invoke_private( 'openai_uses_responses_api', [ 'gpt-5-nano' ] ) );

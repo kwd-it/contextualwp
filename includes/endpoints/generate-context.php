@@ -24,7 +24,7 @@ class Generate_Context {
      *
      * @var string[]
      */
-    const OPENAI_RESPONSES_API_MODELS = [ 'gpt-5.2', 'gpt-5-mini', 'gpt-5-nano', 'gpt-5' ];
+    const OPENAI_RESPONSES_API_MODELS = [ 'gpt-5.5', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-5.2', 'gpt-5-mini', 'gpt-5-nano', 'gpt-5' ];
 
     /** Min/max clamp for max_output_tokens (Responses API) and safe bounds for legacy. */
     const OPENAI_MAX_OUTPUT_TOKENS_MIN = 256;

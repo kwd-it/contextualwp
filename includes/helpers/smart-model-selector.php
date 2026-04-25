@@ -16,6 +16,30 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Smart_Model_Selector {
 
     /**
+     * OpenAI model IDs we continue to accept for existing installs, even if not shown in UI.
+     *
+     * @since 1.2.1
+     * @var string[]
+     */
+    private static $openai_legacy_models = [
+        'gpt-5.2',
+        'gpt-5-mini',
+        'gpt-5-nano',
+        'gpt-5',
+    ];
+
+    /**
+     * Claude model IDs we continue to accept for existing installs, even if not shown in UI.
+     *
+     * @since 1.2.1
+     * @var string[]
+     */
+    private static $claude_legacy_models = [
+        'claude-opus-4-5',
+        'claude-sonnet-4-5',
+    ];
+
+    /**
      * Default token thresholds for model selection
      * 
      * @since 0.2.0
@@ -39,14 +63,21 @@ class Smart_Model_Selector {
      */
     private static $model_mapping = [
         'openai' => [
-            'nano'  => 'gpt-5-nano',
-            'mini'  => 'gpt-5-mini',
-            'large' => 'gpt-5.2',
+            // Flagship / best quality option for complex reasoning/coding.
+            'large' => 'gpt-5.5',
+
+            // Smart selection mapping.
+            'mini'  => 'gpt-5.4-mini',
+            'nano'  => 'gpt-5.4-nano',
         ],
         'claude' => [
             'nano'  => 'claude-haiku-4-5',
-            'mini'  => 'claude-sonnet-4-5',
-            'large' => 'claude-opus-4-5',
+            'mini'  => 'claude-sonnet-4-6',
+            'large' => 'claude-opus-4-7',
+
+            // Additional supported IDs (kept for backward compatibility).
+            'legacy_mini'  => 'claude-sonnet-4-5',
+            'legacy_large' => 'claude-opus-4-5',
         ],
         'mistral' => [
             'nano'  => 'mistral-small-2506',
@@ -368,6 +399,103 @@ class Smart_Model_Selector {
      */
     public static function get_all_models() {
         return apply_filters( 'contextualwp_model_list', self::$model_mapping );
+    }
+
+    /**
+     * Get models that should be visible/selectable in the wp-admin settings dropdown.
+     *
+     * @since 1.2.1
+     * @return array<string, array<int, string>> Provider => ordered list of model IDs.
+     */
+    public static function get_visible_models() {
+        $visible = [
+            'openai' => [
+                'gpt-5.5',
+                'gpt-5.4-mini',
+                'gpt-5.4-nano',
+            ],
+            'claude' => [
+                'claude-opus-4-7',
+                'claude-sonnet-4-6',
+                'claude-haiku-4-5',
+            ],
+        ];
+
+        // Default behaviour for other providers: show their mapped values.
+        foreach ( self::$model_mapping as $provider => $mapping ) {
+            if ( isset( $visible[ $provider ] ) ) {
+                continue;
+            }
+            if ( ! is_array( $mapping ) ) {
+                continue;
+            }
+            $visible[ $provider ] = array_values( $mapping );
+        }
+
+        /**
+         * Filter visible model lists (UI dropdown / settings.js).
+         *
+         * @param array<string, array<int, string>> $visible Provider => ordered list of model IDs.
+         */
+        return apply_filters( 'contextualwp_visible_model_list', $visible );
+    }
+
+    /**
+     * Get models that should be considered valid/supported for settings validation.
+     * Includes legacy IDs for backwards compatibility.
+     *
+     * @since 1.2.1
+     * @return array<string, array<int, string>> Provider => ordered list of model IDs.
+     */
+    public static function get_supported_models() {
+        $supported = [];
+
+        foreach ( self::$model_mapping as $provider => $mapping ) {
+            if ( ! is_array( $mapping ) ) {
+                continue;
+            }
+            $supported[ $provider ] = self::unique_preserve_order( array_values( $mapping ) );
+        }
+
+        // OpenAI: keep legacy IDs valid even when hidden in UI.
+        $supported['openai'] = self::unique_preserve_order( array_merge(
+            $supported['openai'] ?? [],
+            self::$openai_legacy_models
+        ) );
+
+        // Claude: keep legacy IDs valid even when hidden in UI.
+        $supported['claude'] = self::unique_preserve_order( array_merge(
+            $supported['claude'] ?? [],
+            self::$claude_legacy_models
+        ) );
+
+        /**
+         * Filter supported model lists (validation / compatibility).
+         *
+         * @param array<string, array<int, string>> $supported Provider => ordered list of valid model IDs.
+         */
+        return apply_filters( 'contextualwp_supported_model_list', $supported );
+    }
+
+    /**
+     * @since 1.2.1
+     * @param array<int, string> $values
+     * @return array<int, string>
+     */
+    private static function unique_preserve_order( array $values ) {
+        $out = [];
+        $seen = [];
+        foreach ( $values as $v ) {
+            if ( ! is_string( $v ) || $v === '' ) {
+                continue;
+            }
+            if ( isset( $seen[ $v ] ) ) {
+                continue;
+            }
+            $seen[ $v ] = true;
+            $out[] = $v;
+        }
+        return $out;
     }
 
     /**

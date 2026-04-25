@@ -20,8 +20,8 @@ class FormatContentTest extends TestCase {
 	 * When WordPress is loaded, the_content is applied so blocks are rendered.
 	 */
 	public function test_format_content_uses_the_content_rendering_path(): void {
-		if ( ! function_exists( 'apply_filters' ) ) {
-			$this->markTestSkipped( 'Requires WordPress (apply_filters). Run within WP test suite or skip.' );
+		if ( ! function_exists( 'wp_insert_post' ) || ! function_exists( 'add_filter' ) || ! function_exists( 'remove_filter' ) ) {
+			$this->markTestSkipped( 'Requires WordPress (wp_insert_post/add_filter). Run within WP test suite or skip.' );
 		}
 
 		$marker   = ' RENDERED_VIA_THE_CONTENT_' . wp_rand( 10000, 99999 );
@@ -44,7 +44,7 @@ class FormatContentTest extends TestCase {
 	 * Test that block markup produces more than just the title in output.
 	 */
 	public function test_format_content_includes_more_than_title_for_block_content(): void {
-		if ( ! function_exists( 'apply_filters' ) ) {
+		if ( ! function_exists( 'wp_insert_post' ) ) {
 			$this->markTestSkipped( 'Requires WordPress. Run within WP test suite or skip.' );
 		}
 
@@ -60,7 +60,7 @@ class FormatContentTest extends TestCase {
 	 * Test empty content returns a note instead of empty string (no fallback to multi).
 	 */
 	public function test_format_content_empty_after_render_returns_note(): void {
-		if ( ! function_exists( 'apply_filters' ) ) {
+		if ( ! function_exists( 'wp_insert_post' ) ) {
 			$this->markTestSkipped( 'Requires WordPress. Run within WP test suite or skip.' );
 		}
 

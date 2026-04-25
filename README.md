@@ -65,8 +65,8 @@ curl -X POST "https://your-site.test/wp-json/contextualwp/v1/generate_context" \
   - **AI Provider**: OpenAI, Claude, or Mistral
   - **API Key**: Your provider's API key (never exposed in API)
   - **Model**: Automatically filtered based on selected provider
-    - OpenAI: gpt-5-nano, gpt-5-mini, gpt-5.2
-    - Claude: claude-haiku-4-5, claude-sonnet-4-5, claude-opus-4-5
+    - OpenAI: gpt-5-nano, gpt-5-mini, gpt-5.5 (plus gpt-5.4-mini, gpt-5.4-nano, gpt-5.2 for compatibility)
+    - Claude: claude-haiku-4-5, claude-sonnet-4-6, claude-opus-4-7 (plus claude-sonnet-4-5, claude-opus-4-5 for compatibility)
     - Mistral: mistral-small-2506, mistral-medium-2508, mistral-large-2512
   - **Advanced Settings**: Max tokens (default: 1024) and temperature (default: 1.0)
 
@@ -326,11 +326,11 @@ The `plugin.version` field matches the **Version** value in the main plugin file
 ## Supported AI Providers
 
 ### OpenAI
-- Models (defaults): gpt-5-nano, gpt-5-mini, gpt-5.2
+- Models (defaults): gpt-5-nano, gpt-5-mini, gpt-5.5
 - API: default OpenAI models use the Responses API (`POST https://api.openai.com/v1/responses`). Other model IDs use Chat Completions (`POST https://api.openai.com/v1/chat/completions`) when not listed for Responses (see `contextualwp_openai_responses_api_models`).
 
 ### Claude (Anthropic)
-- Models: claude-haiku-4-5, claude-sonnet-4-5, claude-opus-4-5
+- Models: claude-haiku-4-5, claude-sonnet-4-6, claude-opus-4-7
 - Endpoint: https://api.anthropic.com/v1/messages
 
 ### Mistral
