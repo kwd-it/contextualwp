@@ -339,7 +339,7 @@ class ContextualWP_Admin_Settings {
         echo '<input type="checkbox" name="contextualwp_settings[smart_model_selection]" value="1" ' . checked( $value, true, false ) . ' />';
         echo ' ' . esc_html__( 'Automatically select the most efficient model based on prompt length and complexity', 'contextualwp' );
         echo '</label>';
-        echo '<p class="description">' . esc_html__( 'Automatically selects gpt-5-nano, gpt-5-mini, gpt-5.5 (OpenAI) or claude-haiku-4-5, claude-sonnet-4-6, claude-opus-4-7 (Claude) or Mistral Small/Medium/Large 3 depending on prompt size and complexity. Only models from your selected provider will be used.', 'contextualwp' ) . '</p>';
+        echo '<p class="description">' . esc_html__( 'Automatically selects gpt-5.4-nano, gpt-5.4-mini, gpt-5.5 (OpenAI) or claude-haiku-4-5, claude-sonnet-4-6, claude-opus-4-7 (Claude) or Mistral Small/Medium/Large 3 depending on prompt size and complexity. Only models from your selected provider will be used.', 'contextualwp' ) . '</p>';
         echo '</div>';
     }
 

@@ -7,9 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] – 2026-04-25
+
 ### Added
-- Added support for the latest OpenAI and Anthropic (Claude) model IDs.
-- Preserved compatibility with existing configured model IDs.
+- OpenAI catalog IDs `gpt-5.5`, `gpt-5.4-mini`, and `gpt-5.4-nano`; Responses API allowlist extended for the new GPT‑5.x IDs.
+- Claude 4.x catalog: `claude-opus-4-7`, `claude-sonnet-4-6`, and `claude-haiku-4-5`.
+- **Visible vs supported models:** `get_visible_models()` / `get_supported_models()` so wp-admin shows recommended picks only while older saved IDs stay valid.
+- Localised `ContextualWPSupportedModels` for `settings.js` so a saved legacy model survives the client-side model dropdown rebuild (shown as “(legacy)” when applicable).
+
+### Changed
+- Smart model selection for OpenAI and Claude now maps nano/mini/large to the current `gpt-5.4-*` / `gpt-5.5` and Claude 4.x tier IDs.
+
+### Fixed
+- **Settings:** saving with “Smart Model Selection” unchecked now stores `false` (missing checkbox in POST no longer defaulted to on).
+
+### Tests
+- PHPUnit: model catalog, OpenAI Responses API routing, admin `sanitize_settings`, legacy visibility/support invariants; bootstrap stubs (`is_admin`, `absint`) for admin settings tests.
 
 ## [1.2.0] – 2026-04-12
 

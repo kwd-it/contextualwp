@@ -43,7 +43,7 @@ curl -X POST "https://your-site.test/wp-json/contextualwp/v1/generate_context" \
 {
   "message": "AI response generated.",
   "provider": "OpenAI",
-  "model": "gpt-5-mini",
+  "model": "gpt-5.5",
   "context_id": "post-123",
   "prompt": "Summarize this post.",
   "format": "markdown",
@@ -64,9 +64,9 @@ curl -X POST "https://your-site.test/wp-json/contextualwp/v1/generate_context" \
 - Configure:
   - **AI Provider**: OpenAI, Claude, or Mistral
   - **API Key**: Your provider's API key (never exposed in API)
-  - **Model**: Automatically filtered based on selected provider
-    - OpenAI: gpt-5-nano, gpt-5-mini, gpt-5.5 (plus gpt-5.4-mini, gpt-5.4-nano, gpt-5.2 for compatibility)
-    - Claude: claude-haiku-4-5, claude-sonnet-4-6, claude-opus-4-7 (plus claude-sonnet-4-5, claude-opus-4-5 for compatibility)
+  - **Model**: Recommended models in the dropdown depend on provider; previously saved legacy IDs remain valid and may appear as “(legacy)”.
+    - OpenAI (recommended): `gpt-5.5`, `gpt-5.4-mini`, `gpt-5.4-nano` (e.g. `gpt-5.2`, `gpt-5-mini`, `gpt-5-nano`, `gpt-5` still accepted if already saved)
+    - Claude (recommended): `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5` (`claude-opus-4-5`, `claude-sonnet-4-5` still accepted if already saved)
     - Mistral: mistral-small-2506, mistral-medium-2508, mistral-large-2512
   - **Advanced Settings**: Max tokens (default: 1024) and temperature (default: 1.0)
 
@@ -326,11 +326,11 @@ The `plugin.version` field matches the **Version** value in the main plugin file
 ## Supported AI Providers
 
 ### OpenAI
-- Models (defaults): gpt-5-nano, gpt-5-mini, gpt-5.5
+- Models (recommended in settings): `gpt-5.5`, `gpt-5.4-mini`, `gpt-5.4-nano`. Smart selection uses `gpt-5.4-nano` / `gpt-5.4-mini` / `gpt-5.5` for nano/mini/large. Older GPT‑5.x IDs remain valid if already saved.
 - API: default OpenAI models use the Responses API (`POST https://api.openai.com/v1/responses`). Other model IDs use Chat Completions (`POST https://api.openai.com/v1/chat/completions`) when not listed for Responses (see `contextualwp_openai_responses_api_models`).
 
 ### Claude (Anthropic)
-- Models: claude-haiku-4-5, claude-sonnet-4-6, claude-opus-4-7
+- Models (recommended in settings): `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5`. Smart selection uses the same three tiers. Older Claude 4.5 IDs remain valid if already saved.
 - Endpoint: https://api.anthropic.com/v1/messages
 
 ### Mistral
