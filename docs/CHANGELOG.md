@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1] – 2026-04-28
+
+### Changed
+- Admin: replaced the “Ask AI” control icon with a neutral chat/context style graphic so it does not resemble third-party product branding.
+
+### Fixed
+- Single-post AI generation for custom post types, including entries with little or no `post_content`: context sent to providers now incorporates ACF and meta summaries when available, so answers reflect custom-field data instead of implying nothing was provided.
+
 ## [1.3.0] – 2026-04-25
 
 ### Added
