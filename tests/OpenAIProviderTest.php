@@ -217,4 +217,28 @@ class OpenAIProviderTest extends TestCase {
 		$this->assertStringContainsString( "Couldn't generate a response", $output, 'Should show generic failure message when all attempts fail' );
 	}
 
+	/**
+	 * Single-post AI context must append ACF so CPTs with empty post_content still ground the model.
+	 */
+	public function test_build_single_post_ai_context_appends_acf_markdown(): void {
+		$post           = new \stdClass();
+		$post->ID       = 42;
+		$content        = "## Dev\n\nNo content found.\n";
+		$context_data   = [
+			'meta' => [
+				'acf' => [ 'site_name' => 'River View', 'units' => 120 ],
+			],
+		];
+		$out = $this->invoke_private( 'build_single_post_ai_context_content', [ $content, $context_data, $post ] );
+		$this->assertStringContainsString( 'No content found', $out );
+		$this->assertStringContainsString( 'site_name', $out );
+		$this->assertStringContainsString( 'River View', $out );
+		$this->assertStringContainsString( 'Custom fields', $out );
+	}
+
+	public function test_build_single_post_ai_context_unchanged_without_post(): void {
+		$out = $this->invoke_private( 'build_single_post_ai_context_content', [ 'body-only', [ 'meta' => [ 'acf' => [ 'a' => 1 ] ] ], null ] );
+		$this->assertSame( 'body-only', $out );
+	}
+
 }

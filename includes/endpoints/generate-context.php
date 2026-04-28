@@ -257,8 +257,11 @@ class Generate_Context {
             ], null, $request );
         }
 
+        // AI user message must include ACF/meta when present; CPT pages often have empty post_content.
+        $ai_context_content = $this->build_single_post_ai_context_content( $content, $context_data, $post );
+
         // Apply smart model selection for single post context
-        $model = Smart_Model_Selector::select_model( $prompt, $content, $provider_slug, $model, $settings );
+        $model = Smart_Model_Selector::select_model( $prompt, $ai_context_content, $provider_slug, $model, $settings );
 
         $is_field_helper = ( $request->get_param( 'source' ) === 'acf_field_helper' );
         if ( $is_field_helper ) {
@@ -288,8 +291,8 @@ class Generate_Context {
         $provider = apply_filters( 'contextualwp_ai_provider', Providers::normalize( $ai_provider ), $settings, $context_data, $request );
         switch ( $provider ) {
             case 'openai':
-                \ContextualWP\Helpers\Utilities::log_debug( [ 'model' => $model, 'prompt_length' => strlen( $prompt ), 'content_length' => strlen( $content ) ], 'generate_payload_openai' );
-                $ai_response = $this->execute_openai_request( $model, $system_message, $prompt, $content, $max_tokens, $temperature, $api_key, $is_field_helper, $settings, $context_data, $request );
+                \ContextualWP\Helpers\Utilities::log_debug( [ 'model' => $model, 'prompt_length' => strlen( $prompt ), 'content_length' => strlen( $ai_context_content ) ], 'generate_payload_openai' );
+                $ai_response = $this->execute_openai_request( $model, $system_message, $prompt, $ai_context_content, $max_tokens, $temperature, $api_key, $is_field_helper, $settings, $context_data, $request );
                 \ContextualWP\Helpers\Utilities::log_debug( $ai_response, 'generate_response_openai' );
                 if ( is_wp_error( $ai_response ) ) {
                     $ai_error = $ai_response->get_error_message();
@@ -301,7 +304,7 @@ class Generate_Context {
                     'model' => $model,
                     'messages' => [
                         [ 'role' => 'system', 'content' => $system_message ],
-                        [ 'role' => 'user', 'content' => $prompt . "\n\nContext:\n" . $content ]
+                        [ 'role' => 'user', 'content' => $prompt . "\n\nContext:\n" . $ai_context_content ]
                     ],
                     'max_tokens' => $max_tokens,
                     'temperature' => $temperature,
@@ -320,7 +323,7 @@ class Generate_Context {
                     'max_tokens' => $max_tokens,
                     'system' => $system_message,
                     'messages' => [
-                        [ 'role' => 'user', 'content' => $prompt . "\n\nContext:\n" . $content ]
+                        [ 'role' => 'user', 'content' => $prompt . "\n\nContext:\n" . $ai_context_content ]
                     ],
                 ], $settings, $context_data, $request );
                 \ContextualWP\Helpers\Utilities::log_debug( $ai_payload, 'generate_payload_claude' );
@@ -544,6 +547,34 @@ class Generate_Context {
         $before = substr( $prompt, 0, $idx );
         $before = preg_replace( '/^---\s*\n.*?---\s*\n\s*/s', '', $before );
         return trim( $before );
+    }
+
+    /**
+     * Build the "Context:" body sent to AI for single-post generate: rendered post content plus ACF when present.
+     * Keeps $context_data['content'] as body-only for API consumers; providers receive body plus ACF summary here.
+     *
+     * @param string              $content      Output of Utilities::format_content().
+     * @param array               $context_data After contextualwp_context_data filter.
+     * @param \WP_Post|null       $post         Resolved post, or null for new-post context.
+     * @return string
+     */
+    private function build_single_post_ai_context_content( $content, array $context_data, $post ) {
+        if ( ! $post ) {
+            return $content;
+        }
+        $acf = isset( $context_data['meta']['acf'] ) ? $context_data['meta']['acf'] : null;
+        if ( ! is_array( $acf ) || empty( $acf ) ) {
+            return $content;
+        }
+        $acf_md = Utilities::acf_summary_markdown( $acf );
+        if ( $acf_md === '' ) {
+            return $content;
+        }
+        $max = (int) apply_filters( 'contextualwp_single_context_acf_append_max_chars', 12000 );
+        if ( $max > 0 && strlen( $acf_md ) > $max ) {
+            $acf_md = substr( $acf_md, 0, $max ) . "\n" . __( '…(truncated)', 'contextualwp' );
+        }
+        return $content . "\n\n## " . __( 'Custom fields (ACF)', 'contextualwp' ) . "\n\n" . $acf_md;
     }
 
     /**
