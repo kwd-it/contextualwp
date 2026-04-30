@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.2] – 2026-04-30
+
+### Changed
+- Admin: on the **Media Library** overview (grid/list), **ContextualWP Chat** is turned off: the modal shows a fixed notice, the prompt and Send control are disabled, and sending is blocked. The copy directs users to WordPress’s own Media Library search and filters, notes that **media metadata search is on the roadmap**, and clarifies that this chat does **not** scan the media library, inspect thumbnails, or search image contents. Post, page, and CPT chat behaviour is unchanged elsewhere.
+
 ## [1.3.1] – 2026-04-28
 
 ### Changed
