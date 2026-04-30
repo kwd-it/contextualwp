@@ -75,6 +75,12 @@ class ContextualWP_Global_Chat {
         // On edit screens use current post/page as context_id; elsewhere use multi
         $context_id = $post_type !== '' ? $post_type . '-' . $post_id : 'multi';
 
+        $chat_unavailable = $screen && isset( $screen->id ) && 'upload' === $screen->id;
+        $chat_unavailable_message = '';
+        if ( $chat_unavailable ) {
+            $chat_unavailable_message = "ContextualWP Chat is not currently available on the Media Library overview.\n\nThis screen is better handled with the built-in WordPress Media Library search and filters. Media metadata search is on the roadmap, but this chat does not currently scan the media library, inspect thumbnails, or search image contents.\n\nFor now, use the Media Library search and filters in this area. Specific attachment metadata support can be added as a future feature.";
+        }
+
         wp_localize_script(
             'contextualwp-global-chat',
             'contextualwpGlobalChat',
@@ -86,6 +92,8 @@ class ContextualWP_Global_Chat {
                 'postType' => $post_type,
                 'contextId' => $context_id,
                 'promptTemplates' => $prompt_templates,
+                'chatUnavailable' => $chat_unavailable,
+                'chatUnavailableMessage' => $chat_unavailable_message,
             ]
         );
     }

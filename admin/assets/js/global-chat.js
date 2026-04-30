@@ -13,6 +13,18 @@ jQuery(function($){
     $icon = $('#contextualwp-floating-chat-icon');
     $modal = $('#contextualwp-floating-chat-modal');
     var $expandBtn = $('#contextualwp-floating-chat-modal-expand');
+    var $prompt = $('#contextualwp-floating-chat-prompt');
+    var $sendBtn = $('#contextualwp-floating-chat-send');
+    var $messages = $('#contextualwp-floating-chat-messages');
+    var chatUnavailable = typeof contextualwpGlobalChat !== 'undefined' && !!contextualwpGlobalChat.chatUnavailable;
+    var chatUnavailableMessage = (typeof contextualwpGlobalChat !== 'undefined' && contextualwpGlobalChat.chatUnavailableMessage) ? String(contextualwpGlobalChat.chatUnavailableMessage) : '';
+
+    function applyChatUnavailableUi() {
+        if (!chatUnavailable) return;
+        $prompt.prop('disabled', true).val('');
+        $sendBtn.prop('disabled', true);
+        $('.contextualwp-chat-context-row').hide();
+    }
 
     // Maximize / restore toggle
     $expandBtn.attr('aria-label', 'Expand chat').on('click', function(){
@@ -29,7 +41,19 @@ jQuery(function($){
     $icon.on('click', function(){
         $modal.attr({'role':'dialog','aria-modal':'true','aria-label':'ContextualWP Chat'});
         $modal.css('display', 'flex');
-        setTimeout(function(){ $('#contextualwp-floating-chat-prompt').focus(); }, 100);
+        if (chatUnavailable) {
+            $messages.empty();
+            if (chatUnavailableMessage) {
+                var notice = $('<div class="contextualwp-chat-bubble contextualwp-chat-ai contextualwp-chat-unavailable-notice"></div>');
+                notice.text(chatUnavailableMessage);
+                $messages.append(notice);
+            }
+            $messages.scrollTop(0);
+            applyChatUnavailableUi();
+            setTimeout(function(){ $('#contextualwp-floating-chat-modal-close').focus(); }, 100);
+        } else {
+            setTimeout(function(){ $prompt.focus(); }, 100);
+        }
     });
     // Close modal
     $('#contextualwp-floating-chat-modal-close').attr('aria-label','Close chat').on('click', function(){
@@ -40,8 +64,6 @@ jQuery(function($){
     $(document).on('keydown', function(e){
         if (e.key === 'Escape') $modal.css('display', 'none');
     });
-
-    var $messages = $('#contextualwp-floating-chat-messages');
 
     // Use current post/page on edit screens; only use multi when explicitly selected
     var serverContextId = (typeof contextualwpGlobalChat !== 'undefined' && contextualwpGlobalChat.contextId && String(contextualwpGlobalChat.contextId).trim() !== '') ? String(contextualwpGlobalChat.contextId).trim() : 'multi';
@@ -88,6 +110,10 @@ jQuery(function($){
     var $contextRow = $('<div class="contextualwp-chat-context-row" style="margin-bottom:8px;font-size:12px;color:#666;"></div>');
     $('#contextualwp-floating-chat-prompt').before($contextRow);
     function updateContextSwitcher() {
+        if (chatUnavailable) {
+            $contextRow.hide();
+            return;
+        }
         if (serverContextId === 'multi') {
             $contextRow.html('Context: Site-wide').hide();
             return;
@@ -101,11 +127,15 @@ jQuery(function($){
     }
     $(document).on('click', '.contextualwp-chat-context-link', function(e){
         e.preventDefault();
+        if (chatUnavailable) return;
         if (serverContextId === 'multi') return;
         useMultiContext = !useMultiContext;
         updateContextSwitcher();
     });
     updateContextSwitcher();
+    if (chatUnavailable) {
+        applyChatUnavailableUi();
+    }
 
     function renderMarkdown(text) {
         if (typeof marked !== 'undefined' && marked.parse) {
@@ -132,6 +162,7 @@ jQuery(function($){
     }
 
     $('#contextualwp-floating-chat-send').attr('aria-label','Send message').on('click', function(){
+        if (chatUnavailable) return;
         var prompt = $('#contextualwp-floating-chat-prompt').val();
         if (!prompt) return;
         appendMessage('user', prompt);

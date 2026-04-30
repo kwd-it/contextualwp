@@ -120,9 +120,23 @@
     resize: vertical;
     flex-shrink: 0;
 }
+#contextualwp-floating-chat-prompt:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    resize: none;
+}
 
 #contextualwp-floating-chat-send {
     float: right;
+}
+#contextualwp-floating-chat-send:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.contextualwp-chat-unavailable-notice {
+    white-space: pre-wrap;
+    max-width: 100%;
 }
 
 /* Chat bubbles */
