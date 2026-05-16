@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.3] – 2026-05-16
+
+### Added
+- **`Utilities::get_safe_modified_author_display_name()`** — core helper that accepts a post ID or `WP_Post` and returns a sanitized **display name** for the user who last modified the post (WordPress `_edit_last` post meta, resolved via `get_userdata()`). Exposes **only** the public display label; does **not** return user ID, `user_login`, `user_email`, `user_nicename`, roles, capabilities, author URL, or other profile data. Returns `null` when the post is invalid, `_edit_last` is missing, the user cannot be resolved, the display name is empty, or the label looks like an email address.
+
 ## [1.3.2] – 2026-04-30
 
 ### Changed

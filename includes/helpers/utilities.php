@@ -106,7 +106,7 @@ class Utilities {
      * `display_name` only. Does not expose user ID, login, email, nicename, roles, capabilities,
      * or profile URLs.
      *
-     * @since 1.3.2
+     * @since 1.3.3
      * @param int|\WP_Post $post Post ID or post object.
      * @return string|null Sanitized display name, or null when unavailable.
      */
