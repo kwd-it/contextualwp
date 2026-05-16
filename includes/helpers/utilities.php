@@ -100,6 +100,61 @@ class Utilities {
     }
 
     /**
+     * Safe display label for the user who last modified a post.
+     *
+     * Reads {@see get_post_meta()} `_edit_last` for the resolved post, then {@see get_userdata()}
+     * `display_name` only. Does not expose user ID, login, email, nicename, roles, capabilities,
+     * or profile URLs.
+     *
+     * @since 1.3.2
+     * @param int|\WP_Post $post Post ID or post object.
+     * @return string|null Sanitized display name, or null when unavailable.
+     */
+    public static function get_safe_modified_author_display_name( $post ) {
+        if ( is_numeric( $post ) ) {
+            $post_id = (int) $post;
+            if ( $post_id <= 0 ) {
+                return null;
+            }
+            $post = get_post( $post_id );
+        }
+
+        if ( ! ( $post instanceof \WP_Post ) || empty( $post->ID ) ) {
+            return null;
+        }
+
+        if ( ! function_exists( 'get_post_meta' ) || ! function_exists( 'get_userdata' ) ) {
+            return null;
+        }
+
+        $author_id = get_post_meta( $post->ID, '_edit_last', true );
+        if ( ! is_numeric( $author_id ) || (int) $author_id <= 0 ) {
+            return null;
+        }
+
+        $user = get_userdata( (int) $author_id );
+        if ( ! $user || ! isset( $user->display_name ) || ! is_string( $user->display_name ) ) {
+            return null;
+        }
+
+        $label = trim( wp_strip_all_tags( $user->display_name ) );
+        if ( $label === '' ) {
+            return null;
+        }
+
+        $label = sanitize_text_field( $label );
+        if ( $label === '' ) {
+            return null;
+        }
+
+        if ( function_exists( 'is_email' ) && is_email( $label ) ) {
+            return null;
+        }
+
+        return $label;
+    }
+
+    /**
      * Universal can_access_post helper for endpoints
      *
      * @param \WP_Post $post
