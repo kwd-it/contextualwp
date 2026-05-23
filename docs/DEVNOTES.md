@@ -13,7 +13,7 @@ It focuses on **process**, not domain-specific behaviour.
 
 ## Pack architecture (high-level)
 
-- **ContextualWP** is the core engine: sector-agnostic behaviour, REST and admin surfaces, and extension points.
+- **ContextualWP** is the core **structured context layer**: sector-agnostic REST/MCP endpoints, schema and ACF metadata exposure, sector pack registry, and extension points. Optional AI-assisted admin features and `/generate_context` remain in core; document them in user-facing docs where relevant, without making them the primary product focus.
 - **Sector packs** are optional companion plugins that register with ContextualWP and extend it for specific industries or workflows.
 - Core exposes `contextualwp_register_sector_pack()`, the in-memory registry, compatibility checks against `requires_contextualwp`, and documented hooks (see README). Packs **must not** change core plugin files or rely on undocumented internals. They integrate through filters, hooks, and those registration APIs only.
 - Core stays usable and coherent when no packs are active.

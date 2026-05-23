@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: ContextualWP
- * Description: MCP-compatible plugin for exposing context endpoints to AI agents.
+ * Description: Structured WordPress context layer with MCP-compatible REST endpoints, schema and ACF metadata exposure, and optional sector packs. Includes optional AI-assisted generation and admin tools when configured.
  * Version: 1.3.3
  * Author: KWD IT
  * Author URI: https://kwd-it.co.uk

@@ -1,6 +1,6 @@
 # Sector pack specification (lightweight)
 
-This is a **high-level** specification for **sector packs**: optional plugins that extend ContextualWP. It is intentionally simple so new packs can align without locking in low-level implementation detail.
+This is a **high-level** specification for **sector packs**: optional plugins that extend ContextualWP’s **structured context layer** (schema interpretation, manifest relationships, sector-specific guidance). It is intentionally simple so new packs can align without locking in low-level implementation detail.
 
 ---
 
@@ -15,8 +15,9 @@ This is a **high-level** specification for **sector packs**: optional plugins th
 
 ## Responsibilities of core
 
-- Provide a **stable, sector-agnostic** engine: context APIs, admin chat and AskAI flows where applicable, auth, caching behaviour, and documented extension points.  
-- Keep **default behaviour** sensible when **no** sector pack is active.  
+- Provide a **stable, sector-agnostic context engine**: MCP-oriented REST endpoints, schema and ACF metadata exposure, relationship and interpretation hooks, auth, caching behaviour, and documented extension points for integrators (for example Contextual Console).
+- Keep **default behaviour** sensible when **no** sector pack is active.
+- Continue to ship **optional AI-assisted** admin surfaces and generation (`/generate_context`, provider settings, global chat, ACF AskAI) where documented; packs must not assume those are removed. They are separate from the primary structured context contract.
 - Document **contracts** (README, compatibility notes) so packs and sites can plan upgrades.
 
 ---

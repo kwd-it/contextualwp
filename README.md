@@ -1,6 +1,10 @@
 # ContextualWP
 
-ContextualWP is a WordPress plugin that exposes structured post and ACF field data via a REST API in an MCP-oriented pattern. It enables AI agents to retrieve contextual content and, where permitted, generate new content using providers such as OpenAI, Claude, and Mistral. **v1.0** established the first stable release line for production use. **v1.1** adds core support for optional sector pack plugins (runtime registration, compatibility checks, and a read-only admin list) without changing behaviour when no packs are active. **v1.2** adds a **schema interpretation layer** on `/contextualwp/v1/schema` (`interpretation.contextualwp`): AI-friendly summaries, relationship guidance (including **fallback edges inferred from ACF** when the manifest relationships filter is empty), and ACF 6.8 structured-data capability notes—**without** emitting Schema.org JSON-LD from ContextualWP. **v1.3.1** refines the admin “Ask AI” icon (neutral chat/context styling) and improves single-post `generate_context` for CPTs with sparse body copy by including ACF/meta summaries in provider context when present. **v1.3.2** disables **ContextualWP Chat** on the Media Library overview and explains in the modal that WordPress search/filters are the right tool there; media metadata search is described as roadmap-only, and the chat does not scan the library, thumbnails, or image contents. **v1.3.3** adds **`Utilities::get_safe_modified_author_display_name()`** in core: a helper that returns a sanitized last-editor display label from `_edit_last` and `display_name` only, without exposing user IDs, logins, email, nicenames, roles, capabilities, or profile URLs.
+ContextualWP is a **structured WordPress context layer**: it exposes post types, taxonomies, relationship hints, ACF field metadata, and an optional schema interpretation layer through **MCP-compatible REST endpoints** so external tools (for example **Contextual Console**) can integrate with predictable, machine-readable site context instead of scraping HTML or crawling wp-admin. **Optional sector packs** extend that layer for specific industries without forking core.
+
+The primary product focus is the structured context layer. AI-assisted admin tools, including provider settings, `/generate_context`, global chat, and ACF AskAI field helpers, remain available for sites that use them, but they are secondary to the structured REST/MCP APIs.
+
+**v1.0** established the first stable release line for production use. **v1.1** adds core support for optional sector pack plugins (runtime registration, compatibility checks, and a read-only admin list) without changing behaviour when no packs are active. **v1.2** adds a **schema interpretation layer** on `/contextualwp/v1/schema` (`interpretation.contextualwp`): AI-friendly summaries, relationship guidance (including **fallback edges inferred from ACF** when the manifest relationships filter is empty), and ACF 6.8 structured-data capability notes—**without** emitting Schema.org JSON-LD from ContextualWP. **v1.3.1** refines the admin “Ask AI” icon (neutral chat/context styling) and improves single-post `generate_context` for CPTs with sparse body copy by including ACF/meta summaries in provider context when present. **v1.3.2** disables **ContextualWP Chat** on the Media Library overview and explains in the modal that WordPress search/filters are the right tool there; media metadata search is described as roadmap-only, and the chat does not scan the library, thumbnails, or image contents. **v1.3.3** adds **`Utilities::get_safe_modified_author_display_name()`** in core: a helper that returns a sanitized last-editor display label from `_edit_last` and `display_name` only, without exposing user IDs, logins, email, nicenames, roles, capabilities, or profile URLs.
 
 ## Working alongside ACF 6.8
 
@@ -12,11 +16,21 @@ ContextualWP is a WordPress plugin that exposes structured post and ACF field da
 
 Extensions that use **`contextualwp_schema_interpretation`** should add **their own top-level keys** (for example a pack slug). Core merges those keys with the default `contextualwp` block; **avoid overwriting `contextualwp`** unless you intend to replace the built-in layer.
 
+## Primary integration surfaces
+
+Use these endpoints when building tools, agents, or consoles that need **structured context** (discovery, schema, field metadata, and content retrieval):
+
+- **`/wp-json/mcp/v1/manifest`** — MCP discovery metadata, manifest `schema`, and usage contract
+- **`/wp-json/mcp/v1/list_contexts`** and **`/wp-json/mcp/v1/get_context`** — Paginated context listing and per-item content/meta
+- **`/wp-json/contextualwp/v1/schema`** — Site structure plus optional `interpretation` (relationship guidance, ACF capability notes; no Schema.org JSON-LD from ContextualWP)
+- **`/wp-json/contextualwp/v1/acf_schema`** — Editor-safe ACF field metadata for integrators
+- **Sector packs** — Optional plugins registered via `contextualwp_register_sector_pack()`; see [docs/PACK-SPEC.md](docs/PACK-SPEC.md)
+
 ## Endpoints
 
-### `/wp-json/contextualwp/v1/generate_context`
+### `/wp-json/contextualwp/v1/generate_context` (AI-assisted)
 - **Method:** POST
-- **Description:** Generate AI-powered content using a WordPress post/page as context.
+- **Description:** Optional AI-powered generation using a WordPress post/page as context. Requires a configured provider in **Settings** (see below). For read-only structured context, prefer the MCP and schema endpoints above.
 - **Parameters:**
   - `context_id` (string, required): e.g., `post-123`, `page-2`, or `multi` for multiple recent posts
   - `prompt` (string, optional): The prompt/question for the AI
@@ -59,7 +73,10 @@ curl -X POST "https://your-site.test/wp-json/contextualwp/v1/generate_context" \
 }
 ```
 
-## Settings
+## Settings (AI-assisted features)
+
+Structured context endpoints (`/mcp/v1/*`, `/schema`, `/acf_schema`) do **not** require an AI provider. Provider settings below power **optional** generation and admin AI tools (`/generate_context`, global chat, ACF AskAI).
+
 - Go to the **ContextualWP** menu in wp-admin.
 - Configure:
   - **AI Provider**: OpenAI, Claude, or Mistral
@@ -309,7 +326,9 @@ The `plugin.version` field matches the **Version** value in the main plugin file
 }
 ```
 
-## Admin Features
+## AI-assisted admin features (optional)
+
+These wp-admin surfaces use the provider settings above and sit alongside the structured REST/MCP context layer.
 
 ### Global Floating Chat
 - A floating chat icon appears in the WordPress admin area, allowing you to ask questions or generate content about the current screen or post.
@@ -324,7 +343,9 @@ The `plugin.version` field matches the **Version** value in the main plugin file
 - Click the icon to ask the AI about the field's content, get suggestions, or improve writing.
 - You can insert or replace post content with the AI's response directly from the tooltip.
 
-## Supported AI Providers
+## Supported AI Providers (for AI-assisted features)
+
+The providers below apply to `/generate_context`, global chat, and ACF AskAI—not to read-only structured context endpoints.
 
 ### OpenAI
 - Models (recommended in settings): `gpt-5.5`, `gpt-5.4-mini`, `gpt-5.4-nano`. Smart selection uses `gpt-5.4-nano` / `gpt-5.4-mini` / `gpt-5.5` for nano/mini/large. Older GPT‑5.x IDs remain valid if already saved.
