@@ -20,6 +20,8 @@ It focuses on **process**, not domain-specific behaviour.
 
 For pack responsibilities and expectations in more detail, see [PACK-SPEC.md](PACK-SPEC.md). Versioning expectations for core releases are in [COMPATIBILITY.md](COMPATIBILITY.md).
 
+For a forward-looking plan to adopt WordPress 7 AI Client / Connectors when those APIs are stable (without changing current AI behaviour until migration conditions are met), see [AI-MIGRATION-PLAN.md](AI-MIGRATION-PLAN.md).
+
 ---
 
 ## A. Core plugin development
