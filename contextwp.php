@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ContextualWP
  * Description: Structured WordPress context layer with MCP-compatible REST endpoints, schema and ACF metadata exposure, and optional sector packs. Includes optional AI-assisted generation and admin tools when configured.
- * Version: 1.3.3
+ * Version: 1.3.4
  * Author: KWD IT
  * Author URI: https://kwd-it.co.uk
  * Text Domain: contextualwp

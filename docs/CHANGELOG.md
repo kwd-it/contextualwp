@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.4] – 2026-05-23
+
+### Changed
+- Documentation repositioned around ContextualWP as a **structured WordPress context layer**: schema and interpretation, ACF metadata, MCP-compatible REST endpoints, optional sector packs, and **Contextual Console** integration. AI-assisted admin tools remain documented as optional secondary features.
+
+### Removed
+- Unused legacy admin chat script (`admin/assets/js/chat.js`). Global chat continues to use `admin/assets/js/global-chat.js`.
+
+### Added
+- Future AI migration planning notes in `docs/AI-MIGRATION-PLAN.md` (WordPress AI Client, Connectors, Abilities/MCP, `/generate_context`, global chat, and ACF AskAI). Planning only; no runtime changes.
+
+### Notes
+- No runtime AI behaviour has changed in this release. Provider settings, `/generate_context`, global chat, and ACF AskAI are unchanged.
+
 ## [1.3.3] – 2026-05-16
 
 ### Added
