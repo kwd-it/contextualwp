@@ -7,11 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.5] - 2026-06-22
+
 ### Changed
-- Default agent model: central `Smart_Model_Selector::DEFAULT_AGENT_MODEL` now defaults OpenAI requests to `gpt-5.5`, matching OpenAI's current model guidance for complex reasoning and coding. `get_default_model()`, `get_openai_responses_api_models()`, and `get_openai_fallback_models()` consolidate model lists. Filter: `contextualwp_default_agent_model`. Visible model dropdowns derive from the smart-model tier map. OpenAI fallbacks prefer `gpt-5.4-mini` / `gpt-5.4-nano` before legacy GPT-5.x IDs. Settings sanitisation preserves custom model IDs not in the catalog.
+- Updated the default agent model configuration. OpenAI now defaults to `gpt-5.5` when model settings are empty, using a central `Smart_Model_Selector::DEFAULT_AGENT_MODEL` value and the `contextualwp_default_agent_model` filter for overrides.
+- Centralised OpenAI Responses API and fallback model lists via `get_openai_responses_api_models()` and `get_openai_fallback_models()`.
+- Preserved custom or future model IDs during settings sanitisation instead of replacing them with the first catalog model.
 
 ### Tests
-- Default model constant, filter override, fallback/Responses API lists, empty-model sanitisation, custom model preservation, Responses payload model field.
+- Added coverage for the default model constant, filter override, Responses API model list, fallback list, empty-model sanitisation, custom model preservation, and Responses payload model selection.
 
 ## [1.3.4] - 2026-05-23
 
