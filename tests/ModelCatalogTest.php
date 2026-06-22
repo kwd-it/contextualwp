@@ -9,6 +9,37 @@ use PHPUnit\Framework\TestCase;
  */
 class ModelCatalogTest extends TestCase {
 
+    public function test_default_agent_model_constant_matches_openai_flagship(): void {
+        $this->assertSame( 'gpt-5.5', Smart_Model_Selector::DEFAULT_AGENT_MODEL );
+        $this->assertSame( Smart_Model_Selector::DEFAULT_AGENT_MODEL, Smart_Model_Selector::get_default_model( 'openai' ) );
+    }
+
+    public function test_get_default_model_respects_filter_override(): void {
+        $callback = static function () {
+            return 'gpt-custom-override';
+        };
+        add_filter( 'contextualwp_default_agent_model', $callback, 10, 2 );
+
+        try {
+            $this->assertSame( 'gpt-custom-override', Smart_Model_Selector::get_default_model( 'openai' ) );
+        } finally {
+            remove_filter( 'contextualwp_default_agent_model', $callback, 10 );
+        }
+    }
+
+    public function test_openai_fallback_models_prefer_current_mini_nano_tiers(): void {
+        $fallback = Smart_Model_Selector::get_openai_fallback_models();
+        $this->assertSame( [ 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-5-mini', 'gpt-5-nano' ], $fallback );
+    }
+
+    public function test_openai_responses_api_models_include_current_and_legacy_gpt5_ids(): void {
+        $models = Smart_Model_Selector::get_openai_responses_api_models();
+        $this->assertContains( 'gpt-5.5', $models );
+        $this->assertContains( 'gpt-5.4-mini', $models );
+        $this->assertContains( 'gpt-5.2', $models );
+        $this->assertNotContains( 'gpt-4o', $models );
+    }
+
     public function test_openai_visible_models_only_include_current_recommended_models(): void {
         $visible = Smart_Model_Selector::get_visible_models();
         $this->assertIsArray( $visible );

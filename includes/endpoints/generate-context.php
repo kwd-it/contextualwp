@@ -18,25 +18,9 @@ class Generate_Context {
      */
     const MULTI_CONTEXT_ITEM_MAX_CHARS = 6000;
 
-    /**
-     * OpenAI models that use the Responses API (not /v1/chat/completions).
-     * Filterable via contextualwp_openai_responses_api_models.
-     *
-     * @var string[]
-     */
-    const OPENAI_RESPONSES_API_MODELS = [ 'gpt-5.5', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-5.2', 'gpt-5-mini', 'gpt-5-nano', 'gpt-5' ];
-
     /** Min/max clamp for max_output_tokens (Responses API) and safe bounds for legacy. */
     const OPENAI_MAX_OUTPUT_TOKENS_MIN = 256;
     const OPENAI_MAX_OUTPUT_TOKENS_MAX = 4096;
-
-    /**
-     * Fallback OpenAI models when primary returns no visible output (reasoning exhausted etc).
-     * Order: prefer gpt-5-mini then gpt-5-nano. Filterable via contextualwp_openai_fallback_models.
-     *
-     * @var string[]
-     */
-    const OPENAI_FALLBACK_MODELS = [ 'gpt-5-mini', 'gpt-5-nano' ];
 
     public function register_route() {
         register_rest_route( 'contextualwp/v1', '/generate_context', [
@@ -72,7 +56,11 @@ class Generate_Context {
         $settings = get_option( 'contextualwp_settings', [] );
         $ai_provider = $settings['ai_provider'] ?? '';
         $api_key     = $settings['api_key'] ?? '';
+        $provider_slug = Providers::normalize( $ai_provider );
         $model       = $settings['model'] ?? '';
+        if ( $model === '' && $provider_slug !== '' ) {
+            $model = Smart_Model_Selector::get_default_model( $provider_slug );
+        }
         $max_tokens  = $settings['max_tokens'] ?? 1024;
         $temperature = $settings['temperature'] ?? 1.0;
 
@@ -81,7 +69,6 @@ class Generate_Context {
         }
 
         // Apply smart model selection if enabled
-        $provider_slug = Providers::normalize( $ai_provider );
         $model = Smart_Model_Selector::select_model( $prompt, '', $provider_slug, $model, $settings );
 
         // Robust multi-post context aggregation: rendered content only (no schema/ACF/media).
@@ -1339,7 +1326,7 @@ class Generate_Context {
      * @return bool
      */
     private function openai_uses_responses_api( $model ) {
-        $models = apply_filters( 'contextualwp_openai_responses_api_models', self::OPENAI_RESPONSES_API_MODELS );
+        $models = Smart_Model_Selector::get_openai_responses_api_models();
         return is_array( $models ) && in_array( $model, $models, true );
     }
 
@@ -1530,7 +1517,7 @@ class Generate_Context {
         }
 
         // Fallback to non-reasoning models (only if current model uses Responses API).
-        $fallback_models = apply_filters( 'contextualwp_openai_fallback_models', self::OPENAI_FALLBACK_MODELS );
+        $fallback_models = Smart_Model_Selector::get_openai_fallback_models();
         if ( $use_responses && is_array( $fallback_models ) ) {
             foreach ( $fallback_models as $fallback_model ) {
                 if ( $fallback_model === $model ) {

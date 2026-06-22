@@ -34,6 +34,22 @@ class OpenAIProviderTest extends TestCase {
 	}
 
 	/**
+	 * Responses API payload must carry the resolved model ID.
+	 */
+	public function test_build_openai_responses_payload_includes_model(): void {
+		$payload = $this->invoke_private( 'build_openai_responses_payload', [
+			'gpt-5.5',
+			'System instructions',
+			'User prompt',
+			1024,
+			0.7,
+			null,
+		] );
+		$this->assertIsArray( $payload );
+		$this->assertSame( 'gpt-5.5', $payload['model'] );
+	}
+
+	/**
 	 * GPT-5.x models must use the Responses API path.
 	 */
 	public function test_gpt_5_2_uses_responses_api(): void {

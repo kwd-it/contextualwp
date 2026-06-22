@@ -22,8 +22,43 @@ if ( ! function_exists( 'esc_html' ) ) {
 }
 
 if ( ! function_exists( 'apply_filters' ) ) {
+	$GLOBALS['contextualwp_test_filters'] = [];
+
+	function add_filter( $hook, $callback, $priority = 10, $accepted_args = 1 ) {
+		$GLOBALS['contextualwp_test_filters'][ $hook ][ $priority ][] = [
+			'callback'      => $callback,
+			'accepted_args' => $accepted_args,
+		];
+		return true;
+	}
+
+	function remove_filter( $hook, $callback, $priority = 10 ) {
+		if ( empty( $GLOBALS['contextualwp_test_filters'][ $hook ][ $priority ] ) ) {
+			return false;
+		}
+		foreach ( $GLOBALS['contextualwp_test_filters'][ $hook ][ $priority ] as $i => $filter ) {
+			if ( $filter['callback'] === $callback ) {
+				unset( $GLOBALS['contextualwp_test_filters'][ $hook ][ $priority ][ $i ] );
+				return true;
+			}
+		}
+		return false;
+	}
+
 	function apply_filters( $hook, $value, ...$args ) {
-		unset( $hook, $args );
+		if ( empty( $GLOBALS['contextualwp_test_filters'][ $hook ] ) ) {
+			return $value;
+		}
+		$priorities = array_keys( $GLOBALS['contextualwp_test_filters'][ $hook ] );
+		sort( $priorities, SORT_NUMERIC );
+		foreach ( $priorities as $priority ) {
+			foreach ( $GLOBALS['contextualwp_test_filters'][ $hook ][ $priority ] as $filter ) {
+				$callback = $filter['callback'];
+				$accepted = (int) $filter['accepted_args'];
+				$call_args = array_merge( [ $value ], array_slice( $args, 0, max( 0, $accepted - 1 ) ) );
+				$value = $callback( ...$call_args );
+			}
+		}
 		return $value;
 	}
 }

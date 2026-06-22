@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
 require_once dirname( __DIR__ ) . '/includes/helpers/providers.php';
+require_once dirname( __DIR__ ) . '/includes/helpers/smart-model-selector.php';
 require_once dirname( __DIR__ ) . '/admin/settings.php';
 
 /**
@@ -37,6 +38,22 @@ class AdminSettingsSanitizeTest extends TestCase {
 			'max_tokens'  => 1024,
 			'temperature' => 1.0,
 		];
+	}
+
+	public function test_sanitize_uses_default_model_when_model_empty(): void {
+		$settings = $this->settings_instance();
+		$in       = $this->base_input();
+		unset( $in['model'] );
+		$out = $settings->sanitize_settings( $in );
+		$this->assertSame( 'gpt-5.5', $out['model'] );
+	}
+
+	public function test_sanitize_preserves_custom_model_not_in_catalog(): void {
+		$settings = $this->settings_instance();
+		$in       = $this->base_input();
+		$in['model'] = 'gpt-4o-custom-preview';
+		$out = $settings->sanitize_settings( $in );
+		$this->assertSame( 'gpt-4o-custom-preview', $out['model'] );
 	}
 
 	public function test_smart_model_selection_false_when_checkbox_absent_from_post(): void {

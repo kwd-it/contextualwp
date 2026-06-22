@@ -107,6 +107,9 @@ ContextualWP supports **optional sector packs**: separate WordPress plugins that
 - `contextualwp_prompt_templates`: Customize prompt templates for the global chat
 - `contextualwp_available_providers`: Add new AI providers to the settings dropdown
 - `contextualwp_provider_models`: Add new models for existing or custom providers
+- `contextualwp_default_agent_model`: Override the default model ID for a provider when settings are empty or on first save (default OpenAI: `gpt-5.5`, per [OpenAI models docs](https://platform.openai.com/docs/models))
+- `contextualwp_openai_responses_api_models`: OpenAI model IDs routed to the Responses API
+- `contextualwp_openai_fallback_models`: Fallback OpenAI models when the primary response has no visible text
 - `contextualwp_allowed_post_types`: Filter the list of allowed post types for `list_contexts` and `get_context` endpoints (defaults to all public post types)
 - `contextualwp_manifest_schema`: Filter the full schema object in the manifest response (post types and taxonomies metadata)
 - `contextualwp_manifest_schema_post_types`: Filter the post types array in the manifest schema (includes `taxonomies` and optional `field_sources.acf_fields`)

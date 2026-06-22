@@ -16,6 +16,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Smart_Model_Selector {
 
     /**
+     * Default OpenAI agent model for new installs and empty settings.
+     *
+     * Aligned with OpenAI's current flagship recommendation (GPT-5.5 for complex
+     * reasoning and coding). Override via {@see Smart_Model_Selector::get_default_model()}
+     * or the `contextualwp_default_agent_model` filter.
+     *
+     * @see https://platform.openai.com/docs/models
+     * @since 1.3.5
+     */
+    const DEFAULT_AGENT_MODEL = 'gpt-5.5';
+
+    /**
      * OpenAI model IDs we continue to accept for existing installs, even if not shown in UI.
      *
      * @since 1.2.1
@@ -64,7 +76,7 @@ class Smart_Model_Selector {
     private static $model_mapping = [
         'openai' => [
             // Flagship / best quality option for complex reasoning/coding.
-            'large' => 'gpt-5.5',
+            'large' => self::DEFAULT_AGENT_MODEL,
 
             // Smart selection mapping.
             'mini'  => 'gpt-5.4-mini',
@@ -392,6 +404,93 @@ class Smart_Model_Selector {
     }
 
     /**
+     * Default model ID for a provider (large / flagship tier).
+     *
+     * @since 1.3.5
+     * @param string $provider Provider slug or UI label.
+     * @return string Model ID.
+     */
+    public static function get_default_model( $provider = 'openai' ) {
+        $provider_slug = Providers::normalize( $provider );
+        $mapping       = apply_filters( 'contextualwp_smart_model_mapping', self::$model_mapping, $provider_slug );
+        $default       = $mapping[ $provider_slug ]['large'] ?? self::DEFAULT_AGENT_MODEL;
+
+        /**
+         * Filter the default agent model for a provider.
+         *
+         * @param string $default       Model ID.
+         * @param string $provider_slug Normalized provider slug (e.g. openai).
+         */
+        return apply_filters( 'contextualwp_default_agent_model', $default, $provider_slug );
+    }
+
+    /**
+     * OpenAI models that use the Responses API (POST /v1/responses).
+     *
+     * Includes current and legacy GPT-5.x IDs from the supported catalog.
+     *
+     * @since 1.3.5
+     * @return string[]
+     */
+    public static function get_openai_responses_api_models() {
+        $supported = self::get_supported_models()['openai'] ?? [];
+        $models    = array_values( array_filter(
+            $supported,
+            static function ( $model ) {
+                return is_string( $model ) && strpos( $model, 'gpt-5' ) === 0;
+            }
+        ) );
+
+        /**
+         * Filter OpenAI model IDs routed to the Responses API.
+         *
+         * @param string[] $models Model IDs.
+         */
+        return apply_filters( 'contextualwp_openai_responses_api_models', $models );
+    }
+
+    /**
+     * Fallback OpenAI models when the primary model returns no visible output.
+     *
+     * Prefers current mini/nano tiers, then legacy GPT-5.x IDs for existing installs.
+     *
+     * @since 1.3.5
+     * @return string[]
+     */
+    public static function get_openai_fallback_models() {
+        $mapping  = apply_filters( 'contextualwp_smart_model_mapping', self::$model_mapping, 'openai' );
+        $openai   = is_array( $mapping['openai'] ?? null ) ? $mapping['openai'] : [];
+        $models   = [];
+        foreach ( [ 'mini', 'nano' ] as $tier ) {
+            if ( ! empty( $openai[ $tier ] ) && is_string( $openai[ $tier ] ) ) {
+                $models[] = $openai[ $tier ];
+            }
+        }
+        foreach ( self::$openai_legacy_models as $legacy ) {
+            if ( in_array( $legacy, [ 'gpt-5-mini', 'gpt-5-nano' ], true ) && ! in_array( $legacy, $models, true ) ) {
+                $models[] = $legacy;
+            }
+        }
+
+        /**
+         * Filter fallback OpenAI models when the primary response has no visible text.
+         *
+         * @param string[] $models Ordered model IDs to try.
+         */
+        return apply_filters( 'contextualwp_openai_fallback_models', $models );
+    }
+
+    /**
+     * Display order for tier keys in settings dropdowns (quality descending).
+     *
+     * @since 1.3.5
+     * @return string[]
+     */
+    private static function tier_order_for_visible() {
+        return [ 'large', 'mini', 'nano' ];
+    }
+
+    /**
      * Get all models for all providers (single source of truth)
      * 
      * @since 0.3.2
@@ -408,28 +507,22 @@ class Smart_Model_Selector {
      * @return array<string, array<int, string>> Provider => ordered list of model IDs.
      */
     public static function get_visible_models() {
-        $visible = [
-            'openai' => [
-                'gpt-5.5',
-                'gpt-5.4-mini',
-                'gpt-5.4-nano',
-            ],
-            'claude' => [
-                'claude-opus-4-7',
-                'claude-sonnet-4-6',
-                'claude-haiku-4-5',
-            ],
-        ];
+        $visible = [];
+        $mapping = self::get_all_models();
 
-        // Default behaviour for other providers: show their mapped values.
-        foreach ( self::$model_mapping as $provider => $mapping ) {
-            if ( isset( $visible[ $provider ] ) ) {
+        foreach ( $mapping as $provider => $tiers ) {
+            if ( ! is_array( $tiers ) ) {
                 continue;
             }
-            if ( ! is_array( $mapping ) ) {
-                continue;
+            $list = [];
+            foreach ( self::tier_order_for_visible() as $tier ) {
+                if ( ! empty( $tiers[ $tier ] ) && is_string( $tiers[ $tier ] ) ) {
+                    $list[] = $tiers[ $tier ];
+                }
             }
-            $visible[ $provider ] = array_values( $mapping );
+            if ( $list !== [] ) {
+                $visible[ $provider ] = $list;
+            }
         }
 
         /**

@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.3.4] – 2026-05-23
+### Changed
+- Default agent model: central `Smart_Model_Selector::DEFAULT_AGENT_MODEL` now defaults OpenAI requests to `gpt-5.5`, matching OpenAI's current model guidance for complex reasoning and coding. `get_default_model()`, `get_openai_responses_api_models()`, and `get_openai_fallback_models()` consolidate model lists. Filter: `contextualwp_default_agent_model`. Visible model dropdowns derive from the smart-model tier map. OpenAI fallbacks prefer `gpt-5.4-mini` / `gpt-5.4-nano` before legacy GPT-5.x IDs. Settings sanitisation preserves custom model IDs not in the catalog.
+
+### Tests
+- Default model constant, filter override, fallback/Responses API lists, empty-model sanitisation, custom model preservation, Responses payload model field.
+
+## [1.3.4] - 2026-05-23
 
 ### Changed
 - Documentation repositioned around ContextualWP as a **structured WordPress context layer**: schema and interpretation, ACF metadata, MCP-compatible REST endpoints, optional sector packs, and **Contextual Console** integration. AI-assisted admin tools remain documented as optional secondary features.
@@ -21,42 +27,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Notes
 - No runtime AI behaviour has changed in this release. Provider settings, `/generate_context`, global chat, and ACF AskAI are unchanged.
 
-## [1.3.3] – 2026-05-16
+## [1.3.3] - 2026-05-16
 
 ### Added
-- **`Utilities::get_safe_modified_author_display_name()`** — core helper that accepts a post ID or `WP_Post` and returns a sanitized **display name** for the user who last modified the post (WordPress `_edit_last` post meta, resolved via `get_userdata()`). Exposes **only** the public display label; does **not** return user ID, `user_login`, `user_email`, `user_nicename`, roles, capabilities, author URL, or other profile data. Returns `null` when the post is invalid, `_edit_last` is missing, the user cannot be resolved, the display name is empty, or the label looks like an email address.
+- **`Utilities::get_safe_modified_author_display_name()`** - core helper that accepts a post ID or `WP_Post` and returns a sanitized **display name** for the user who last modified the post (WordPress `_edit_last` post meta, resolved via `get_userdata()`). Exposes **only** the public display label; does **not** return user ID, `user_login`, `user_email`, `user_nicename`, roles, capabilities, author URL, or other profile data. Returns `null` when the post is invalid, `_edit_last` is missing, the user cannot be resolved, the display name is empty, or the label looks like an email address.
 
-## [1.3.2] – 2026-04-30
-
-### Changed
-- Admin: on the **Media Library** overview (grid/list), **ContextualWP Chat** is turned off: the modal shows a fixed notice, the prompt and Send control are disabled, and sending is blocked. The copy directs users to WordPress’s own Media Library search and filters, notes that **media metadata search is on the roadmap**, and clarifies that this chat does **not** scan the media library, inspect thumbnails, or search image contents. Post, page, and CPT chat behaviour is unchanged elsewhere.
-
-## [1.3.1] – 2026-04-28
+## [1.3.2] - 2026-04-30
 
 ### Changed
-- Admin: replaced the “Ask AI” control icon with a neutral chat/context style graphic so it does not resemble third-party product branding.
+- Admin: on the **Media Library** overview (grid/list), **ContextualWP Chat** is turned off: the modal shows a fixed notice, the prompt and Send control are disabled, and sending is blocked. The copy directs users to WordPress's own Media Library search and filters, notes that **media metadata search is on the roadmap**, and clarifies that this chat does **not** scan the media library, inspect thumbnails, or search image contents. Post, page, and CPT chat behaviour is unchanged elsewhere.
+
+## [1.3.1] - 2026-04-28
+
+### Changed
+- Admin: replaced the "Ask AI" control icon with a neutral chat/context style graphic so it does not resemble third-party product branding.
 
 ### Fixed
 - Single-post AI generation for custom post types, including entries with little or no `post_content`: context sent to providers now incorporates ACF and meta summaries when available, so answers reflect custom-field data instead of implying nothing was provided.
 
-## [1.3.0] – 2026-04-25
+## [1.3.0] - 2026-04-25
 
 ### Added
-- OpenAI catalog IDs `gpt-5.5`, `gpt-5.4-mini`, and `gpt-5.4-nano`; Responses API allowlist extended for the new GPT‑5.x IDs.
+- OpenAI catalog IDs `gpt-5.5`, `gpt-5.4-mini`, and `gpt-5.4-nano`; Responses API allowlist extended for the new GPT-5.x IDs.
 - Claude 4.x catalog: `claude-opus-4-7`, `claude-sonnet-4-6`, and `claude-haiku-4-5`.
 - **Visible vs supported models:** `get_visible_models()` / `get_supported_models()` so wp-admin shows recommended picks only while older saved IDs stay valid.
-- Localised `ContextualWPSupportedModels` for `settings.js` so a saved legacy model survives the client-side model dropdown rebuild (shown as “(legacy)” when applicable).
+- Localised `ContextualWPSupportedModels` for `settings.js` so a saved legacy model survives the client-side model dropdown rebuild (shown as "(legacy)" when applicable).
 
 ### Changed
 - Smart model selection for OpenAI and Claude now maps nano/mini/large to the current `gpt-5.4-*` / `gpt-5.5` and Claude 4.x tier IDs.
 
 ### Fixed
-- **Settings:** saving with “Smart Model Selection” unchecked now stores `false` (missing checkbox in POST no longer defaulted to on).
+- **Settings:** saving with "Smart Model Selection" unchecked now stores `false` (missing checkbox in POST no longer defaulted to on).
 
 ### Tests
 - PHPUnit: model catalog, OpenAI Responses API routing, admin `sanitize_settings`, legacy visibility/support invariants; bootstrap stubs (`is_admin`, `absint`) for admin settings tests.
 
-## [1.2.0] – 2026-04-12
+## [1.2.0] - 2026-04-12
 
 ### Added
 - Schema interpretation core layer on `/contextualwp/v1/schema` (`interpretation.contextualwp`: AI-friendly summaries, relationship guidance, sector pack notes when applicable).
@@ -69,7 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Notes
 - No breaking changes; REST routes and response contracts for existing endpoints are unchanged from v1.1.x.
 
-## [1.1.0] – 2026-03-30
+## [1.1.0] - 2026-03-30
 
 ### Added
 - Sector pack registration foundation in core (`contextualwp_register_sector_pack()`, optional `Sector_Pack_Interface`, in-memory registry).
@@ -81,7 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Settings page schema export wording clarified (export is site schema JSON, not a separate "context pack" product).
 - Documentation and process updates for post-v1 workflow, QA strategy, compatibility rules, and pack architecture.
 
-## [1.0.0] – 2026-03-29
+## [1.0.0] - 2026-03-29
 
 First stable release. ContextualWP ships MCP-oriented REST context for AI agents and integrated admin AI (global chat and ACF AskAI), with the following areas hardened for production use:
 
@@ -93,7 +99,7 @@ First stable release. ContextualWP ships MCP-oriented REST context for AI agents
 - **OpenAI GPT-5** models via the **Responses API** with token mapping, retries, and model fallback; Chat Completions remain for other OpenAI model IDs when configured via filters.
 - **QA** and documentation aligned for v1 release readiness.
 
-## [0.11.5] – 2026-03-17
+## [0.11.5] - 2026-03-17
 
 ### Fixed
 - **AskAI group container fields**: AskAI icon coverage now includes ACF group container fields; icon appears on the group container header and prompts send structural subfield definitions (label, name, type) only, with nested values excluded from context.
@@ -101,58 +107,58 @@ First stable release. ContextualWP ships MCP-oriented REST context for AI agents
 - **Container grounding**: Group and repeater AskAI responses are grounded to structure and purpose only, with no frontend or template assumptions.
 - **QA checklist**: Updated field helper QA results for group and repeater; coverage gaps marked resolved, with remaining A3 wording polish noted.
 
-## [0.11.4] – 2026-03-16
+## [0.11.4] - 2026-03-16
 
 ### Fixed
 - **AskAI checkbox fields**: Added AskAI icon coverage for ACF checkbox fields in the editor. QA now passes for A1 and A3.
 - **AskAI date picker fields**: Added AskAI icon coverage for ACF date_picker fields in the editor. QA now passes for A1, A2, and A4.
 - **QA checklist**: Updated field helper QA results for checkbox and date_picker after coverage fixes.
 
-## [0.11.3] – 2026-03-14
+## [0.11.3] - 2026-03-14
 
 ### Fixed
 - **AskAI taxonomy (A1)**: "What is this field for?" responses for taxonomy fields are now limited to stored value, taxonomy, and categorisation only; frontend/template/display assumptions (sections, archives, filters, navigation) are no longer included.
-- **AskAI behaviour (A3)**: "What changes when…" responses are now grounded in schema only: stored value changes, conditional logic, controlled fields, and explicit relationship/target types. When no conditional logic exists, the response returns stored value change only; frontend/template/display behaviour is no longer invented.
+- **AskAI behaviour (A3)**: "What changes when..." responses are now grounded in schema only: stored value changes, conditional logic, controlled fields, and explicit relationship/target types. When no conditional logic exists, the response returns stored value change only; frontend/template/display behaviour is no longer invented.
 
-## [0.11.2] – 2026-03-01
+## [0.11.2] - 2026-03-01
 
 ### Fixed
 - **Single-CPT generate_context**: Strict grounding for single post/page context so C3 scope no longer bleeds into the AI response; post, page, and multi contexts unchanged.
 
-## [0.11.1] – 2026-02-27
+## [0.11.1] - 2026-02-27
 
 ### Fixed
 - **Multi-context content**: Multi-context is now built via the same rendered content path as single-context (`the_content`/format_content), so the AI receives real body copy. Items are formatted as `## {Label}: {Title} ({id})\n\n{body}` with `\n---\n` separators; per-item truncation defaults to 6000 chars (filter: `contextualwp_multi_context_item_max_chars`). Empty rendered content returns "No content found." Ordering is post_modified DESC, ID DESC.
-- **OpenAI GPT-5.x**: GPT-5.2, gpt-5-mini, and gpt-5-nano now use the Responses API (`POST /v1/responses`) instead of chat/completions. `max_tokens` is mapped to `max_output_tokens` and clamped 256–4096. On empty or incomplete output the provider retries once with truncated context, then falls back to smaller model(s); reasoning tokens are never shown to the user; on total failure a generic user-safe message is returned (details in debug logs only).
+- **OpenAI GPT-5.x**: GPT-5.2, gpt-5-mini, and gpt-5-nano now use the Responses API (`POST /v1/responses`) instead of chat/completions. `max_tokens` is mapped to `max_output_tokens` and clamped 256 - 4096. On empty or incomplete output the provider retries once with truncated context, then falls back to smaller model(s); reasoning tokens are never shown to the user; on total failure a generic user-safe message is returned (details in debug logs only).
 
-## [0.11.0] – 2026-02-23
+## [0.11.0] - 2026-02-23
 
 ### Fixed
 - **Admin Chat context on edit screens**: Floating chat and ACF AskAI now use the current post/page as `context_id` on wp-admin edit screens (including new posts as `post-0`). Multi is only used when explicitly selected or on non-edit screens.
 - **Block-based page content in context**: Single-context `context.content` now includes rendered Gutenberg and ACF block output (via `the_content`), not just the title, so summaries use real page copy instead of generic filler.
 
 ### Changed
-- **format_content**: Runs `post_content` through `the_content` before formatting; empty rendered content returns a concise “No content found.” note without falling back to multi.
+- **format_content**: Runs `post_content` through `the_content` before formatting; empty rendered content returns a concise "No content found." note without falling back to multi.
 
-## [0.10.2] – 2026-02-10
+## [0.10.2] - 2026-02-10
 
 ### Fixed
 - AskAI popover layout improvements: tightened close button spacing and improved alignment with the triggering field.
 - AskAI responses now correctly render markdown formatting (e.g. bold text).
 
-## [0.10.1] – 2026-02-09
+## [0.10.1] - 2026-02-09
 
 ### Fixed
 - AskAI popover now clamps to the viewport so it doesn't open off-screen or cause horizontal scrolling in wp-admin.
 
-## [0.10.0] – 2026-02-08
+## [0.10.0] - 2026-02-08
 
 ### Changed
 - **AskAI intent routing**: Prompts are now routed by intent (explain vs advise) for clearer guidance in the editor.
-- **"What changes when…"**: Shown only when relevant to the user's question.
+- **"What changes when..."**: Shown only when relevant to the user's question.
 - **Field helper prompts**: Fixed schema routing errors when using AskAI on individual ACF fields.
 
-## [0.9.0] – 2026-02-07
+## [0.9.0] - 2026-02-07
 
 ### Added
 - **Editor-safe ACF schema endpoint** (`/wp-json/contextualwp/v1/acf_schema`): Returns ACF field metadata for AI and editor use, with conditional logic and controlled-fields summaries in plain terms. Excludes field keys, internal IDs, and file paths.
@@ -161,7 +167,7 @@ First stable release. ContextualWP ships MCP-oriented REST context for AI agents
 - **AskAI icon coverage**: Expanded across more ACF field types for consistent inline AI assistance.
 - **AskAI true/false fields**: Improved responses using ACF schema for better context and suggestions.
 
-## [0.8.0] – 2026-01-31
+## [0.8.0] - 2026-01-31
 
 ### Added
 - **Manifest schema section**: `/manifest` now exposes a `schema` section describing post types and taxonomies (metadata only, no content).
@@ -180,17 +186,17 @@ First stable release. ContextualWP ships MCP-oriented REST context for AI agents
   - Active theme details (including parent theme when applicable).
   - Active plugins with versions.
 
-## [0.7.0] – 2026-01-29
+## [0.7.0] - 2026-01-29
 
 ### Added
 - **Markdown rendering for chat**: AI responses in the global chat widget now render as markdown (bold, italic, code blocks, lists, headings, blockquotes, links).
 - **Maximize/restore toggle**: Chat window can be expanded to use most of the viewport and restored to default size.
 
 ### Changed
-- **Larger chat window**: Default size increased to 520×560px for better readability.
+- **Larger chat window**: Default size increased to 520x560px for better readability.
 - **Scrollable messages area**: Messages area scrolls correctly within the chat window; scroll no longer propagates to the page behind.
 
-## [0.6.3] – 2026-01-28
+## [0.6.3] - 2026-01-28
 
 ### Added
 - **Intent router for schema-based questions**: Structure answers now route by intent instead of one generic schema summary.
@@ -198,12 +204,12 @@ First stable release. ContextualWP ships MCP-oriented REST context for AI agents
   - **Generic schema overview**: Queries like "What CPTs are on this site?" or "List post types and taxonomies" return CPTs + taxonomies (and optional ACF top-5 when ACF is mentioned).
   - **Unknown post type**: When the user asks for ACF by post type but the post type cannot be resolved, return a helpful message plus the list of available post types from the schema.
 - Golden/fixture tests for the three intents (`tests/IntentRouterTest.php`); output is stable and deterministic.
-- Single "Source: schema (generated at …)" footer per response (deduped).
+- Single "Source: schema (generated at ...)" footer per response (deduped).
 
 ### Changed
 - Schema structure answers are built by intent-specific formatters; footer is appended once via `build_schema_footer()`.
 
-## [0.6.2] – 2026-01-27
+## [0.6.2] - 2026-01-27
 
 ### Fixed
 - Improve schema responses for "ACF for <post type>" queries by returning only field groups assigned to that post type and excluding blocks unless requested.
@@ -211,20 +217,20 @@ First stable release. ContextualWP ships MCP-oriented REST context for AI agents
 ### Changed
 - Remove IMPROVEMENTS.md; rely on DEVNOTES.md + CHANGELOG.md.
 
-## [0.6.1] – 2026-01-27
+## [0.6.1] - 2026-01-27
 
 ### Changed
 - **AI model catalog**: Updated built-in model mappings to current offerings:
-  - OpenAI: gpt-4o-mini / 4o / 4.1 → gpt-5-nano, gpt-5-mini, gpt-5.2
-  - Claude: claude-3-haiku / 3.5-sonnet / 3.5-opus → claude-haiku-4-5, claude-sonnet-4-5, claude-opus-4-5
-  - Mistral: mistral-tiny / small / large → mistral-small-2506, mistral-medium-2508, mistral-large-2512 (Small/Medium/Large 3)
+  - OpenAI: gpt-4o-mini / 4o / 4.1 -> gpt-5-nano, gpt-5-mini, gpt-5.2
+  - Claude: claude-3-haiku / 3.5-sonnet / 3.5-opus -> claude-haiku-4-5, claude-sonnet-4-5, claude-opus-4-5
+  - Mistral: mistral-tiny / small / large -> mistral-small-2506, mistral-medium-2508, mistral-large-2512 (Small/Medium/Large 3)
 
-## [0.6.0] – 2026-01-26
+## [0.6.0] - 2026-01-26
 
 ### Added
 - **Copy Context Pack**: Admin settings page now includes a "Copy Context Pack" section allowing admins to copy the site's ContextualWP schema JSON to clipboard for sharing with AI tools, debugging, audits, or external workflows.
 
-## [0.5.0] – Schema Export Endpoint
+## [0.5.0] - Schema Export Endpoint
 
 ### Added
 - Admin-only schema export endpoint (`/contextualwp/v1/schema`) for site introspection.
@@ -234,7 +240,7 @@ First stable release. ContextualWP ships MCP-oriented REST context for AI agents
 ### Added
 - **Provider Registry**: New `ContextualWP\Helpers\Providers` class as single source of truth for AI provider support
 - **Mistral Support**: Mistral is now fully supported alongside OpenAI and Claude
-- **Provider Normalization**: Centralized provider name normalization (UI labels ↔ internal slugs)
+- **Provider Normalization**: Centralized provider name normalization (UI labels <-> internal slugs)
 - **Manifest Providers**: Manifest endpoint now includes `providers` array listing all supported providers
 
 ### Changed

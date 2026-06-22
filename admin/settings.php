@@ -186,14 +186,21 @@ class ContextualWP_Admin_Settings {
      * Validate model for the selected provider and return a valid model
      */
     private function validate_model_for_provider( $model, $provider ) {
+        $provider_slug = \ContextualWP\Helpers\Providers::normalize( $provider );
+        $model         = is_string( $model ) ? trim( $model ) : '';
+
+        if ( $model === '' ) {
+            return \ContextualWP\Helpers\Smart_Model_Selector::get_default_model( $provider_slug );
+        }
+
         $valid_models = $this->get_valid_models_for_provider( $provider );
-        
-        if ( in_array( $model, $valid_models ) ) {
+
+        if ( in_array( $model, $valid_models, true ) ) {
             return $model;
         }
-        
-        // Return first valid model as fallback
-        return !empty( $valid_models ) ? $valid_models[0] : '';
+
+        // Preserve custom or future model IDs not yet in the supported catalog.
+        return $model;
     }
 
     /**
