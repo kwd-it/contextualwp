@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Some core code paths (sector pack compatibility) depend on this constant.
 if ( ! defined( 'CONTEXTUALWP_VERSION' ) ) {
-	define( 'CONTEXTUALWP_VERSION', '1.3.5' );
+	define( 'CONTEXTUALWP_VERSION', '1.3.6' );
 }
 
 if ( ! function_exists( 'esc_html' ) ) {

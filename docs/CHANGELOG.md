@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.6] - 2026-10-10
+
 ### Changed
 - Minimum supported PHP version raised from 8.1 to **8.3** (`composer.json` and a new `Requires PHP: 8.3` plugin header). PHP 8.1 reached end of life on 2025-12-31. No runtime behaviour changed.
 
