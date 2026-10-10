@@ -27,9 +27,112 @@ class ModelCatalogTest extends TestCase {
         }
     }
 
-    public function test_openai_fallback_models_prefer_current_mini_nano_tiers(): void {
+    public function test_openai_fallback_models_use_current_mini_nano_tiers_only(): void {
         $fallback = Smart_Model_Selector::get_openai_fallback_models();
-        $this->assertSame( [ 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-5-mini', 'gpt-5-nano' ], $fallback );
+        $this->assertSame( [ 'gpt-5.4-mini', 'gpt-5.4-nano' ], $fallback );
+    }
+
+    public function test_openai_fallback_models_skip_retiring_ids_even_when_mapped(): void {
+        $callback = static function ( $mapping ) {
+            $mapping['openai']['mini'] = 'gpt-5-mini';
+            return $mapping;
+        };
+        add_filter( 'contextualwp_smart_model_mapping', $callback, 10, 2 );
+
+        try {
+            $this->assertSame( [ 'gpt-5.4-nano' ], Smart_Model_Selector::get_openai_fallback_models() );
+        } finally {
+            remove_filter( 'contextualwp_smart_model_mapping', $callback, 10 );
+        }
+    }
+
+    public function test_retiring_models_are_classified_with_vendor_dates(): void {
+        $property = new \ReflectionProperty( Smart_Model_Selector::class, 'retiring_models' );
+        $property->setAccessible( true );
+
+        $this->assertSame(
+            [
+                'openai'  => [
+                    'gpt-5'      => '2026-12-11',
+                    'gpt-5-mini' => '2026-12-11',
+                    'gpt-5-nano' => '2026-12-11',
+                ],
+                'claude'  => [
+                    'claude-sonnet-4-5' => '2026-11-30',
+                ],
+                'mistral' => [
+                    'mistral-small-2506'  => '2026-07-31',
+                    'mistral-medium-2508' => '2026-08-31',
+                ],
+            ],
+            $property->getValue()
+        );
+    }
+
+    /**
+     * Retiring IDs stay valid for saved settings but are never offered or chosen automatically.
+     */
+    public function test_retiring_models_stay_supported_but_unreachable_automatically(): void {
+        $property = new \ReflectionProperty( Smart_Model_Selector::class, 'retiring_models' );
+        $property->setAccessible( true );
+        $retiring  = $property->getValue();
+        $visible   = Smart_Model_Selector::get_visible_models();
+        $supported = Smart_Model_Selector::get_supported_models();
+        $fallback  = Smart_Model_Selector::get_openai_fallback_models();
+        $mapping   = Smart_Model_Selector::get_all_models();
+
+        foreach ( $retiring as $provider => $models ) {
+            foreach ( array_keys( $models ) as $model ) {
+                $this->assertContains( $model, $supported[ $provider ], "$model must remain supported" );
+                $this->assertNotContains( $model, $visible[ $provider ], "$model must not be visible" );
+                $this->assertNotContains( $model, $fallback, "$model must not be a fallback" );
+                foreach ( [ 'nano', 'mini', 'large' ] as $tier ) {
+                    $this->assertNotSame( $model, $mapping[ $provider ][ $tier ], "$model must not be a smart-selection tier" );
+                }
+                $this->assertNotSame( $model, Smart_Model_Selector::get_default_model( $provider ), "$model must not be a default" );
+            }
+        }
+    }
+
+    public function test_default_models_per_provider_are_unchanged(): void {
+        $this->assertSame( 'gpt-5.5', Smart_Model_Selector::get_default_model( 'openai' ) );
+        $this->assertSame( 'claude-opus-4-7', Smart_Model_Selector::get_default_model( 'claude' ) );
+        $this->assertSame( 'mistral-large-2512', Smart_Model_Selector::get_default_model( 'mistral' ) );
+    }
+
+    public function test_mistral_visible_models_use_current_successors(): void {
+        $visible = Smart_Model_Selector::get_visible_models();
+        $this->assertSame(
+            [ 'mistral-large-2512', 'mistral-medium-3-5', 'mistral-small-2603' ],
+            array_values( $visible['mistral'] )
+        );
+    }
+
+    public function test_mistral_supported_models_include_retired_legacy_ids(): void {
+        $supported = Smart_Model_Selector::get_supported_models();
+        $this->assertSame(
+            [ 'mistral-small-2603', 'mistral-medium-3-5', 'mistral-large-2512', 'mistral-small-2506', 'mistral-medium-2508' ],
+            array_values( $supported['mistral'] )
+        );
+    }
+
+    public function test_mistral_smart_model_selection_uses_current_models(): void {
+        $settings = [ 'smart_model_selection' => true ];
+        $provider = 'mistral';
+
+        $this->assertSame( 'mistral-small-2603', Smart_Model_Selector::select_model( 'Hi', '', $provider, 'mistral-large-2512', $settings ) );
+
+        $medium_prompt = 'Analyze and explain this. ' . str_repeat( 'word ', 400 );
+        $this->assertSame( 'mistral-medium-3-5', Smart_Model_Selector::select_model( $medium_prompt, '', $provider, 'mistral-large-2512', $settings ) );
+
+        $long_prompt = 'Analyze and explain this. ' . str_repeat( 'word ', 2000 );
+        $this->assertSame( 'mistral-large-2512', Smart_Model_Selector::select_model( $long_prompt, '', $provider, 'mistral-small-2603', $settings ) );
+    }
+
+    public function test_saved_retired_model_is_kept_when_smart_selection_is_off(): void {
+        $settings = [ 'smart_model_selection' => false ];
+        $this->assertSame( 'mistral-small-2506', Smart_Model_Selector::select_model( 'Hi', '', 'mistral', 'mistral-small-2506', $settings ) );
+        $this->assertSame( 'claude-sonnet-4-5', Smart_Model_Selector::select_model( 'Hi', '', 'claude', 'claude-sonnet-4-5', $settings ) );
     }
 
     public function test_openai_responses_api_models_include_current_and_legacy_gpt5_ids(): void {

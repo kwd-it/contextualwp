@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Minimum supported PHP version raised from 8.1 to **8.3** (`composer.json` and a new `Requires PHP: 8.3` plugin header). PHP 8.1 reached end of life on 2025-12-31. No runtime behaviour changed.
 
 ### Fixed
+- Mistral smart selection no longer routes short and medium prompts to retired models. The nano and mini tiers now use `mistral-small-2603` (Mistral Small 4) and `mistral-medium-3-5` (Mistral Medium 3.5), the vendor's documented successors to `mistral-small-2506` (retired 2026-07-31) and `mistral-medium-2508` (retired 2026-08-31); `mistral-large-2512` is unchanged. Both successors use the same Chat Completions contract and, with no `reasoning_effort` sent, return plain text as before. The retired IDs remain accepted as legacy saved settings. Source: docs.mistral.ai models page and changelog, checked 2026-10-10.
+- The OpenAI empty-output fallback no longer tries `gpt-5-mini` and `gpt-5-nano`, whose only snapshots OpenAI shuts down on 2026-12-11; it now uses `gpt-5.4-mini` then `gpt-5.4-nano`. `gpt-5`, `gpt-5-mini` and `gpt-5-nano` are classified as retiring and remain accepted as legacy saved settings. The default model (`gpt-5.5`) and smart-selection tiers are unchanged. Source: OpenAI API deprecations page, checked 2026-10-10.
+- `claude-sonnet-4-5` is classified as retiring (Anthropic retires `claude-sonnet-4-5-20250929` on 2026-11-30) and is never used automatically; it remains accepted as a legacy saved setting. Claude tiers and defaults are unchanged. Source: Anthropic model deprecations page, checked 2026-10-10.
 - `composer.json` declared the `MIT` licence while the repository `LICENSE` file is GPL-3.0. The metadata now reads `GPL-3.0-only`, matching the licence text; the plugin header and README state the licence too. Licensing terms are unchanged.
 
 ## [1.3.5] - 2026-06-22
