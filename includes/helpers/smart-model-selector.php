@@ -52,6 +52,42 @@ class Smart_Model_Selector {
     ];
 
     /**
+     * Mistral model IDs we continue to accept for existing installs, even if not shown in UI.
+     *
+     * @var string[]
+     */
+    private static $mistral_legacy_models = [
+        'mistral-small-2506',
+        'mistral-medium-2508',
+    ];
+
+    /**
+     * Legacy model IDs the vendor has retired or scheduled for retirement, with the vendor's
+     * retirement (shutdown) date. Saved settings naming these IDs stay accepted, but they are
+     * never used as an automatic fallback.
+     *
+     * Sources (checked 2026-10-10): OpenAI deprecations page (gpt-5 2025-08-07 snapshots),
+     * Anthropic model deprecations page (claude-sonnet-4-5-20250929), Mistral models page
+     * (mistral-small-2506, mistral-medium-2508).
+     *
+     * @var array<string, array<string, string>> Provider => [ model ID => retirement date (Y-m-d) ].
+     */
+    private static $retiring_models = [
+        'openai'  => [
+            'gpt-5'      => '2026-12-11',
+            'gpt-5-mini' => '2026-12-11',
+            'gpt-5-nano' => '2026-12-11',
+        ],
+        'claude'  => [
+            'claude-sonnet-4-5' => '2026-11-30',
+        ],
+        'mistral' => [
+            'mistral-small-2506'  => '2026-07-31',
+            'mistral-medium-2508' => '2026-08-31',
+        ],
+    ];
+
+    /**
      * Default token thresholds for model selection
      * 
      * @since 0.2.0
@@ -92,8 +128,9 @@ class Smart_Model_Selector {
             'legacy_large' => 'claude-opus-4-5',
         ],
         'mistral' => [
-            'nano'  => 'mistral-small-2506',
-            'mini'  => 'mistral-medium-2508',
+            // Mistral Small 4 and Medium 3.5 replace the retired Small 3.2 and Medium 3.1.
+            'nano'  => 'mistral-small-2603',
+            'mini'  => 'mistral-medium-3-5',
             'large' => 'mistral-large-2512',
         ],
     ];
@@ -452,7 +489,8 @@ class Smart_Model_Selector {
     /**
      * Fallback OpenAI models when the primary model returns no visible output.
      *
-     * Prefers current mini/nano tiers, then legacy GPT-5.x IDs for existing installs.
+     * Uses the current mini/nano tiers. Model IDs the vendor has retired or scheduled for
+     * retirement are never used as a fallback.
      *
      * @since 1.3.5
      * @return string[]
@@ -462,13 +500,8 @@ class Smart_Model_Selector {
         $openai   = is_array( $mapping['openai'] ?? null ) ? $mapping['openai'] : [];
         $models   = [];
         foreach ( [ 'mini', 'nano' ] as $tier ) {
-            if ( ! empty( $openai[ $tier ] ) && is_string( $openai[ $tier ] ) ) {
+            if ( ! empty( $openai[ $tier ] ) && is_string( $openai[ $tier ] ) && ! self::is_retiring_model( 'openai', $openai[ $tier ] ) ) {
                 $models[] = $openai[ $tier ];
-            }
-        }
-        foreach ( self::$openai_legacy_models as $legacy ) {
-            if ( in_array( $legacy, [ 'gpt-5-mini', 'gpt-5-nano' ], true ) && ! in_array( $legacy, $models, true ) ) {
-                $models[] = $legacy;
             }
         }
 
@@ -478,6 +511,17 @@ class Smart_Model_Selector {
          * @param string[] $models Ordered model IDs to try.
          */
         return apply_filters( 'contextualwp_openai_fallback_models', $models );
+    }
+
+    /**
+     * Whether the vendor has retired the model ID or scheduled it for retirement.
+     *
+     * @param string $provider Provider slug.
+     * @param string $model    Model ID.
+     * @return bool
+     */
+    private static function is_retiring_model( $provider, $model ) {
+        return isset( self::$retiring_models[ $provider ][ $model ] );
     }
 
     /**
@@ -560,6 +604,12 @@ class Smart_Model_Selector {
         $supported['claude'] = self::unique_preserve_order( array_merge(
             $supported['claude'] ?? [],
             self::$claude_legacy_models
+        ) );
+
+        // Mistral: keep legacy IDs valid even when hidden in UI.
+        $supported['mistral'] = self::unique_preserve_order( array_merge(
+            $supported['mistral'] ?? [],
+            self::$mistral_legacy_models
         ) );
 
         /**
