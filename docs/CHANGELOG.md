@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Minimum supported PHP version raised from 8.1 to **8.3** (`composer.json` and a new `Requires PHP: 8.3` plugin header). PHP 8.1 reached end of life on 2025-12-31. No runtime behaviour changed.
+
+### Fixed
+- `composer.json` declared the `MIT` licence while the repository `LICENSE` file is GPL-3.0. The metadata now reads `GPL-3.0-only`, matching the licence text; the plugin header and README state the licence too. Licensing terms are unchanged.
+
 ## [1.3.5] - 2026-06-22
 
 ### Changed
