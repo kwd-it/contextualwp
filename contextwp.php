@@ -3,8 +3,11 @@
  * Plugin Name: ContextualWP
  * Description: Structured WordPress context layer with MCP-compatible REST endpoints, schema and ACF metadata exposure, and optional sector packs. Includes optional AI-assisted generation and admin tools when configured.
  * Version: 1.3.5
+ * Requires PHP: 8.3
  * Author: KWD IT
  * Author URI: https://kwd-it.co.uk
+ * License: GPL-3.0-only
+ * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  * Text Domain: contextualwp
  */
 

@@ -6,6 +6,10 @@ The primary product focus is the structured context layer. AI-assisted admin too
 
 **v1.0** established the first stable release line for production use. **v1.1** adds core support for optional sector pack plugins (runtime registration, compatibility checks, and a read-only admin list) without changing behaviour when no packs are active. **v1.2** adds a **schema interpretation layer** on `/contextualwp/v1/schema` (`interpretation.contextualwp`): AI-friendly summaries, relationship guidance (including **fallback edges inferred from ACF** when the manifest relationships filter is empty), and ACF 6.8 structured-data capability notes, **without** emitting Schema.org JSON-LD from ContextualWP. **v1.3.1** refines the admin "Ask AI" icon (neutral chat/context styling) and improves single-post `generate_context` for CPTs with sparse body copy by including ACF/meta summaries in provider context when present. **v1.3.2** disables **ContextualWP Chat** on the Media Library overview and explains in the modal that WordPress search/filters are the right tool there; media metadata search is described as roadmap-only, and the chat does not scan the library, thumbnails, or image contents. **v1.3.3** adds **`Utilities::get_safe_modified_author_display_name()`** in core: a helper that returns a sanitized last-editor display label from `_edit_last` and `display_name` only, without exposing user IDs, logins, email, nicenames, roles, capabilities, or profile URLs. **v1.3.4** is a maintenance release: documentation repositioned around the structured context layer, removal of an unused legacy chat script, and future AI migration planning notes in `docs/AI-MIGRATION-PLAN.md` (no runtime AI behaviour changes). **v1.3.5** (current) centralises the default agent model configuration: OpenAI defaults to `gpt-5.5` when model settings are empty via `Smart_Model_Selector::DEFAULT_AGENT_MODEL` (overridable with `contextualwp_default_agent_model`), centralises Responses API and fallback model lists, and preserves custom model IDs during settings sanitisation.
 
+## Requirements
+
+- PHP **8.3+**
+
 ## Working alongside ACF 6.8
 
 **ACF 6.8+** can emit **automatic Schema.org JSON-LD** on singular front-end views when the site enables it (see ACF’s `acf/settings/enable_schema` and per–post type settings). **ContextualWP does not output Schema.org JSON-LD** (not in REST responses, not mirrored from ACF). Instead it exposes an **interpretation layer** plus existing structured endpoints so agents get **AI-friendly summaries and field/relationship hints** without scraping HTML or depending on front-end JSON-LD.
@@ -387,4 +391,8 @@ cached (default 5 minutes); use `contextualwp_schema_cache_ttl` and
 
 - [CHANGELOG.md](docs/CHANGELOG.md) - Complete list of changes and version history
 - [DEVNOTES.md](docs/DEVNOTES.md) - Development notes and technical details
+
+## Licence
+
+GPL-3.0-only. See [LICENSE](LICENSE).
 
