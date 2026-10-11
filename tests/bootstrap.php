@@ -143,7 +143,11 @@ require dirname( __DIR__ ) . '/includes/SectorPacks/Sector_Pack_Interface.php';
 require dirname( __DIR__ ) . '/includes/SectorPacks/Registry.php';
 require dirname( __DIR__ ) . '/includes/SectorPacks/functions.php';
 
-// PSR-4 maps ContextualWP\ to includes/; endpoint files live under includes/endpoints/ (lowercase).
+// PSR-4 maps ContextualWP\ to includes/, but helper and endpoint files live in
+// lower-case directories with hyphenated names, so Composer cannot autoload them
+// on a case-sensitive filesystem. Require them explicitly, as runtime
+// (includes/contextualwp-init.php) does.
+require dirname( __DIR__ ) . '/includes/helpers/utilities.php';
 require dirname( __DIR__ ) . '/includes/endpoints/generate-context.php';
 require dirname( __DIR__ ) . '/includes/helpers/smart-model-selector.php';
 require dirname( __DIR__ ) . '/includes/helpers/schema-interpretation.php';
