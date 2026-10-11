@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- The PHPUnit suite now passes on case-sensitive filesystems (Linux): `tests/bootstrap.php` requires `includes/helpers/utilities.php` explicitly, as runtime does, instead of relying on a PSR-4 autoload match that only succeeds on case-insensitive filesystems. Test infrastructure only; no runtime change.
+
 ## [1.3.6] - 2026-10-10
 
 ### Changed
