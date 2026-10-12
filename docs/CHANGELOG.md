@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- GitHub Actions workflow (`.github/workflows/tests.yml`) that runs the existing PHPUnit suite with `composer install` on pull requests and pushes to `main`, on PHP 8.3 (the declared minimum) and PHP 8.4. Test infrastructure only; no runtime change.
+
 ### Fixed
 - The PHPUnit suite now passes on case-sensitive filesystems (Linux): `tests/bootstrap.php` requires `includes/helpers/utilities.php` explicitly, as runtime does, instead of relying on a PSR-4 autoload match that only succeeds on case-insensitive filesystems. Test infrastructure only; no runtime change.
 
