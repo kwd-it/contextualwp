@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - GitHub Actions workflow (`.github/workflows/tests.yml`) that runs the existing PHPUnit suite with `composer install` on pull requests and pushes to `main`, on PHP 8.3 (the declared minimum) and PHP 8.4. Test infrastructure only; no runtime change.
 
+### Changed
+- `phpunit/phpunit` constraint widened from the exact `10.0` pin to `^10.5` (aligning with the Housebuilder Pack). The exact pin selected 10.0.0, which Composer now refuses to resolve because it is covered by security advisory PKSA-z3gr-8qht-p93v. Dev dependency only; the suite passes unchanged on 10.5.
+
 ### Fixed
 - The PHPUnit suite now passes on case-sensitive filesystems (Linux): `tests/bootstrap.php` requires `includes/helpers/utilities.php` explicitly, as runtime does, instead of relying on a PSR-4 autoload match that only succeeds on case-insensitive filesystems. Test infrastructure only; no runtime change.
 
