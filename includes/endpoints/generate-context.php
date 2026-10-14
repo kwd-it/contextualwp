@@ -1361,8 +1361,18 @@ class Generate_Context {
             'max_output_tokens'   => $max_output_tokens,
             'temperature'         => $temperature,
         ];
+        $reasons_by_default = Smart_Model_Selector::openai_reasons_by_default( $model );
+        if ( ( $reasoning_effort === null || $reasoning_effort === '' ) && $reasons_by_default ) {
+            // Models that reason at medium effort by default (GPT-6) are told not to, so the
+            // nano tier keeps its previous no-reasoning behaviour, latency and token use.
+            $reasoning_effort = 'none';
+        }
         if ( $reasoning_effort !== null && $reasoning_effort !== '' ) {
             $payload['reasoning'] = [ 'effort' => $reasoning_effort ];
+            if ( $reasoning_effort !== 'none' && $reasons_by_default ) {
+                // OpenAI: temperature is not sent when a GPT-6 model reasons.
+                unset( $payload['temperature'] );
+            }
         }
         return $payload;
     }

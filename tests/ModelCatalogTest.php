@@ -29,7 +29,7 @@ class ModelCatalogTest extends TestCase {
 
     public function test_openai_fallback_models_use_current_mini_nano_tiers_only(): void {
         $fallback = Smart_Model_Selector::get_openai_fallback_models();
-        $this->assertSame( [ 'gpt-5.4-mini', 'gpt-5.4-nano' ], $fallback );
+        $this->assertSame( [ 'gpt-5.4-mini', 'gpt-6-luna' ], $fallback );
     }
 
     public function test_openai_fallback_models_skip_retiring_ids_even_when_mapped(): void {
@@ -40,7 +40,7 @@ class ModelCatalogTest extends TestCase {
         add_filter( 'contextualwp_smart_model_mapping', $callback, 10, 2 );
 
         try {
-            $this->assertSame( [ 'gpt-5.4-nano' ], Smart_Model_Selector::get_openai_fallback_models() );
+            $this->assertSame( [ 'gpt-6-luna' ], Smart_Model_Selector::get_openai_fallback_models() );
         } finally {
             remove_filter( 'contextualwp_smart_model_mapping', $callback, 10 );
         }
@@ -53,9 +53,10 @@ class ModelCatalogTest extends TestCase {
         $this->assertSame(
             [
                 'openai'  => [
-                    'gpt-5'      => '2026-12-11',
-                    'gpt-5-mini' => '2026-12-11',
-                    'gpt-5-nano' => '2026-12-11',
+                    'gpt-5'        => '2026-12-11',
+                    'gpt-5-mini'   => '2026-12-11',
+                    'gpt-5-nano'   => '2026-12-11',
+                    'gpt-5.4-nano' => '2027-04-01',
                 ],
                 'claude'  => [
                     'claude-sonnet-4-5' => '2026-11-30',
@@ -140,6 +141,7 @@ class ModelCatalogTest extends TestCase {
         $this->assertContains( 'gpt-5.5', $models );
         $this->assertContains( 'gpt-5.4-mini', $models );
         $this->assertContains( 'gpt-5.2', $models );
+        $this->assertContains( 'gpt-6-luna', $models );
         $this->assertNotContains( 'gpt-4o', $models );
     }
 
@@ -149,7 +151,7 @@ class ModelCatalogTest extends TestCase {
         $this->assertArrayHasKey( 'openai', $visible );
 
         $this->assertSame(
-            [ 'gpt-5.5', 'gpt-5.4-mini', 'gpt-5.4-nano' ],
+            [ 'gpt-5.5', 'gpt-5.4-mini', 'gpt-6-luna' ],
             array_values( $visible['openai'] )
         );
     }
@@ -163,6 +165,8 @@ class ModelCatalogTest extends TestCase {
         $supported = Smart_Model_Selector::get_supported_models();
         $this->assertNotContains( 'gpt-5.2', $visible['openai'], 'OpenAI legacy must not appear in visible list' );
         $this->assertContains( 'gpt-5.2', $supported['openai'], 'OpenAI legacy must remain supported' );
+        $this->assertNotContains( 'gpt-5.4-nano', $visible['openai'], 'Retiring gpt-5.4-nano must not appear in visible list' );
+        $this->assertContains( 'gpt-5.4-nano', $supported['openai'], 'Retiring gpt-5.4-nano must remain supported for saved settings' );
         $this->assertNotContains( 'claude-sonnet-4-5', $visible['claude'], 'Claude legacy must not appear in visible list' );
         $this->assertContains( 'claude-sonnet-4-5', $supported['claude'], 'Claude legacy must remain supported' );
     }
@@ -175,6 +179,7 @@ class ModelCatalogTest extends TestCase {
         $models = array_values( $supported['openai'] );
         $this->assertContains( 'gpt-5.5', $models );
         $this->assertContains( 'gpt-5.4-mini', $models );
+        $this->assertContains( 'gpt-6-luna', $models );
         $this->assertContains( 'gpt-5.4-nano', $models );
 
         // Backwards compatibility: previously-shipped IDs must remain valid.
@@ -216,7 +221,7 @@ class ModelCatalogTest extends TestCase {
 
         // nano: short prompt
         $nano = Smart_Model_Selector::select_model( 'Hi', '', $provider, 'gpt-5.5', $settings );
-        $this->assertSame( 'gpt-5.4-nano', $nano );
+        $this->assertSame( 'gpt-6-luna', $nano );
 
         // mini: medium-length prompt (~400 words) with medium complexity (no threshold adjustment).
         $medium_prompt = 'Analyze and explain this. ' . str_repeat( 'word ', 400 );
