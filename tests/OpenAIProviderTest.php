@@ -56,10 +56,44 @@ class OpenAIProviderTest extends TestCase {
 		$this->assertTrue( $this->invoke_private( 'openai_uses_responses_api', [ 'gpt-5.5' ] ) );
 		$this->assertTrue( $this->invoke_private( 'openai_uses_responses_api', [ 'gpt-5.4-mini' ] ) );
 		$this->assertTrue( $this->invoke_private( 'openai_uses_responses_api', [ 'gpt-5.4-nano' ] ) );
+		$this->assertTrue( $this->invoke_private( 'openai_uses_responses_api', [ 'gpt-6-luna' ] ) );
 		$this->assertTrue( $this->invoke_private( 'openai_uses_responses_api', [ 'gpt-5.2' ] ) );
 		$this->assertTrue( $this->invoke_private( 'openai_uses_responses_api', [ 'gpt-5-mini' ] ) );
 		$this->assertTrue( $this->invoke_private( 'openai_uses_responses_api', [ 'gpt-5-nano' ] ) );
 		$this->assertTrue( $this->invoke_private( 'openai_uses_responses_api', [ 'gpt-5' ] ) );
+	}
+
+	/**
+	 * GPT-6 models reason at medium effort unless told otherwise, so the nano tier is sent
+	 * reasoning.effort "none" when no effort is requested and keeps its temperature.
+	 */
+	public function test_gpt_6_luna_without_requested_reasoning_is_sent_effort_none(): void {
+		$payload = $this->invoke_private( 'build_openai_responses_payload', [ 'gpt-6-luna', 'System', 'User', 1024, 0.7, null ] );
+		$this->assertSame( [ 'effort' => 'none' ], $payload['reasoning'] );
+		$this->assertSame( 0.7, $payload['temperature'] );
+		$this->assertSame( 'gpt-6-luna', $payload['model'] );
+	}
+
+	/**
+	 * When a request asks a GPT-6 model to reason, the effort is kept and temperature is
+	 * not sent, as OpenAI's migration guidance requires.
+	 */
+	public function test_gpt_6_luna_with_requested_reasoning_drops_temperature(): void {
+		$payload = $this->invoke_private( 'build_openai_responses_payload', [ 'gpt-6-luna', 'System', 'User', 1024, 0.7, 'low' ] );
+		$this->assertSame( [ 'effort' => 'low' ], $payload['reasoning'] );
+		$this->assertArrayNotHasKey( 'temperature', $payload );
+	}
+
+	/**
+	 * GPT-5.x payloads are unchanged: no reasoning key unless requested, temperature kept.
+	 */
+	public function test_gpt_5_payloads_are_unchanged(): void {
+		$mini = $this->invoke_private( 'build_openai_responses_payload', [ 'gpt-5.4-mini', 'System', 'User', 1024, 0.7, null ] );
+		$this->assertArrayNotHasKey( 'reasoning', $mini );
+		$this->assertSame( 0.7, $mini['temperature'] );
+		$large = $this->invoke_private( 'build_openai_responses_payload', [ 'gpt-5.5', 'System', 'User', 1024, 0.7, 'low' ] );
+		$this->assertSame( [ 'effort' => 'low' ], $large['reasoning'] );
+		$this->assertSame( 0.7, $large['temperature'] );
 	}
 
 	/**

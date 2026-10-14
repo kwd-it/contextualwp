@@ -34,6 +34,7 @@ class Smart_Model_Selector {
      * @var string[]
      */
     private static $openai_legacy_models = [
+        'gpt-5.4-nano',
         'gpt-5.2',
         'gpt-5-mini',
         'gpt-5-nano',
@@ -68,15 +69,17 @@ class Smart_Model_Selector {
      *
      * Sources (checked 2026-10-10): OpenAI deprecations page (gpt-5 2025-08-07 snapshots),
      * Anthropic model deprecations page (claude-sonnet-4-5-20250929), Mistral models page
-     * (mistral-small-2506, mistral-medium-2508).
+     * (mistral-small-2506, mistral-medium-2508). Checked 2026-10-14: OpenAI deprecations page
+     * (gpt-5.4-nano, announced 2026-10-01, shutdown 2027-04-01, replacement gpt-6-luna).
      *
      * @var array<string, array<string, string>> Provider => [ model ID => retirement date (Y-m-d) ].
      */
     private static $retiring_models = [
         'openai'  => [
-            'gpt-5'      => '2026-12-11',
-            'gpt-5-mini' => '2026-12-11',
-            'gpt-5-nano' => '2026-12-11',
+            'gpt-5'        => '2026-12-11',
+            'gpt-5-mini'   => '2026-12-11',
+            'gpt-5-nano'   => '2026-12-11',
+            'gpt-5.4-nano' => '2027-04-01',
         ],
         'claude'  => [
             'claude-sonnet-4-5' => '2026-11-30',
@@ -114,9 +117,11 @@ class Smart_Model_Selector {
             // Flagship / best quality option for complex reasoning/coding.
             'large' => self::DEFAULT_AGENT_MODEL,
 
-            // Smart selection mapping.
+            // Smart selection mapping. gpt-6-luna is OpenAI's documented replacement for
+            // gpt-5.4-nano (shutdown 2027-04-01); it is sent reasoning.effort "none" unless a
+            // request asks for reasoning, see Generate_Context::build_openai_responses_payload().
             'mini'  => 'gpt-5.4-mini',
-            'nano'  => 'gpt-5.4-nano',
+            'nano'  => 'gpt-6-luna',
         ],
         'claude' => [
             'nano'  => 'claude-haiku-4-5',
@@ -464,7 +469,7 @@ class Smart_Model_Selector {
     /**
      * OpenAI models that use the Responses API (POST /v1/responses).
      *
-     * Includes current and legacy GPT-5.x IDs from the supported catalog.
+     * Includes current and legacy GPT-5.x and GPT-6 IDs from the supported catalog.
      *
      * @since 1.3.5
      * @return string[]
@@ -474,7 +479,7 @@ class Smart_Model_Selector {
         $models    = array_values( array_filter(
             $supported,
             static function ( $model ) {
-                return is_string( $model ) && strpos( $model, 'gpt-5' ) === 0;
+                return is_string( $model ) && ( strpos( $model, 'gpt-5' ) === 0 || strpos( $model, 'gpt-6' ) === 0 );
             }
         ) );
 
@@ -484,6 +489,28 @@ class Smart_Model_Selector {
          * @param string[] $models Model IDs.
          */
         return apply_filters( 'contextualwp_openai_responses_api_models', $models );
+    }
+
+    /**
+     * Whether an OpenAI model reasons by default when a request omits reasoning.effort.
+     *
+     * GPT-6 models default to medium reasoning effort, and OpenAI's migration guide says
+     * temperature must not be sent unless the effort is "none" (reasoning guide and
+     * latest-model guide, checked 2026-10-14). GPT-5.x models default to "none".
+     *
+     * @param string $model Model ID.
+     * @return bool
+     */
+    public static function openai_reasons_by_default( $model ) {
+        $reasons = is_string( $model ) && strpos( $model, 'gpt-6' ) === 0;
+
+        /**
+         * Filter whether an OpenAI model reasons by default when reasoning.effort is omitted.
+         *
+         * @param bool   $reasons Whether the model reasons by default.
+         * @param string $model   Model ID.
+         */
+        return (bool) apply_filters( 'contextualwp_openai_reasons_by_default', $reasons, $model );
     }
 
     /**

@@ -86,7 +86,7 @@ Structured context endpoints (`/mcp/v1/*`, `/schema`, `/acf_schema`) do **not** 
   - **AI Provider**: OpenAI, Claude, or Mistral
   - **API Key**: Your provider's API key (never exposed in API)
   - **Model**: Recommended models in the dropdown depend on provider; previously saved legacy IDs remain valid and may appear as “(legacy)”.
-    - OpenAI (recommended): `gpt-5.5`, `gpt-5.4-mini`, `gpt-5.4-nano` (e.g. `gpt-5.2`, `gpt-5-mini`, `gpt-5-nano`, `gpt-5` still accepted if already saved; OpenAI shuts down `gpt-5`, `gpt-5-mini` and `gpt-5-nano` on 2026-12-11)
+    - OpenAI (recommended): `gpt-5.5`, `gpt-5.4-mini`, `gpt-6-luna` (e.g. `gpt-5.4-nano`, `gpt-5.2`, `gpt-5-mini`, `gpt-5-nano`, `gpt-5` still accepted if already saved; OpenAI shuts down `gpt-5`, `gpt-5-mini` and `gpt-5-nano` on 2026-12-11 and `gpt-5.4-nano` on 2027-04-01)
     - Claude (recommended): `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5` (`claude-opus-4-5`, `claude-sonnet-4-5` still accepted if already saved; Anthropic retires `claude-sonnet-4-5` on 2026-11-30)
     - Mistral: `mistral-large-2512`, `mistral-medium-3-5`, `mistral-small-2603` (`mistral-small-2506`, `mistral-medium-2508` still accepted if already saved, but Mistral has retired them)
   - **Advanced Settings**: Max tokens (default: 1024) and temperature (default: 1.0)
@@ -355,7 +355,7 @@ These wp-admin surfaces use the provider settings above and sit alongside the st
 The providers below apply to `/generate_context`, global chat, and ACF AskAI—not to read-only structured context endpoints.
 
 ### OpenAI
-- Models (recommended in settings): `gpt-5.5`, `gpt-5.4-mini`, `gpt-5.4-nano`. Smart selection uses `gpt-5.4-nano` / `gpt-5.4-mini` / `gpt-5.5` for nano/mini/large. Older GPT‑5.x IDs remain valid if already saved. When a Responses API model returns no visible text, the request falls back to `gpt-5.4-mini` then `gpt-5.4-nano` (filter: `contextualwp_openai_fallback_models`); IDs scheduled for shutdown are never used as fallbacks.
+- Models (recommended in settings): `gpt-5.5`, `gpt-5.4-mini`, `gpt-6-luna`. Smart selection uses `gpt-6-luna` / `gpt-5.4-mini` / `gpt-5.5` for nano/mini/large. `gpt-6-luna` (OpenAI's documented replacement for `gpt-5.4-nano`, which shuts down on 2027-04-01) is sent `reasoning.effort: none` unless a request asks for reasoning, so the nano tier behaves as before; when it does reason, `temperature` is not sent, as OpenAI requires for GPT-6 models (filter: `contextualwp_openai_reasons_by_default`). Older GPT‑5.x IDs, including `gpt-5.4-nano`, remain valid if already saved. When a Responses API model returns no visible text, the request falls back to `gpt-5.4-mini` then `gpt-6-luna` (filter: `contextualwp_openai_fallback_models`); IDs scheduled for shutdown are never used as fallbacks.
 - API: default OpenAI models use the Responses API (`POST https://api.openai.com/v1/responses`). Other model IDs use Chat Completions (`POST https://api.openai.com/v1/chat/completions`) when not listed for Responses (see `contextualwp_openai_responses_api_models`).
 
 ### Claude (Anthropic)
