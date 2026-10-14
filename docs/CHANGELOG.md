@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.7] - 2026-10-14
+
 ### Added
 - GitHub Actions workflow (`.github/workflows/tests.yml`) that runs the existing PHPUnit suite with `composer install` on pull requests and pushes to `main`, on PHP 8.3 (the declared minimum) and PHP 8.4. Test infrastructure only; no runtime change.
 
