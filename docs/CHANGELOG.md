@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `phpunit/phpunit` constraint widened from the exact `10.0` pin to `^10.5` (aligning with the Housebuilder Pack). The exact pin selected 10.0.0, which Composer now refuses to resolve because it is covered by security advisory PKSA-z3gr-8qht-p93v. Dev dependency only; the suite passes unchanged on 10.5.
 
 ### Fixed
+- Claude (Anthropic) replies are read from the first `text` content block instead of `content[0]`, so responses that begin with a `thinking` or `redacted_thinking` block (possible with newer Claude models) return the visible answer rather than failing, and thinking content is never used as the answer. Responses with no text block return an error as before. Behaviour for current models, whose first block is text, is unchanged; no request, model or catalogue change. Stewardship proposal kwd-it/contextual-stewardship#4, approved 2026-10-14.
 - The PHPUnit suite now passes on case-sensitive filesystems (Linux): `tests/bootstrap.php` requires `includes/helpers/utilities.php` explicitly, as runtime does, instead of relying on a PSR-4 autoload match that only succeeds on case-insensitive filesystems. Test infrastructure only; no runtime change.
 
 ## [1.3.6] - 2026-10-10

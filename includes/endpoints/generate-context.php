@@ -1622,12 +1622,48 @@ class Generate_Context {
         $code = wp_remote_retrieve_response_code( $response );
         $body = wp_remote_retrieve_body( $response );
         $data = json_decode( $body, true );
-        if ( $code !== 200 || ! isset( $data['content'][0]['text'] ) ) {
+        if ( $code !== 200 ) {
             return new \WP_Error( 'claude_error', isset( $data['error']['message'] ) ? $data['error']['message'] : 'Unknown error from Claude.' );
         }
+        $text = $this->extract_claude_output_text( $data );
+        if ( $text === null ) {
+            return new \WP_Error( 'claude_error', isset( $data['error']['message'] ) ? $data['error']['message'] : 'No text content in the Claude response.' );
+        }
         return [
-            'output' => $data['content'][0]['text'],
+            'output' => $text,
             'raw'    => $data,
         ];
+    }
+
+    /**
+     * Visible text of a Messages API response: the first `text` content block.
+     *
+     * Current and newer Claude models can return `thinking` (or `redacted_thinking`)
+     * blocks before the text block, so the text is no longer assumed to be at
+     * `content[0]`. Thinking content is never used as the answer. A block without a
+     * `type` is treated as text when it carries a string `text` (the shape the plugin
+     * accepted before), so behaviour for current responses is unchanged.
+     *
+     * @param mixed $data Decoded response body.
+     * @return string|null First text block, or null when the response has none.
+     */
+    private function extract_claude_output_text( $data ) {
+        if ( ! is_array( $data ) || ! isset( $data['content'] ) || ! is_array( $data['content'] ) ) {
+            return null;
+        }
+        foreach ( $data['content'] as $block ) {
+            if ( ! is_array( $block ) ) {
+                continue;
+            }
+            $type = isset( $block['type'] ) ? $block['type'] : 'text';
+            if ( $type !== 'text' || ! isset( $block['text'] ) || ! is_string( $block['text'] ) ) {
+                continue;
+            }
+            if ( trim( $block['text'] ) === '' ) {
+                continue;
+            }
+            return $block['text'];
+        }
+        return null;
     }
 } 
