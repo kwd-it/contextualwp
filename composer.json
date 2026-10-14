@@ -36,6 +36,6 @@
         "wordpress-plugin-slug": "contextualwp"
     },
     "require-dev": {
-        "phpunit/phpunit": "10.0"
+        "phpunit/phpunit": "^10.5"
     }
 }
