@@ -72,7 +72,7 @@ class ACFPostTypeQueryTest extends TestCase {
      *
      * @return array Array of [prompt, available_slugs, expected, description]
      */
-    public function postTypeExtractionProvider() {
+    public static function postTypeExtractionProvider() {
         return [
             [
                 'List all acf assigned to plot cpt',
@@ -171,7 +171,7 @@ class ACFPostTypeQueryTest extends TestCase {
      *
      * @return array Array of [prompt, expected, description]
      */
-    public function blockDetectionProvider() {
+    public static function blockDetectionProvider() {
         return [
             [
                 'ACF for plots and include blocks',
@@ -224,7 +224,7 @@ class ACFPostTypeQueryTest extends TestCase {
      *
      * @return array Array of [group, post_type_slug, expected, description]
      */
-    public function blockGroupDetectionProvider() {
+    public static function blockGroupDetectionProvider() {
         return [
             [
                 [
@@ -318,7 +318,7 @@ class ACFPostTypeQueryTest extends TestCase {
      *
      * @return array Array of [groups, post_type, include_blocks, expected_count, description]
      */
-    public function acfGroupsFilteringProvider() {
+    public static function acfGroupsFilteringProvider() {
         return [
             [
                 [
