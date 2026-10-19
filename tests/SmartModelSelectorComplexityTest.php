@@ -108,7 +108,7 @@ class SmartModelSelectorComplexityTest extends TestCase {
      *
      * @return array Array of [prompt, description] pairs
      */
-    public function simpleExamplesProvider() {
+    public static function simpleExamplesProvider() {
         return [
             [
                 'What is this?',
@@ -130,7 +130,7 @@ class SmartModelSelectorComplexityTest extends TestCase {
      *
      * @return array Array of [prompt, description] pairs
      */
-    public function mediumExamplesProvider() {
+    public static function mediumExamplesProvider() {
         return [
             [
                 'Please analyze the document and explain the findings.',
@@ -152,7 +152,7 @@ class SmartModelSelectorComplexityTest extends TestCase {
      *
      * @return array Array of [prompt, description] pairs
      */
-    public function complexExamplesProvider() {
+    public static function complexExamplesProvider() {
         return [
             [
                 'Analyze the document, compare it with others, and explain the differences. Then evaluate the results.',
