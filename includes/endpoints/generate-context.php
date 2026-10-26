@@ -321,7 +321,6 @@ class Generate_Context {
                     $ai_response = null;
                 }
                 break;
-            // Add more providers here (e.g., 'anthropic')
             default:
                 $ai_error = 'Unsupported AI provider: ' . esc_html( $provider );
                 break;
