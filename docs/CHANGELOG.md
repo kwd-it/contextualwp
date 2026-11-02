@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Mistral smart selection moves the mini tier from `mistral-medium-3-5` (Mistral Medium 3.5) and the large tier from `mistral-large-2512` (Mistral Large 3) to `mistral-large-4` (Mistral Large 4, v26.10). Mistral deprecated both models on 2026-10-31, retires them on 2027-04-30 and documents Mistral Large 4 as the alternative for both; no newer Mistral Medium exists, so the mini and large tiers share one model for now. The Mistral default model (the large tier) becomes `mistral-large-4`, and the settings dropdown lists it once. The nano tier (`mistral-small-2603`) is unchanged. The deprecated IDs stay accepted as legacy saved settings with their retirement dates recorded, but are never selected or offered. Mistral Large 4 is in public preview at the time of writing. List prices per million tokens: Large 4 $0.70 input and $2.10 output, against $1.50 and $7.50 for Medium 3.5 and $0.50 and $1.50 for Large 3, with reasoning tokens added to output. Sources: docs.mistral.ai models overview, model cards and reasoning guide, checked 2026-11-02. Stewardship proposal kwd-it/contextual-stewardship#8, approved 2026-11-02.
+- Mistral Large 4 always reasons (it does not accept `reasoning_effort: "none"`), so requests to it send `reasoning_effort: "low"` to keep reasoning tokens and latency within the plugin's token and timeout limits. Requests to every other Mistral model are unchanged.
+
+### Fixed
+- Mistral replies are read from the `text` chunks when `message.content` is a list of chunks, as it is when a model reasons, so the answer is returned as text and the `thinking` trace is never used. A plain-string `content` is returned unchanged, and a response with no text now returns an error instead of a non-text value.
+
 ## [1.3.7] - 2026-10-14
 
 ### Added

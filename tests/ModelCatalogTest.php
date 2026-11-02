@@ -64,6 +64,8 @@ class ModelCatalogTest extends TestCase {
                 'mistral' => [
                     'mistral-small-2506'  => '2026-07-31',
                     'mistral-medium-2508' => '2026-08-31',
+                    'mistral-medium-3-5'  => '2027-04-30',
+                    'mistral-large-2512'  => '2027-04-30',
                 ],
             ],
             $property->getValue()
@@ -95,24 +97,32 @@ class ModelCatalogTest extends TestCase {
         }
     }
 
-    public function test_default_models_per_provider_are_unchanged(): void {
+    public function test_default_models_per_provider(): void {
         $this->assertSame( 'gpt-5.5', Smart_Model_Selector::get_default_model( 'openai' ) );
         $this->assertSame( 'claude-opus-4-7', Smart_Model_Selector::get_default_model( 'claude' ) );
-        $this->assertSame( 'mistral-large-2512', Smart_Model_Selector::get_default_model( 'mistral' ) );
+        // Mistral Large 4 replaces the deprecated Large 3 (mistral-large-2512) as the large tier.
+        $this->assertSame( 'mistral-large-4', Smart_Model_Selector::get_default_model( 'mistral' ) );
     }
 
     public function test_mistral_visible_models_use_current_successors(): void {
         $visible = Smart_Model_Selector::get_visible_models();
+        // The mini and large tiers share Mistral Large 4, which is listed once.
         $this->assertSame(
-            [ 'mistral-large-2512', 'mistral-medium-3-5', 'mistral-small-2603' ],
+            [ 'mistral-large-4', 'mistral-small-2603' ],
             array_values( $visible['mistral'] )
         );
+    }
+
+    public function test_visible_models_never_list_a_model_twice(): void {
+        foreach ( Smart_Model_Selector::get_visible_models() as $provider => $models ) {
+            $this->assertSame( array_values( array_unique( $models ) ), array_values( $models ), "$provider visible list has duplicates" );
+        }
     }
 
     public function test_mistral_supported_models_include_retired_legacy_ids(): void {
         $supported = Smart_Model_Selector::get_supported_models();
         $this->assertSame(
-            [ 'mistral-small-2603', 'mistral-medium-3-5', 'mistral-large-2512', 'mistral-small-2506', 'mistral-medium-2508' ],
+            [ 'mistral-small-2603', 'mistral-large-4', 'mistral-medium-3-5', 'mistral-large-2512', 'mistral-small-2506', 'mistral-medium-2508' ],
             array_values( $supported['mistral'] )
         );
     }
@@ -121,18 +131,29 @@ class ModelCatalogTest extends TestCase {
         $settings = [ 'smart_model_selection' => true ];
         $provider = 'mistral';
 
-        $this->assertSame( 'mistral-small-2603', Smart_Model_Selector::select_model( 'Hi', '', $provider, 'mistral-large-2512', $settings ) );
+        $this->assertSame( 'mistral-small-2603', Smart_Model_Selector::select_model( 'Hi', '', $provider, 'mistral-large-4', $settings ) );
 
         $medium_prompt = 'Analyze and explain this. ' . str_repeat( 'word ', 400 );
-        $this->assertSame( 'mistral-medium-3-5', Smart_Model_Selector::select_model( $medium_prompt, '', $provider, 'mistral-large-2512', $settings ) );
+        $this->assertSame( 'mistral-large-4', Smart_Model_Selector::select_model( $medium_prompt, '', $provider, 'mistral-small-2603', $settings ) );
 
         $long_prompt = 'Analyze and explain this. ' . str_repeat( 'word ', 2000 );
-        $this->assertSame( 'mistral-large-2512', Smart_Model_Selector::select_model( $long_prompt, '', $provider, 'mistral-small-2603', $settings ) );
+        $this->assertSame( 'mistral-large-4', Smart_Model_Selector::select_model( $long_prompt, '', $provider, 'mistral-small-2603', $settings ) );
+    }
+
+    public function test_mistral_reasoning_effort_is_low_for_large_4_only(): void {
+        $this->assertSame( 'low', Smart_Model_Selector::get_mistral_reasoning_effort( 'mistral-large-4' ) );
+        $this->assertSame( 'low', Smart_Model_Selector::get_mistral_reasoning_effort( 'mistral-large-4-0' ) );
+        $this->assertNull( Smart_Model_Selector::get_mistral_reasoning_effort( 'mistral-small-2603' ) );
+        $this->assertNull( Smart_Model_Selector::get_mistral_reasoning_effort( 'mistral-large-2512' ) );
+        $this->assertNull( Smart_Model_Selector::get_mistral_reasoning_effort( 'mistral-medium-3-5' ) );
+        $this->assertNull( Smart_Model_Selector::get_mistral_reasoning_effort( null ) );
     }
 
     public function test_saved_retired_model_is_kept_when_smart_selection_is_off(): void {
         $settings = [ 'smart_model_selection' => false ];
         $this->assertSame( 'mistral-small-2506', Smart_Model_Selector::select_model( 'Hi', '', 'mistral', 'mistral-small-2506', $settings ) );
+        $this->assertSame( 'mistral-medium-3-5', Smart_Model_Selector::select_model( 'Hi', '', 'mistral', 'mistral-medium-3-5', $settings ) );
+        $this->assertSame( 'mistral-large-2512', Smart_Model_Selector::select_model( 'Hi', '', 'mistral', 'mistral-large-2512', $settings ) );
         $this->assertSame( 'claude-sonnet-4-5', Smart_Model_Selector::select_model( 'Hi', '', 'claude', 'claude-sonnet-4-5', $settings ) );
     }
 

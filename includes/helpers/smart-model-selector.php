@@ -58,6 +58,8 @@ class Smart_Model_Selector {
      * @var string[]
      */
     private static $mistral_legacy_models = [
+        'mistral-medium-3-5',
+        'mistral-large-2512',
         'mistral-small-2506',
         'mistral-medium-2508',
     ];
@@ -71,6 +73,8 @@ class Smart_Model_Selector {
      * Anthropic model deprecations page (claude-sonnet-4-5-20250929), Mistral models page
      * (mistral-small-2506, mistral-medium-2508). Checked 2026-10-14: OpenAI deprecations page
      * (gpt-5.4-nano, announced 2026-10-01, shutdown 2027-04-01, replacement gpt-6-luna).
+     * Checked 2026-11-02: Mistral models overview and model cards (mistral-medium-3-5 and
+     * mistral-large-2512, deprecated 2026-10-31, retirement 2027-04-30, alternative Mistral Large 4).
      *
      * @var array<string, array<string, string>> Provider => [ model ID => retirement date (Y-m-d) ].
      */
@@ -87,6 +91,8 @@ class Smart_Model_Selector {
         'mistral' => [
             'mistral-small-2506'  => '2026-07-31',
             'mistral-medium-2508' => '2026-08-31',
+            'mistral-medium-3-5'  => '2027-04-30',
+            'mistral-large-2512'  => '2027-04-30',
         ],
     ];
 
@@ -133,10 +139,13 @@ class Smart_Model_Selector {
             'legacy_large' => 'claude-opus-4-5',
         ],
         'mistral' => [
-            // Mistral Small 4 and Medium 3.5 replace the retired Small 3.2 and Medium 3.1.
+            // Mistral deprecated Medium 3.5 (mini) and Large 3 (large) on 2026-10-31, retiring
+            // 2027-04-30, and documents Mistral Large 4 as the alternative for both, so the two
+            // tiers share one model until a new mid-tier model exists. Mistral Large 4 always
+            // reasons; see Smart_Model_Selector::get_mistral_reasoning_effort().
             'nano'  => 'mistral-small-2603',
-            'mini'  => 'mistral-medium-3-5',
-            'large' => 'mistral-large-2512',
+            'mini'  => 'mistral-large-4',
+            'large' => 'mistral-large-4',
         ],
     ];
 
@@ -514,6 +523,25 @@ class Smart_Model_Selector {
     }
 
     /**
+     * The reasoning_effort to send with a Mistral chat completions request, or null to send none.
+     *
+     * Mistral Large 4 always reasons: it accepts only "low", "medium" and "high" (not "none"),
+     * and its reasoning tokens count against max_tokens and add latency (Mistral reasoning
+     * guide, checked 2026-11-02). "low" keeps short editorial answers inside the plugin's token
+     * and timeout limits. Other Mistral models are sent no reasoning_effort, as before. Sites
+     * can change the value through the contextualwp_ai_payload filter.
+     *
+     * @param string $model Model ID.
+     * @return string|null
+     */
+    public static function get_mistral_reasoning_effort( $model ) {
+        if ( is_string( $model ) && strpos( $model, 'mistral-large-4' ) === 0 ) {
+            return 'low';
+        }
+        return null;
+    }
+
+    /**
      * Fallback OpenAI models when the primary model returns no visible output.
      *
      * Uses the current mini/nano tiers. Model IDs the vendor has retired or scheduled for
@@ -591,6 +619,8 @@ class Smart_Model_Selector {
                     $list[] = $tiers[ $tier ];
                 }
             }
+            // Two tiers can share one model (Mistral mini and large); list it once.
+            $list = self::unique_preserve_order( $list );
             if ( $list !== [] ) {
                 $visible[ $provider ] = $list;
             }
