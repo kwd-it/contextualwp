@@ -111,15 +111,7 @@ class Generate_Context {
                     }
                     break;
                 case 'mistral':
-                    $ai_payload = apply_filters( 'contextualwp_ai_payload', [
-                        'model' => $model,
-                        'messages' => [
-                            [ 'role' => 'system', 'content' => $system_message ],
-                            [ 'role' => 'user', 'content' => $prompt . "\n\nContext:\n" . $content ]
-                        ],
-                        'max_tokens' => $max_tokens,
-                        'temperature' => $temperature,
-                    ], $settings, $context_data, $request );
+                    $ai_payload = apply_filters( 'contextualwp_ai_payload', $this->build_mistral_payload( $model, $system_message, $prompt . "\n\nContext:\n" . $content, $max_tokens, $temperature ), $settings, $context_data, $request );
                     \ContextualWP\Helpers\Utilities::log_debug( $ai_payload, 'generate_payload_mistral_multi' );
                     $ai_response = $this->call_mistral_api( $ai_payload, $api_key );
                     \ContextualWP\Helpers\Utilities::log_debug( $ai_response, 'generate_response_mistral_multi' );
@@ -287,15 +279,7 @@ class Generate_Context {
                 }
                 break;
             case 'mistral':
-                $ai_payload = apply_filters( 'contextualwp_ai_payload', [
-                    'model' => $model,
-                    'messages' => [
-                        [ 'role' => 'system', 'content' => $system_message ],
-                        [ 'role' => 'user', 'content' => $prompt . "\n\nContext:\n" . $ai_context_content ]
-                    ],
-                    'max_tokens' => $max_tokens,
-                    'temperature' => $temperature,
-                ], $settings, $context_data, $request );
+                $ai_payload = apply_filters( 'contextualwp_ai_payload', $this->build_mistral_payload( $model, $system_message, $prompt . "\n\nContext:\n" . $ai_context_content, $max_tokens, $temperature ), $settings, $context_data, $request );
                 \ContextualWP\Helpers\Utilities::log_debug( $ai_payload, 'generate_payload_mistral' );
                 $ai_response = $this->call_mistral_api( $ai_payload, $api_key );
                 \ContextualWP\Helpers\Utilities::log_debug( $ai_response, 'generate_response_mistral' );
@@ -1609,10 +1593,73 @@ class Generate_Context {
         if ( $code !== 200 || ! isset( $data['choices'][0]['message']['content'] ) ) {
             return new \WP_Error( 'mistral_error', isset( $data['error']['message'] ) ? $data['error']['message'] : 'Unknown error from Mistral.' );
         }
+        $text = $this->extract_mistral_output_text( $data );
+        if ( $text === null ) {
+            return new \WP_Error( 'mistral_error', 'No text content in the Mistral response.' );
+        }
         return [
-            'output' => $data['choices'][0]['message']['content'],
+            'output' => $text,
             'raw'    => $data,
         ];
+    }
+
+    /**
+     * Build the Mistral chat completions payload.
+     *
+     * reasoning_effort is added only for models that need it
+     * ({@see Smart_Model_Selector::get_mistral_reasoning_effort()}); other models get the same
+     * payload as before.
+     *
+     * @param string    $model          Model ID.
+     * @param string    $system_message System message.
+     * @param string    $user_content   User message (prompt plus context).
+     * @param int       $max_tokens     Max tokens from settings.
+     * @param float|int $temperature    Sampling temperature.
+     * @return array
+     */
+    private function build_mistral_payload( $model, $system_message, $user_content, $max_tokens, $temperature ) {
+        $payload = [
+            'model'       => $model,
+            'messages'    => [
+                [ 'role' => 'system', 'content' => $system_message ],
+                [ 'role' => 'user', 'content' => $user_content ],
+            ],
+            'max_tokens'  => $max_tokens,
+            'temperature' => $temperature,
+        ];
+        $effort = Smart_Model_Selector::get_mistral_reasoning_effort( $model );
+        if ( $effort !== null ) {
+            $payload['reasoning_effort'] = $effort;
+        }
+        return $payload;
+    }
+
+    /**
+     * The visible answer from a decoded Mistral chat completions response.
+     *
+     * message.content is a plain string for non-reasoning output. When the model reasons it is
+     * a list of chunks: "thinking" chunks carry the reasoning trace and are never returned, and
+     * "text" chunks carry the answer (Mistral reasoning guide, checked 2026-11-02).
+     *
+     * @param array $data Decoded response body.
+     * @return string|null The answer, or null when the response holds no text.
+     */
+    private function extract_mistral_output_text( $data ) {
+        $content = $data['choices'][0]['message']['content'] ?? null;
+        if ( is_string( $content ) ) {
+            return $content;
+        }
+        if ( ! is_array( $content ) ) {
+            return null;
+        }
+        $parts = [];
+        foreach ( $content as $chunk ) {
+            if ( is_array( $chunk ) && ( $chunk['type'] ?? '' ) === 'text' && isset( $chunk['text'] ) && is_string( $chunk['text'] ) ) {
+                $parts[] = $chunk['text'];
+            }
+        }
+        $text = implode( '', $parts );
+        return trim( $text ) === '' ? null : $text;
     }
 
     private function call_claude_api( $payload, $api_key ) {

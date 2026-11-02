@@ -88,7 +88,7 @@ Structured context endpoints (`/mcp/v1/*`, `/schema`, `/acf_schema`) do **not** 
   - **Model**: Recommended models in the dropdown depend on provider; previously saved legacy IDs remain valid and may appear as “(legacy)”.
     - OpenAI (recommended): `gpt-5.5`, `gpt-5.4-mini`, `gpt-6-luna` (e.g. `gpt-5.4-nano`, `gpt-5.2`, `gpt-5-mini`, `gpt-5-nano`, `gpt-5` still accepted if already saved; OpenAI shuts down `gpt-5`, `gpt-5-mini` and `gpt-5-nano` on 2026-12-11 and `gpt-5.4-nano` on 2027-04-01)
     - Claude (recommended): `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5` (`claude-opus-4-5`, `claude-sonnet-4-5` still accepted if already saved; Anthropic retires `claude-sonnet-4-5` on 2026-11-30)
-    - Mistral: `mistral-large-2512`, `mistral-medium-3-5`, `mistral-small-2603` (`mistral-small-2506`, `mistral-medium-2508` still accepted if already saved, but Mistral has retired them)
+    - Mistral: `mistral-large-4`, `mistral-small-2603` (`mistral-large-2512`, `mistral-medium-3-5` still accepted if already saved; Mistral retires both on 2027-04-30. `mistral-small-2506`, `mistral-medium-2508` are also still accepted, but Mistral has retired them)
   - **Advanced Settings**: Max tokens (default: 1024) and temperature (default: 1.0)
 
 ## Extensibility
@@ -363,7 +363,7 @@ The providers below apply to `/generate_context`, global chat, and ACF AskAI—n
 - Endpoint: https://api.anthropic.com/v1/messages
 
 ### Mistral
-- Models: `mistral-small-2603` (Small 4), `mistral-medium-3-5` (Medium 3.5), `mistral-large-2512` (Large 3). Smart selection uses them for nano/mini/large. The retired `mistral-small-2506` (Small 3.2) and `mistral-medium-2508` (Medium 3.1) remain accepted if already saved, but requests to them fail.
+- Models: `mistral-small-2603` (Small 4) and `mistral-large-4` (Large 4, the default). Smart selection uses Small 4 for nano and Large 4 for both mini and large, because Mistral names Large 4 as the alternative to both deprecated models and has no current mid-tier model. Mistral Large 4 always reasons, so it is sent `reasoning_effort: "low"` (change it with the `contextualwp_ai_payload` filter); its reasoning trace is never shown, only the answer. `mistral-large-2512` (Large 3) and `mistral-medium-3-5` (Medium 3.5) remain accepted if already saved until Mistral retires them on 2027-04-30, after which requests to them fail. The retired `mistral-small-2506` (Small 3.2) and `mistral-medium-2508` (Medium 3.1) remain accepted if already saved, but requests to them fail.
 - Endpoint: https://api.mistral.ai/v1/chat/completions
 
 ### Custom Providers
